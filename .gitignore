@@ -1,0 +1,11 @@
+/target
+debug/
+*.swp
+*.swo
+.DS_Store
+*.env
+*.key
+*.pem
+credentials.json
+Claude-Production-Grade-Suite/
+RESILIENCE_PATCH.md

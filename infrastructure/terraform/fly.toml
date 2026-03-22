@@ -1,0 +1,68 @@
+# ================================================
+# ELECTRO - Fly.io Deployment Configuration
+# Alternative to Terraform/AWS for quick deploys.
+#
+# Usage:
+#   fly launch        # first time
+#   fly deploy        # subsequent deploys
+#   fly secrets set ANTHROPIC_API_KEY=sk-...
+# ================================================
+
+app = "electro"
+primary_region = "iad"
+kill_signal = "SIGINT"
+kill_timeout = "5s"
+
+[build]
+  dockerfile = "../../Dockerfile"
+
+[env]
+  ELECTRO_MODE = "cloud"
+  RUST_LOG = "info"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 250
+    soft_limit = 200
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8080
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [[services.tcp_checks]]
+    grace_period = "10s"
+    interval = "30s"
+    timeout = "3s"
+
+  [[services.http_checks]]
+    grace_period = "10s"
+    interval = "30s"
+    timeout = "3s"
+    method = "GET"
+    path = "/health"
+    protocol = "http"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+  cpus = 1
+
+[mounts]
+  source = "electro_data"
+  destination = "/var/lib/electro"
+  initial_size = "1gb"

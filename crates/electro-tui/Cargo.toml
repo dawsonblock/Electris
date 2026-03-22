@@ -1,0 +1,61 @@
+[package]
+name = "electro-tui"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Interactive TUI for ELECTRO — Claude Code-level terminal experience"
+
+[dependencies]
+# Internal
+electro-core.workspace = true
+electro-agent.workspace = true
+electro-providers.workspace = true
+electro-memory.workspace = true
+electro-vault.workspace = true
+electro-tools.workspace = true
+electro-codex-oauth = { workspace = true, optional = true }
+electro-mcp = { workspace = true, optional = true }
+
+# TUI framework
+ratatui = { version = "0.29", default-features = false, features = ["crossterm"] }
+crossterm = { version = "0.28", features = ["event-stream"] }
+
+# Text rendering
+syntect = { version = "5", default-features = false, features = ["default-fancy"] }
+unicode-width = "0.2"
+textwrap = "0.16"
+
+# Fuzzy matching
+nucleo = "0.5"
+
+# Async
+tokio.workspace = true
+tokio-stream.workspace = true
+futures.workspace = true
+async-trait.workspace = true
+
+# Serialization
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+
+# Error handling
+anyhow.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+# Utilities
+chrono.workspace = true
+uuid.workspace = true
+dirs.workspace = true
+bytes.workspace = true
+
+[features]
+default = ["mcp", "codex-oauth"]
+mcp = ["dep:electro-mcp"]
+codex-oauth = ["dep:electro-codex-oauth"]
+
+[dev-dependencies]
+electro-test-utils.workspace = true
+insta = "1"

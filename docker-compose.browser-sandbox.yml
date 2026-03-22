@@ -1,0 +1,51 @@
+services:
+  browser-proxy:
+    build:
+      context: .
+      dockerfile: docker/browser-proxy/Dockerfile
+    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /var/spool/squid:size=256m
+      - /var/log/squid:size=64m
+      - /run:size=16m
+    networks:
+      - browser-internal
+      - browser-egress
+
+  browser-sandbox:
+    build:
+      context: .
+      dockerfile: docker/browser-sandbox/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - browser-proxy
+    environment:
+      CHROME_PROXY_SERVER: http://browser-proxy:3128
+      CHROME_PROXY_BYPASS: ""
+      CHROME_REMOTE_DEBUGGING_ADDRESS: 0.0.0.0
+      CHROME_REMOTE_DEBUGGING_PORT: 9222
+    ports:
+      - "127.0.0.1:9223:9222"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 512
+    mem_limit: 2g
+    shm_size: 1g
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=1g
+      - /home/chrome:rw,noexec,nosuid,size=1g
+    networks:
+      - browser-internal
+
+networks:
+  browser-internal:
+    internal: true
+  browser-egress: {}

@@ -1,0 +1,31 @@
+[package]
+name = "electro-agent"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Agent runtime for ELECTRO"
+
+[dependencies]
+electro-core.workspace = true
+electro-vault.workspace = true
+tokio.workspace = true
+futures.workspace = true
+tracing.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+uuid.workspace = true
+sqlx.workspace = true
+base64.workspace = true
+tokio-util.workspace = true
+serde_yaml.workspace = true
+sha2.workspace = true
+hex.workspace = true
+url.workspace = true
+
+[dev-dependencies]
+electro-test-utils.workspace = true
+async-trait.workspace = true
+toml.workspace = true
+tempfile = "3"

@@ -1,0 +1,188 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/electro-core",
+    "crates/electro-gateway",
+    "crates/electro-agent",
+    "crates/electro-providers",
+    "crates/electro-channels",
+    "crates/electro-memory",
+    "crates/electro-vault",
+    "crates/electro-tools",
+    "crates/electro-skills",
+    "crates/electro-automation",
+    "crates/electro-observable",
+    "crates/electro-filestore",
+    "crates/electro-test-utils",
+    "crates/electro-mcp",
+    "crates/electro-codex-oauth",
+    "crates/electro-tui",
+    "crates/electro-hive",
+]
+
+[workspace.package]
+version = "3.2.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/dawsonblock/Electro"
+rust-version = "1.83"
+
+[workspace.dependencies]
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+async-trait = "0.1"
+futures = "0.3"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+serde_yaml = "0.9"
+
+# HTTP
+axum = { version = "0.8", features = ["ws"] }
+reqwest = { version = "0.12", features = ["json", "stream", "rustls-tls"], default-features = false }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "trace"] }
+
+# Database
+sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "postgres"] }
+
+# Messaging
+teloxide = { version = "0.17", features = ["macros"] }
+serenity = { version = "0.12", features = ["gateway", "model"] }
+poise = "0.6"
+
+# Crypto
+chacha20poly1305 = "0.10"
+sha2 = "0.10"
+zeroize = { version = "1", features = ["derive"] }
+ed25519-dalek = { version = "2", features = ["serde"] }
+rand = "0.8"
+
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Logging & observability
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
+opentelemetry = "0.27"
+tracing-opentelemetry = "0.28"
+
+# Browser
+chromiumoxide = { version = "0.7", features = ["tokio-runtime"] }
+htmd = "0.5"
+
+# Object storage
+aws-sdk-s3 = "1"
+aws-config = "1"
+
+# Error handling
+thiserror = "2"
+anyhow = "1"
+
+# Config
+config = "0.14"
+
+# TLS
+rustls = "0.23"
+tokio-rustls = "0.26"
+
+# Utilities
+bytes = "1"
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+url = { version = "2", features = ["serde"] }
+regex = "1"
+base64 = "0.22"
+aes-gcm = "0.10"
+hex = "0.4"
+dirs = "6"
+pin-project-lite = "0.2"
+tokio-stream = "0.1"
+tokio-util = { version = "0.7", features = ["rt"] }
+
+# Internal crates
+electro-core = { path = "crates/electro-core" }
+electro-gateway = { path = "crates/electro-gateway" }
+electro-agent = { path = "crates/electro-agent" }
+electro-providers = { path = "crates/electro-providers" }
+electro-channels = { path = "crates/electro-channels" }
+electro-memory = { path = "crates/electro-memory" }
+electro-vault = { path = "crates/electro-vault" }
+electro-tools = { path = "crates/electro-tools" }
+electro-skills = { path = "crates/electro-skills" }
+electro-automation = { path = "crates/electro-automation" }
+electro-observable = { path = "crates/electro-observable" }
+electro-filestore = { path = "crates/electro-filestore" }
+electro-test-utils = { path = "crates/electro-test-utils" }
+electro-mcp = { path = "crates/electro-mcp" }
+electro-codex-oauth = { path = "crates/electro-codex-oauth" }
+electro-tui = { path = "crates/electro-tui" }
+electro-hive = { path = "crates/electro-hive" }
+
+[package]
+name = "electro"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Cloud-native Rust AI agent runtime"
+
+[[bin]]
+name = "electro"
+path = "src/main.rs"
+
+[dependencies]
+electro-core.workspace = true
+electro-gateway.workspace = true
+electro-agent.workspace = true
+electro-providers.workspace = true
+electro-channels.workspace = true
+electro-memory.workspace = true
+electro-vault.workspace = true
+electro-tools.workspace = true
+electro-skills.workspace = true
+electro-automation.workspace = true
+electro-observable.workspace = true
+electro-filestore.workspace = true
+electro-mcp = { workspace = true, optional = true }
+electro-codex-oauth = { workspace = true, optional = true }
+electro-tui = { workspace = true, optional = true }
+electro-hive.workspace = true
+tokio.workspace = true
+clap.workspace = true
+dirs.workspace = true
+aes-gcm.workspace = true
+hex.workspace = true
+base64.workspace = true
+rand.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+async-trait.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+futures.workspace = true
+tokio-util.workspace = true
+
+[features]
+default = ["telegram", "browser", "mcp", "codex-oauth"]
+telegram = ["electro-channels/telegram"]
+discord = ["electro-channels/discord"]
+slack = ["electro-channels/slack"]
+browser = ["electro-tools/browser"]
+postgres = ["electro-memory/postgres"]
+mcp = ["dep:electro-mcp"]
+codex-oauth = ["dep:electro-codex-oauth"]
+tui = ["dep:electro-tui"]
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+panic = "unwind"  # Required for catch_unwind — enables per-task panic recovery

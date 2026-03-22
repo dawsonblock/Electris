@@ -1,0 +1,18 @@
+[package]
+name = "electro-skills"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Skill definitions and loading for ELECTRO"
+
+[dependencies]
+electro-core.workspace = true
+serde.workspace = true
+serde_yaml.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+dirs.workspace = true
+
+[dev-dependencies]
+tempfile = "3"

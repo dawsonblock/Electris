@@ -1,0 +1,484 @@
+warning: unused import: `FileAccessPolicy`
+ --> crates/electro-core/src/traits/tool.rs:2:39
+  |
+2 | ...ityPolicy, FileAccessPolicy};
+  |               ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: struct `UnimplementedDockerClient` is never constructed
+   --> crates/electro-core/src/orchestrator_impl.rs:361:8
+    |
+361 | struct UnimplementedDockerClient;
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `electro-core` (lib) generated 2 warnings (run `cargo fix --lib -p electro-core` to apply 1 suggestion)
+warning: unused import: `CapabilityPolicy`
+  --> crates/electro-agent/src/executor.rs:17:28
+   |
+17 | ...:policy::{CapabilityPolicy, FileAcces...
+   |              ^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `electro-agent` (lib) generated 1 warning (run `cargo fix --lib -p electro-agent` to apply 1 suggestion)
+warning: unused import: `std::path::PathBuf`
+ --> crates/electro-tui/src/agent_bridge.rs:8:5
+  |
+8 | use std::path::PathBuf;
+  |     ^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+   Compiling electro v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2)
+warning: `electro-tui` (lib) generated 1 warning (run `cargo fix --lib -p electro-tui` to apply 1 suggestion)
+warning: unused imports: `HashMap` and `HashSet`
+ --> src/main.rs:1:24
+  |
+1 | use std::collections::{HashMap, HashSet};
+  |                        ^^^^^^^  ^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused imports: `AtomicBool` and `Ordering`
+ --> src/main.rs:3:25
+  |
+3 | ...atomic::{AtomicBool, Ordering};
+  |             ^^^^^^^^^^  ^^^^^^^^
+
+warning: unused import: `async_trait::async_trait`
+ --> src/main.rs:7:5
+  |
+7 | use async_trait::async_trait;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `credentials_path` and `load_credentials_file`
+  --> src/main.rs:12:5
+   |
+12 |     credentials_path, detect_api_key, is...
+   |     ^^^^^^^^^^^^^^^^
+13 |     load_credentials_file, load_saved_cr...
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `available_models_for_provider` and `is_vision_model`
+  --> src/main.rs:16:5
+   |
+16 |     available_models_for_provider, default_model, is_vision_model,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                 ^^^^^^^^^^^^^^^
+
+warning: unused import: `tokio::sync::Mutex`
+  --> src/main.rs:20:5
+   |
+20 | use tokio::sync::Mutex;
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `load_active_provider_keys`
+ --> src/cli.rs:3:43
+  |
+3 | ..._key, load_active_provider_keys, load_...
+  |          ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `default_model`
+ --> src/cli.rs:6:36
+  |
+6 | ...r_provider, default_model, is_vision_m...
+  |                ^^^^^^^^^^^^^
+
+warning: unused import: `electro_core::types::model_registry::default_model`
+ --> src/onboarding.rs:6:5
+  |
+6 | use electro_core::types::model_registry::default_model;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::panic::AssertUnwindSafe`
+ --> src/server_mode.rs:2:5
+  |
+2 | use std::panic::AssertUnwindSafe;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `async_trait::async_trait`
+ --> src/server_mode.rs:7:5
+  |
+7 | use async_trait::async_trait;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::admin::is_admin_user`
+  --> src/server_mode.rs:12:5
+   |
+12 | use crate::admin::is_admin_user;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `censor_secrets`
+  --> src/server_mode.rs:13:24
+   |
+13 | use crate::bootstrap::{censor_secrets, S...
+   |                        ^^^^^^^^^^^^^^
+
+warning: unused imports: `format_user_error`, `handle_model_command`, `list_configured_providers`, and `remove_provider`
+  --> src/server_mode.rs:14:18
+   |
+14 | ...::{format_user_error, handle_model_command, list_configured_providers, remove_provider};
+   |       ^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^
+
+warning: unused imports: `is_process_alive`, `pid_file_path`, `read_pid_file`, and `write_pid_file`
+  --> src/server_mode.rs:15:21
+   |
+15 | ...::{is_process_alive, pid_file_path, read_pid_file, remove_pid_file, write_pid_file};
+   |       ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^^^^                   ^^^^^^^^^^^^^^
+
+warning: unused imports: `ONBOARDING_REFERENCE`, `decrypt_otk_blob`, `onboarding_message_with_link`, `send_with_retry`, and `validate_provider_key`
+  --> src/server_mode.rs:16:46
+   |
+16 | ...t, decrypt_otk_blob, onboarding_message_with_link, send_with_retry, validate_provider_key, ONBOARDING_REFERENCE};
+   |       ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `pid_file_path`
+  --> src/main.rs:34:32
+   |
+34 | ...cess_alive, pid_file_path, read_pid_f...
+   |                ^^^^^^^^^^^^^
+
+warning: unused import: `send_with_retry`
+  --> src/main.rs:35:87
+   |
+35 | ...with_link, send_with_retry, validate_...
+   |               ^^^^^^^^^^^^^^^
+
+warning: variable does not need to be mutable
+   --> src/server_mode.rs:332:18
+    |
+332 |     let (msg_tx, mut msg_rx) =
+    |                  ----^^^^^^
+    |                  |
+    |                  help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+error[E0382]: borrow of moved value: `agent_state`
+   --> src/server_mode.rs:437:23
+    |
+228 |     let agent_state: Arc<tokio::sync::R...
+    |         ----------- move occurs because `agent_state` has type `Arc<RwLock<Option<...>>>`, which does not implement the `Copy` trait
+...
+410 |         agent_state,
+    |         ----------- value moved here
+...
+437 |     let maybe_agent = agent_state.read(...
+    |                       ^^^^^^^^^^^ value borrowed here after move
+    |
+note: consider changing this parameter type in function `run_message_dispatcher` to borrow instead if owning the value isn't necessary
+   --> src/server_mode.rs:560:18
+    |
+556 | ...fn run_message_dispatcher(
+    |       ---------------------- in this function
+...
+560 | ...ent_state: Arc<tokio::sync::RwLock<Option<Arc<electro_agent::AgentRuntime>>>>,
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this parameter takes ownership of the value
+    = note: borrow occurs due to deref coercion to `tokio::sync::RwLock<std::option::Option<Arc<AgentRuntime>>>`
+    = note: the full name for the type has been written to '/Users/dawsonblock/Downloads/Electro-main 2/target/debug/deps/electro-58745b09ebc53286.long-type-7996590518477428831.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+help: clone the value to increment its reference count
+    |
+410 |         agent_state.clone(),
+    |                    ++++++++
+
+error[E0382]: borrow of moved value: `agent_state`
+   --> src/server_mode.rs:437:23
+    |
+228 |     let agent_state: Arc<tokio::sync::R...
+    |         ----------- move occurs because `agent_state` has type `Arc<RwLock<Option<...>>>`, which does not implement the `Copy` trait
+...
+410 |         agent_state,
+    |         ----------- value moved here
+...
+437 |     let maybe_agent = agent_state.read(...
+    |                       ^^^^^^^^^^^ value borrowed here after move
+    |
+note: consider changing this parameter type in function `run_message_dispatcher` to borrow instead if owning the value isn't necessary
+   --> src/server_mode.rs:560:18
+    |
+556 | ...fn run_message_dispatcher(
+    |       ---------------------- in this function
+...
+560 | ...ent_state: Arc<tokio::sync::RwLock<Option<Arc<electro_agent::AgentRuntime>>>>,
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this parameter takes ownership of the value
+    = note: borrow occurs due to deref coercion to `tokio::sync::RwLock<std::option::Option<Arc<AgentRuntime>>>`
+    = note: the full name for the type has been written to '/Users/dawsonblock/Downloads/Electro-main 2/target/debug/deps/electro-d750938d2924c429.long-type-16163514675360728324.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+help: clone the value to increment its reference count
+    |
+410 |         agent_state.clone(),
+    |                    ++++++++
+
+warning: unused import: `futures::FutureExt`
+ --> src/server_mode.rs:8:5
+  |
+8 | use futures::FutureExt;
+  |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `base64::Engine`
+ --> src/main.rs:8:5
+  |
+8 | use base64::Engine as _;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused variable: `pid`
+  --> src/daemon.rs:79:14
+   |
+79 |         Some(pid) => {
+   |              ^^^ help: if this is intentional, prefix it with an underscore: `_pid`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `config`
+   --> src/server_mode.rs:486:29
+    |
+486 | ...ve_enabled(config: &electro_core::ty...
+    |               ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: unused variable: `config`
+   --> src/server_mode.rs:511:27
+    |
+511 | ...ive_config(config: &electro_core::ty...
+    |               ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: variable does not need to be mutable
+   --> src/server_mode.rs:904:13
+    |
+904 | ...let mut persistent_history: Vec<elec...
+    |        ----^^^^^^^^^^^^^^^^^^
+    |        |
+    |        help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> src/server_mode.rs:937:24
+    |
+937 | ...ome(mut msg) = chat_rx.recv().await {
+    |        ----^^^
+    |        |
+    |        help: remove this `mut`
+
+warning: unused variable: `persistent_history`
+   --> src/server_mode.rs:904:13
+    |
+904 | ... let mut persistent_history: Vec<ele...
+    |         ^^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_persistent_history`
+
+warning: unused variable: `panic_chat_id`
+   --> src/server_mode.rs:939:17
+    |
+939 | ...     let panic_chat_id = msg.chat_id...
+    |             ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_panic_chat_id`
+
+warning: unused variable: `panic_msg_id`
+   --> src/server_mode.rs:940:17
+    |
+940 | ...     let panic_msg_id = msg.id.clone();
+    |             ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_panic_msg_id`
+
+warning: unused variable: `max_turns`
+   --> src/server_mode.rs:839:5
+    |
+839 |     max_turns: usize,
+    |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_turns`
+
+warning: unused variable: `max_ctx`
+   --> src/server_mode.rs:840:5
+    |
+840 |     max_ctx: usize,
+    |     ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_ctx`
+
+warning: unused variable: `max_rounds`
+   --> src/server_mode.rs:841:5
+    |
+841 |     max_rounds: usize,
+    |     ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_rounds`
+
+warning: unused variable: `max_task_duration`
+   --> src/server_mode.rs:842:5
+    |
+842 |     max_task_duration: u64,
+    |     ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_task_duration`
+
+warning: unused variable: `max_spend`
+   --> src/server_mode.rs:843:5
+    |
+843 |     max_spend: f64,
+    |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_spend`
+
+warning: unused variable: `v2_opt`
+   --> src/server_mode.rs:844:5
+    |
+844 |     v2_opt: bool,
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_v2_opt`
+
+warning: unused variable: `pp_opt`
+   --> src/server_mode.rs:845:5
+    |
+845 |     pp_opt: bool,
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_pp_opt`
+
+warning: unused variable: `base_url`
+   --> src/server_mode.rs:846:5
+    |
+846 |     base_url: &Option<String>,
+    |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_base_url`
+
+warning: unused variable: `is_busy_clone`
+   --> src/server_mode.rs:871:9
+    |
+871 |     let is_busy_clone = is_busy.clone();
+    |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_is_busy_clone`
+
+warning: unused variable: `current_task_clone`
+   --> src/server_mode.rs:872:9
+    |
+872 |     let current_task_clone = current_ta...
+    |         ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_current_task_clone`
+
+warning: unused variable: `self_tx`
+   --> src/server_mode.rs:873:9
+    |
+873 |     let self_tx = chat_tx.clone();
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_self_tx`
+
+warning: unused variable: `agent_state`
+   --> src/server_mode.rs:875:9
+    |
+875 |     let agent_state = agent_state.clone();
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_agent_state`
+
+warning: unused variable: `tools_template`
+   --> src/server_mode.rs:877:9
+    |
+877 |     let tools_template = tools_template...
+    |         ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_tools_template`
+
+warning: unused variable: `custom_registry`
+   --> src/server_mode.rs:878:9
+    |
+878 |     let custom_registry = custom_regist...
+    |         ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_custom_registry`
+
+warning: unused variable: `mcp_mgr`
+   --> src/server_mode.rs:880:9
+    |
+880 |     let mcp_mgr = mcp_mgr.clone();
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_mcp_mgr`
+
+warning: unused variable: `sender`
+   --> src/server_mode.rs:881:9
+    |
+881 |     let sender = sender.clone();
+    |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_sender`
+
+warning: unused variable: `workspace_path`
+   --> src/server_mode.rs:882:9
+    |
+882 |     let workspace_path = ws_path.to_pat...
+    |         ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_workspace_path`
+
+warning: unused variable: `interrupt_clone`
+   --> src/server_mode.rs:883:9
+    |
+883 |     let interrupt_clone = interrupt.clo...
+    |         ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_interrupt_clone`
+
+warning: unused variable: `is_heartbeat_clone`
+   --> src/server_mode.rs:884:9
+    |
+884 |     let is_heartbeat_clone = is_heartbe...
+    |         ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_is_heartbeat_clone`
+
+warning: unused variable: `cancel_token_clone`
+   --> src/server_mode.rs:885:9
+    |
+885 |     let cancel_token_clone = cancel_tok...
+    |         ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cancel_token_clone`
+
+warning: unused variable: `pending_for_worker`
+   --> src/server_mode.rs:886:9
+    |
+886 |     let pending_for_worker = pending_cl...
+    |         ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pending_for_worker`
+
+warning: unused variable: `shared_mode`
+   --> src/server_mode.rs:887:9
+    |
+887 |     let shared_mode = shared_mode;
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_shared_mode`
+
+warning: unused variable: `shared_memory_strategy`
+   --> src/server_mode.rs:888:9
+    |
+888 |     let shared_memory_strategy = shared...
+    |         ^^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_shared_memory_strategy`
+
+warning: unused variable: `setup_tokens_worker`
+   --> src/server_mode.rs:889:9
+    |
+889 |     let setup_tokens_worker = setup_tok...
+    |         ^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_setup_tokens_worker`
+
+warning: unused variable: `pending_raw_keys_worker`
+   --> src/server_mode.rs:890:9
+    |
+890 |     let pending_raw_keys_worker = pendi...
+    |         ^^^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pending_raw_keys_worker`
+
+warning: unused variable: `login_sessions_worker`
+   --> src/server_mode.rs:892:9
+    |
+892 |     let login_sessions_worker = login_s...
+    |         ^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_login_sessions_worker`
+
+warning: unused variable: `vault_for_login`
+   --> src/server_mode.rs:894:9
+    |
+894 |     let vault_for_login = vault.clone();
+    |         ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_vault_for_login`
+
+warning: unused variable: `browser_ref_worker`
+   --> src/server_mode.rs:896:9
+    |
+896 |     let browser_ref_worker = browser_re...
+    |         ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_browser_ref_worker`
+
+warning: unused variable: `usage_store_worker`
+   --> src/server_mode.rs:897:9
+    |
+897 |     let usage_store_worker = usage_stor...
+    |         ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_usage_store_worker`
+
+warning: unused variable: `hive_worker`
+   --> src/server_mode.rs:898:9
+    |
+898 |     let hive_worker = hive_clone.clone();
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_hive_worker`
+
+warning: unused variable: `config_path`
+   --> src/main.rs:253:5
+    |
+253 |     config_path: Option<&std::path::Path>,
+    |     ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_config_path`
+
+warning: unused variable: `cli_browser_ref`
+   --> src/main.rs:342:30
+    |
+342 | ...emplate, cli_browser_ref) = electro_...
+    |             ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cli_browser_ref`
+
+warning: unused variable: `mcp_manager`
+   --> src/main.rs:376:9
+    |
+376 |     let mcp_manager: Arc<electro_mcp::M...
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_mcp_manager`
+
+For more information about this error, try `rustc --explain E0382`.
+warning: `electro` (bin "electro") generated 62 warnings
+error: could not compile `electro` (bin "electro") due to 1 previous error; 62 warnings emitted
+warning: build failed, waiting for other jobs to finish...
+warning: `electro` (bin "electro" test) generated 62 warnings (62 duplicates)
+error: could not compile `electro` (bin "electro" test) due to 1 previous error; 62 warnings emitted
