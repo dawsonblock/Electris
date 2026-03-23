@@ -18,12 +18,13 @@ use std::sync::Arc;
 
 use tracing::{debug, info, warn};
 
+#[cfg(test)]
 fn custom_tools_enabled() -> bool {
-    #[cfg(test)]
-    {
-        return true;
-    }
+    true
+}
 
+#[cfg(not(test))]
+fn custom_tools_enabled() -> bool {
     matches!(
         std::env::var("ELECTRO_ENABLE_CUSTOM_TOOLS")
             .unwrap_or_default()

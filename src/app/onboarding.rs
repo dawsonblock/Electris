@@ -85,14 +85,23 @@ pub async fn decrypt_otk_blob(
     use aes_gcm::aead::{Aead, KeyInit};
     use aes_gcm::{Aes256Gcm, Key, Nonce};
 
-    let otk = store.consume(chat_id).await.ok_or_else(|| "No pending setup link".to_string())?;
-    let blob = base64::engine::general_purpose::STANDARD.decode(blob_b64.trim()).map_err(|e| format!("Invalid base64: {}", e))?;
-    if blob.len() < 29 { return Err("Encrypted blob too short.".to_string()); }
+    let otk = store
+        .consume(chat_id)
+        .await
+        .ok_or_else(|| "No pending setup link".to_string())?;
+    let blob = base64::engine::general_purpose::STANDARD
+        .decode(blob_b64.trim())
+        .map_err(|e| format!("Invalid base64: {}", e))?;
+    if blob.len() < 29 {
+        return Err("Encrypted blob too short.".to_string());
+    }
     let (iv_bytes, ciphertext) = blob.split_at(12);
     let key = Key::<Aes256Gcm>::from_slice(&otk);
     let cipher = Aes256Gcm::new(key);
     let nonce = Nonce::from_slice(iv_bytes);
-    let plaintext = cipher.decrypt(nonce, ciphertext).map_err(|_| "Decryption failed".to_string())?;
+    let plaintext = cipher
+        .decrypt(nonce, ciphertext)
+        .map_err(|_| "Decryption failed".to_string())?;
     String::from_utf8(plaintext).map_err(|_| "Decrypted data is not valid UTF-8.".to_string())
 }
 

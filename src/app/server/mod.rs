@@ -1,20 +1,23 @@
-use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
+use crate::app::onboarding::build_system_prompt;
+use crate::app::server::dispatcher::run_message_dispatcher;
+use crate::app::{
+    check_hive_enabled, create_agent, create_provider, init_core_stack, init_tools,
+    load_hive_config,
+};
+use crate::bootstrap::SecretCensorChannel;
+use crate::daemon::remove_pid_file;
 use anyhow::Result;
-use tokio::sync::Mutex;
-use electro_core::Channel;
 use electro_core::types::config::{ElectroConfig, ElectroMode, MemoryStrategy};
 use electro_core::types::message::InboundMessage;
-use crate::app::{init_core_stack, create_agent, create_provider, init_tools, check_hive_enabled, load_hive_config};
-use crate::app::onboarding::{build_system_prompt};
-use crate::bootstrap::{SecretCensorChannel};
-use crate::app::server::dispatcher::run_message_dispatcher;
-use crate::daemon::remove_pid_file;
+use electro_core::Channel;
+use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
-pub mod slot;
-pub mod dispatcher;
-pub mod worker;
 pub mod commands;
+pub mod dispatcher;
+pub mod slot;
+pub mod worker;
 
 pub async fn start_server(
     config: &mut ElectroConfig,
@@ -67,9 +70,13 @@ pub async fn start_server(
         if tg_config.enabled {
             if let Ok(mut tg) = electro_channels::TelegramChannel::new(tg_config) {
                 if tg.start().await.is_ok() {
-                    if let Some(rx) = tg.take_receiver() { channel_receivers.push(rx); }
+                    if let Some(rx) = tg.take_receiver() {
+                        channel_receivers.push(rx);
+                    }
                     let arc: Arc<dyn Channel> = Arc::new(tg);
-                    if primary_channel.is_none() { primary_channel = Some(arc.clone()); }
+                    if primary_channel.is_none() {
+                        primary_channel = Some(arc.clone());
+                    }
                     channels.push(arc);
                 }
             }
@@ -82,9 +89,13 @@ pub async fn start_server(
         if dc_config.enabled {
             if let Ok(mut dc) = electro_channels::DiscordChannel::new(dc_config) {
                 if dc.start().await.is_ok() {
-                    if let Some(rx) = dc.take_receiver() { channel_receivers.push(rx); }
+                    if let Some(rx) = dc.take_receiver() {
+                        channel_receivers.push(rx);
+                    }
                     let arc: Arc<dyn Channel> = Arc::new(dc);
-                    if primary_channel.is_none() { primary_channel = Some(arc.clone()); }
+                    if primary_channel.is_none() {
+                        primary_channel = Some(arc.clone());
+                    }
                     channels.push(arc);
                 }
             }
@@ -96,9 +107,13 @@ pub async fn start_server(
         if sl_config.enabled {
             if let Ok(mut sl) = electro_channels::SlackChannel::new(sl_config) {
                 if sl.start().await.is_ok() {
-                    if let Some(rx) = sl.take_receiver() { channel_receivers.push(rx); }
+                    if let Some(rx) = sl.take_receiver() {
+                        channel_receivers.push(rx);
+                    }
                     let arc: Arc<dyn Channel> = Arc::new(sl);
-                    if primary_channel.is_none() { primary_channel = Some(arc.clone()); }
+                    if primary_channel.is_none() {
+                        primary_channel = Some(arc.clone());
+                    }
                     channels.push(arc);
                 }
             }
@@ -107,9 +122,10 @@ pub async fn start_server(
 
     // ── Tools ──
     let pending_messages = Arc::new(std::sync::Mutex::new(HashMap::new()));
-    let censored_channel: Option<Arc<dyn Channel>> = primary_channel.clone()
+    let censored_channel: Option<Arc<dyn Channel>> = primary_channel
+        .clone()
         .map(|ch| Arc::new(SecretCensorChannel { inner: ch }) as Arc<dyn Channel>);
-    
+
     let shared_mode = Arc::new(tokio::sync::RwLock::new(config.mode));
     let shared_memory_strategy = Arc::new(tokio::sync::RwLock::new(MemoryStrategy::Lambda));
 
@@ -120,7 +136,11 @@ pub async fn start_server(
         Some(core.memory.clone()),
         Some(Arc::new(core.setup_tokens.clone()) as Arc<dyn electro_core::SetupLinkGenerator>),
         Some(core.usage_store.clone()),
-        if personality_locked { None } else { Some(shared_mode.clone()) },
+        if personality_locked {
+            None
+        } else {
+            Some(shared_mode.clone())
+        },
         core.vault.clone(),
     );
 
@@ -144,7 +164,9 @@ pub async fn start_server(
         let tx = msg_tx.clone();
         task_handles.push(tokio::spawn(async move {
             while let Some(msg) = ch_rx.recv().await {
-                if tx.send(msg).await.is_err() { break; }
+                if tx.send(msg).await.is_err() {
+                    break;
+                }
             }
         }));
     }
@@ -156,17 +178,29 @@ pub async fn start_server(
         let runner = electro_automation::HeartbeatRunner::new(
             config.heartbeat.clone(),
             workspace_path.clone(),
-            config.heartbeat.report_to.clone().unwrap_or_else(|| "heartbeat".to_string()),
+            config
+                .heartbeat
+                .report_to
+                .clone()
+                .unwrap_or_else(|| "heartbeat".to_string()),
         );
         let hb_tx = msg_tx.clone();
-        task_handles.push(tokio::spawn(async move { runner.run(hb_tx).await; }));
+        task_handles.push(tokio::spawn(async move {
+            runner.run(hb_tx).await;
+        }));
     }
 
     // ── Hive ──
     let hive_config = load_hive_config().await;
     let hive_instance = if hive_config.enabled {
-        let hive_url = format!("sqlite:{}?mode=rwc", electro_core::paths::hive_db_file().display());
-        electro_hive::Hive::new(&hive_config, &hive_url).await.ok().map(Arc::new)
+        let hive_url = format!(
+            "sqlite:{}?mode=rwc",
+            electro_core::paths::hive_db_file().display()
+        );
+        electro_hive::Hive::new(&hive_config, &hive_url)
+            .await
+            .ok()
+            .map(Arc::new)
     } else {
         None
     };
@@ -183,12 +217,14 @@ pub async fn start_server(
         core.memory.clone(),
         tools,
         custom_tool_registry,
-        #[cfg(feature = "mcp")] mcp_manager,
+        #[cfg(feature = "mcp")]
+        mcp_manager,
         config.clone(),
         pending_messages,
         core.setup_tokens,
         Arc::new(Mutex::new(HashSet::new())), // pending_raw_keys
-        #[cfg(feature = "browser")] Arc::new(Mutex::new(HashMap::new())), // login_sessions
+        #[cfg(feature = "browser")]
+        Arc::new(Mutex::new(HashMap::new())), // login_sessions
         core.usage_store.clone(),
         hive_instance,
         shared_mode,
@@ -196,18 +232,29 @@ pub async fn start_server(
         workspace_path,
         personality_locked,
         tenant_manager,
-        #[cfg(feature = "browser")] browser_tool_ref,
+        #[cfg(feature = "browser")]
+        browser_tool_ref,
         core.vault.clone(),
-    ).await;
+    )
+    .await;
 
     // ── Gateway Server ──
     println!("ELECTRO gateway starting...");
     if let Some(agent) = agent_state.read().await.clone() {
-        let gateway = Arc::new(electro_gateway::server::SkyGate::new(channels, agent, config.gateway.clone()));
+        let gateway = Arc::new(electro_gateway::server::SkyGate::new(
+            channels,
+            agent,
+            config.gateway.clone(),
+        ));
         let listener = gateway.bind().await?;
-        println!("  Gateway: http://{}:{}", config.gateway.host, config.gateway.port);
+        println!(
+            "  Gateway: http://{}:{}",
+            config.gateway.host, config.gateway.port
+        );
         let gw_clone = gateway.clone();
-        task_handles.push(tokio::spawn(async move { let _ = gw_clone.serve(listener).await; }));
+        task_handles.push(tokio::spawn(async move {
+            let _ = gw_clone.serve(listener).await;
+        }));
     } else {
         println!("  Gateway: disabled (waiting for credentials)");
     }
@@ -215,7 +262,11 @@ pub async fn start_server(
     tokio::signal::ctrl_c().await?;
     println!("\nELECTRO shutting down gracefully...");
     drop(msg_tx);
-    let _ = tokio::time::timeout(std::time::Duration::from_secs(5), futures::future::join_all(task_handles)).await;
+    let _ = tokio::time::timeout(
+        std::time::Duration::from_secs(5),
+        futures::future::join_all(task_handles),
+    )
+    .await;
     remove_pid_file();
     Ok(())
 }

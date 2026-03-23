@@ -656,7 +656,10 @@ mod tests {
 
         let result = vault.store_secret("   ", b"secret").await;
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("must not be empty"));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("must not be empty"));
     }
 
     #[tokio::test]
@@ -668,6 +671,9 @@ mod tests {
 
         let result = vault.get_secret("").await;
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("must not be empty"));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("must not be empty"));
     }
 }

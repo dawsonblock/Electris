@@ -47,7 +47,12 @@ pub async fn wait_for_callback(
             async move {
                 let mut guard = match tx.lock() {
                     Ok(g) => g,
-                    Err(_) => return Html(error_page("Internal Error", "Authentication state is corrupted")),
+                    Err(_) => {
+                        return Html(error_page(
+                            "Internal Error",
+                            "Authentication state is corrupted",
+                        ))
+                    }
                 };
                 if let Some(sender) = guard.take() {
                     if let Some(error) = params.error {

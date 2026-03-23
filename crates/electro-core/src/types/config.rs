@@ -797,7 +797,28 @@ mod tests {
         assert_eq!(gw.host, "127.0.0.1");
         assert_eq!(gw.port, 8080);
         assert!(!gw.tls);
+    }
 
+    #[test]
+    fn test_malformed_toml_rejected() {
+        let malformed = "mode = 'play'\n[gateway\nhost = '127.0.0.1'";
+        let result: Result<ElectroConfig, _> = toml::from_str(malformed);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_invalid_config_values_rejected() {
+        let mut config = AgentAccessibleConfig::default();
+        config.agent.max_turns = 0; // Invalid
+        assert!(config.validate().is_err());
+
+        config.agent.max_turns = 100;
+        config.observability.log_level = "invalid_level".to_string();
+        assert!(config.validate().is_err());
+    }
+
+    #[test]
+    fn defaults_are_sensible_continued() {
         let mem = MemoryConfig::default();
         assert_eq!(mem.backend, "sqlite");
 

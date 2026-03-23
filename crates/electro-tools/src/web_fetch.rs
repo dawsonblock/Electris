@@ -165,7 +165,7 @@ impl Tool for WebFetchTool {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    // use super::*;
     use crate::network_guard::host_is_blocked;
 
     #[test]

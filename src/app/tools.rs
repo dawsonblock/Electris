@@ -1,7 +1,7 @@
-use std::sync::Arc;
-use electro_core::{Channel, Memory, Tool, UsageStore, Vault, SetupLinkGenerator};
-use electro_tools::{BrowserTool, CustomToolRegistry, PendingMessages, SharedMode};
 use electro_core::types::config::ToolsConfig;
+use electro_core::{Channel, Memory, SetupLinkGenerator, Tool, UsageStore, Vault};
+use electro_tools::{BrowserTool, CustomToolRegistry, PendingMessages, SharedMode};
+use std::sync::Arc;
 
 pub fn init_tools(
     config: &ToolsConfig,

@@ -1,15 +1,17 @@
-use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
-use std::sync::atomic::Ordering;
-use tokio::sync::Mutex;
-use tokio_util::sync::CancellationToken;
-use electro_core::{Channel, Memory, Tool, UsageStore, Vault};
-use electro_core::types::config::{ElectroConfig, MemoryStrategy};
-use electro_core::types::message::{InboundMessage, ChatMessage, Role, MessageContent, CompletionRequest};
-use electro_agent::AgentRuntime;
+use crate::app::onboarding::build_system_prompt;
 use crate::app::server::slot::ChatSlot;
 use crate::bootstrap::SecretCensorChannel;
-use crate::app::onboarding::{build_system_prompt};
+use electro_agent::AgentRuntime;
+use electro_core::types::config::{ElectroConfig, MemoryStrategy};
+use electro_core::types::message::{
+    ChatMessage, CompletionRequest, InboundMessage, MessageContent, Role,
+};
+use electro_core::{Channel, Memory, Tool, UsageStore, Vault};
+use std::collections::{HashMap, HashSet};
+use std::sync::atomic::Ordering;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use tokio_util::sync::CancellationToken;
 
 pub async fn run_message_dispatcher(
     mut msg_rx: tokio::sync::mpsc::Receiver<InboundMessage>,
@@ -44,7 +46,7 @@ pub async fn run_message_dispatcher(
         let custom_registry_clone = custom_tool_registry.clone();
         #[cfg(feature = "mcp")]
         let mcp_manager_clone = mcp_manager.clone();
-        
+
         let config_clone = config.clone();
         let ws_path = workspace_path.clone();
         let pending_clone = pending_messages.clone();
@@ -76,7 +78,9 @@ pub async fn run_message_dispatcher(
                             slot.cancel_token.cancel();
                         }
 
-                        let is_slash_stop = inbound.text.as_deref()
+                        let is_slash_stop = inbound
+                            .text
+                            .as_deref()
                             .map(|t| t.trim().eq_ignore_ascii_case("/stop"))
                             .unwrap_or(false);
 
@@ -89,10 +93,12 @@ pub async fn run_message_dispatcher(
                         if slot.is_busy.load(Ordering::Relaxed) {
                             if let Some(text) = inbound.text.as_deref() {
                                 if let Ok(mut pq) = pending_clone.lock() {
-                                    pq.entry(chat_id.clone()).or_default().push(text.to_string());
+                                    pq.entry(chat_id.clone())
+                                        .or_default()
+                                        .push(text.to_string());
                                 }
                             }
-                            
+
                             // LLM interceptor logic...
                             let icpt_sender = sender.clone();
                             let icpt_chat_id = chat_id.clone();
@@ -103,7 +109,8 @@ pub async fn run_message_dispatcher(
                             let icpt_task = slot.current_task.clone();
                             let icpt_agent_state = agent_state_clone.clone();
                             tokio::spawn(async move {
-                                let task_desc = icpt_task.lock().map(|t| t.clone()).unwrap_or_default();
+                                let task_desc =
+                                    icpt_task.lock().map(|t| t.clone()).unwrap_or_default();
                                 let agent_guard = icpt_agent_state.read().await;
                                 if let Some(agent) = agent_guard.as_ref() {
                                     let provider = agent.provider_arc();
@@ -130,12 +137,16 @@ pub async fn run_message_dispatcher(
                                         text = text.replace("[CANCEL]", "").trim().to_string();
 
                                         if !text.is_empty() {
-                                            let _ = icpt_sender.send_message(electro_core::types::message::OutboundMessage {
-                                                chat_id: icpt_chat_id,
-                                                text,
-                                                reply_to: Some(icpt_msg_id),
-                                                parse_mode: None,
-                                            }).await;
+                                            let _ = icpt_sender
+                                                .send_message(
+                                                    electro_core::types::message::OutboundMessage {
+                                                        chat_id: icpt_chat_id,
+                                                        text,
+                                                        reply_to: Some(icpt_msg_id),
+                                                        parse_mode: None,
+                                                    },
+                                                )
+                                                .await;
                                         }
 
                                         if should_cancel {
@@ -165,7 +176,8 @@ pub async fn run_message_dispatcher(
                         &memory_clone,
                         &tools_clone,
                         &custom_registry_clone,
-                        #[cfg(feature = "mcp")] &mcp_manager_clone,
+                        #[cfg(feature = "mcp")]
+                        &mcp_manager_clone,
                         config_clone.agent.max_turns,
                         config_clone.agent.max_context_tokens,
                         config_clone.agent.max_tool_rounds,
@@ -178,13 +190,15 @@ pub async fn run_message_dispatcher(
                         &pending_clone,
                         &setup_tokens_clone,
                         &pending_raw_keys_clone,
-                        #[cfg(feature = "browser")] &login_sessions_clone,
+                        #[cfg(feature = "browser")]
+                        &login_sessions_clone,
                         &usage_store_clone,
                         &hive_clone,
                         shared_mode.clone(),
                         shared_memory_strategy.clone(),
                         personality_locked,
-                        #[cfg(feature = "browser")] &browser_tool_ref,
+                        #[cfg(feature = "browser")]
+                        &browser_tool_ref,
                         &vault,
                     )
                 });

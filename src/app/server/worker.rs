@@ -1,13 +1,15 @@
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::collections::{HashMap, HashSet};
-use tokio::sync::Mutex;
-use electro_core::{Channel, Memory, Tool, UsageStore, Vault};
-use electro_core::types::config::{MemoryStrategy};
-use electro_core::types::message::{InboundMessage, ChatMessage, Role, MessageContent, OutboundMessage};
-use electro_agent::AgentRuntime;
-use crate::app::server::slot::ChatSlot;
 use crate::app::server::commands::handle_slash_command;
+use crate::app::server::slot::ChatSlot;
+use electro_agent::AgentRuntime;
+use electro_core::types::config::MemoryStrategy;
+use electro_core::types::message::{
+    ChatMessage, InboundMessage, MessageContent, OutboundMessage, Role,
+};
+use electro_core::{Channel, Memory, Tool, UsageStore, Vault};
+use std::collections::{HashMap, HashSet};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 #[allow(clippy::too_many_arguments)]
 pub fn create_chat_worker(
@@ -90,13 +92,17 @@ pub fn create_chat_worker(
                 &tools_template,
                 &setup_tokens,
                 &pending_raw_keys,
-                #[cfg(feature = "browser")] &login_sessions,
-                #[cfg(feature = "browser")] &browser_ref,
+                #[cfg(feature = "browser")]
+                &login_sessions,
+                #[cfg(feature = "browser")]
+                &browser_ref,
                 &vault,
                 &shared_mode,
                 &shared_memory_strategy,
                 personality_locked,
-            ).await {
+            )
+            .await
+            {
                 continue;
             }
 

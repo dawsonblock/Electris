@@ -1,6 +1,6 @@
 use anyhow::Result;
 use electro_agent::AgentRuntime;
-use electro_core::types::config::{ElectroConfig, ProviderConfig, ElectroMode};
+use electro_core::types::config::{ElectroConfig, ElectroMode, ProviderConfig};
 use electro_core::{Memory, Provider, Tool};
 use std::sync::Arc;
 use tokio::sync::RwLock;

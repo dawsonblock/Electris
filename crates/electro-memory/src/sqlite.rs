@@ -641,6 +641,10 @@ mod tests {
     use super::*;
     use chrono::Utc;
 
+    async fn make_mem() -> SqliteMemory {
+        SqliteMemory::new("sqlite::memory:").await.unwrap()
+    }
+
     fn make_entry(id: &str, content: &str, session: Option<&str>) -> MemoryEntry {
         MemoryEntry {
             id: id.to_string(),
@@ -949,6 +953,56 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(history.len(), 20);
+    }
+
+    #[tokio::test]
+    async fn test_json_corruption_rejected() {
+        let mem = make_mem().await;
+        // Manually insert malformed JSON into metadata column
+        sqlx::query::<sqlx::Sqlite>("INSERT INTO memory_entries (id, content, metadata, timestamp, session_id, entry_type) VALUES (?1, ?2, ?3, ?4, ?5, ?6)")
+            .bind("corrupt_1")
+            .bind("some content")
+            .bind("{ invalid json }")
+            .bind(Utc::now().to_rfc3339())
+            .bind("session_corrupt")
+            .bind("conversation")
+            .execute(&mem.pool)
+            .await
+            .unwrap();
+
+        let result: Result<Vec<MemoryEntry>, ElectroError> =
+            mem.get_session_history("session_corrupt", 10).await;
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(err_msg.contains("Serialization") || err_msg.contains("JSON"));
+    }
+
+    #[tokio::test]
+    async fn test_clock_skew_tolerated() {
+        let mem = make_mem().await;
+        let future_time = Utc::now() + chrono::Duration::days(365);
+        let future_rfc3339 = future_time.to_rfc3339();
+
+        mem.store(make_entry(
+            "future_1",
+            "future content",
+            Some("session_skew"),
+        ))
+        .await
+        .unwrap();
+
+        // Update the timestamp to the future manually
+        sqlx::query::<sqlx::Sqlite>(
+            "UPDATE memory_entries SET timestamp = ?1 WHERE id = 'future_1'",
+        )
+        .bind(&future_rfc3339)
+        .execute(&mem.pool)
+        .await
+        .unwrap();
+
+        let history: Vec<MemoryEntry> = mem.get_session_history("session_skew", 10).await.unwrap();
+        assert_eq!(history.len(), 1);
+        assert_eq!(history[0].timestamp.timestamp(), future_time.timestamp());
     }
 
     #[tokio::test]

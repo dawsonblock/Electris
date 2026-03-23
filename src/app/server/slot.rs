@@ -1,8 +1,8 @@
-use std::sync::Arc;
+use electro_core::types::message::InboundMessage;
 use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
 use tokio::sync::mpsc::Sender;
 use tokio_util::sync::CancellationToken;
-use electro_core::types::message::InboundMessage;
 
 /// Tracks the active task state for a single chat.
 pub struct ChatSlot {

@@ -1,17 +1,16 @@
+use crate::cli::{Commands, ConfigCommands, SkillCommands};
 use electro_core::config::credentials::{
     credentials_path, is_placeholder_key, load_active_provider_keys, load_credentials_file,
 };
-use electro_core::types::model_registry::{
-    available_models_for_provider, is_vision_model,
-};
-use crate::cli::{Commands, SkillCommands, ConfigCommands};
+use electro_core::types::model_registry::{available_models_for_provider, is_vision_model};
 
 pub fn format_user_error(e: &electro_core::types::error::ElectroError) -> String {
     use electro_core::types::error::ElectroError;
     match e {
         ElectroError::Provider(msg) => {
             if msg.contains("400") || msg.contains("Bad Request") || msg.contains("validation") {
-                "The AI provider rejected the request. Try switching models with /model.".to_string()
+                "The AI provider rejected the request. Try switching models with /model."
+                    .to_string()
             } else if msg.contains("500") || msg.contains("502") || msg.contains("503") {
                 "The AI provider is experiencing issues.".to_string()
             } else if msg.contains("timeout") || msg.contains("timed out") {
@@ -48,9 +47,20 @@ pub fn list_configured_providers() -> String {
             has_providers = true;
             for p in &creds.providers {
                 let key_count = p.keys.iter().filter(|k| !is_placeholder_key(k)).count();
-                let active = if p.name == creds.active { " (active)" } else { "" };
-                let proxy = if let Some(ref url) = p.base_url { format!(" via {}", url) } else { String::new() };
-                lines.push(format!("  {} — model: {}, {} key(s){}{}", p.name, p.model, key_count, proxy, active));
+                let active = if p.name == creds.active {
+                    " (active)"
+                } else {
+                    ""
+                };
+                let proxy = if let Some(ref url) = p.base_url {
+                    format!(" via {}", url)
+                } else {
+                    String::new()
+                };
+                lines.push(format!(
+                    "  {} — model: {}, {} key(s){}{}",
+                    p.name, p.model, key_count, proxy, active
+                ));
             }
         }
     }
@@ -83,7 +93,11 @@ pub fn remove_provider(provider_name: &str) -> String {
         return format!("Provider '{}' not found.", provider_name);
     }
     if creds.active == provider_name {
-        creds.active = creds.providers.first().map(|p| p.name.clone()).unwrap_or_default();
+        creds.active = creds
+            .providers
+            .first()
+            .map(|p| p.name.clone())
+            .unwrap_or_default();
     }
     let path = credentials_path();
     if let Ok(content) = toml::to_string_pretty(&creds) {
@@ -92,7 +106,10 @@ pub fn remove_provider(provider_name: &str) -> String {
     if creds.providers.is_empty() {
         format!("Removed {}. No providers remaining.", provider_name)
     } else {
-        format!("Removed {}. Active provider: {}", provider_name, creds.active)
+        format!(
+            "Removed {}. Active provider: {}",
+            provider_name, creds.active
+        )
     }
 }
 

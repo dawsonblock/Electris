@@ -1459,10 +1459,7 @@ mod tests {
 
     #[test]
     fn graph_rejects_duplicate_ids() {
-        let tasks = vec![
-            SubTask::new("1", "Task A"),
-            SubTask::new("1", "Task B"),
-        ];
+        let tasks = vec![SubTask::new("1", "Task A"), SubTask::new("1", "Task B")];
         let result = TaskGraph::new("duplicate", tasks);
         assert!(result.is_err());
         assert!(result.unwrap_err().to_string().contains("Duplicate"));

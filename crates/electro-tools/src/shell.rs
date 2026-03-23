@@ -14,6 +14,7 @@ use async_trait::async_trait;
 use electro_core::policy::CapabilityPolicy;
 use electro_core::types::error::ElectroError;
 use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
+use tracing::warn;
 
 /// Default command timeout in seconds.
 const DEFAULT_TIMEOUT_SECS: u64 = 30;
@@ -135,7 +136,7 @@ fn parse_f64_env(name: &str, default: f64, min: f64, max: f64) -> f64 {
 }
 
 pub fn load_policy() -> ShellRunnerPolicy {
-    ShellRunnerPolicy {
+    let policy = ShellRunnerPolicy {
         backend: parse_backend(
             &std::env::var("ELECTRO_SHELL_BACKEND").unwrap_or_else(|_| "auto".to_string()),
         ),
@@ -148,7 +149,13 @@ pub fn load_policy() -> ShellRunnerPolicy {
         pids_limit: parse_u64_env("ELECTRO_SHELL_PIDS_LIMIT", DEFAULT_PIDS_LIMIT, 16, 4096),
         cpu_limit: parse_f64_env("ELECTRO_SHELL_CPU_LIMIT", DEFAULT_CPU_LIMIT, 0.25, 8.0),
         tmpfs_mb: parse_u64_env("ELECTRO_SHELL_TMPFS_MB", DEFAULT_TMPFS_MB, 16, 2048),
+    };
+
+    if policy.container_image == "debian:bookworm-slim" {
+        warn!("Thin shell image in use; expected electro-shell-runner:local for full capability.");
     }
+
+    policy
 }
 
 fn command_contains_blocked_meta(command: &str) -> Option<&'static str> {
@@ -485,15 +492,9 @@ pub async fn run_host_command(
         }
     }
 
-    let mut child = match command.spawn() {
-        Ok(c) => c,
-        Err(e) => {
-            return Ok(ToolOutput {
-                content: format!("Failed to execute command via host runner: {}", e),
-                is_error: true,
-            })
-        }
-    };
+    let mut child = command.spawn().map_err(|e| {
+        ElectroError::Tool(format!("Failed to execute command via host runner: {}", e))
+    })?;
 
     if let Some(data) = stdin_data {
         if let Some(mut stdin) = child.stdin.take() {
@@ -539,15 +540,12 @@ pub async fn run_container_command(
         command.stdin(Stdio::piped());
     }
 
-    let mut child = match command.spawn() {
-        Ok(c) => c,
-        Err(e) => {
-            return Ok(ToolOutput {
-                content: format!("Failed to execute command via {} runner: {}", engine, e),
-                is_error: true,
-            })
-        }
-    };
+    let mut child = command.spawn().map_err(|e| {
+        ElectroError::Tool(format!(
+            "Failed to execute command via {} runner: {}",
+            engine, e
+        ))
+    })?;
 
     if let Some(data) = stdin_data {
         if let Some(mut stdin) = child.stdin.take() {
@@ -797,6 +795,7 @@ mod tests {
 
     #[test]
     fn host_program_validation_blocks_shell_launchers() {
+        std::env::remove_var("ELECTRO_SHELL_ALLOW_HOST_LAUNCHER");
         let parsed = ParsedCommand::new(
             "bash".to_string(),
             vec!["-lc".to_string(), "echo hi".to_string()],

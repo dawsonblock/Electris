@@ -1,15 +1,21 @@
-use std::sync::Arc;
+use crate::app::cli::{handle_model_command, list_configured_providers, remove_provider};
+use crate::app::onboarding::{
+    build_system_prompt, decrypt_otk_blob, onboarding_message_with_link, validate_provider_key,
+    ONBOARDING_REFERENCE,
+};
+use crate::app::{check_hive_enabled, create_agent, create_provider, init_core_stack, init_tools};
+use crate::bootstrap::SecretCensorChannel;
 use anyhow::Result;
-use crate::app::{init_core_stack, create_agent, create_provider, init_tools, check_hive_enabled};
+use electro_core::config::credentials::{
+    detect_api_key, is_placeholder_key, load_active_provider_keys, load_saved_credentials,
+    save_credentials,
+};
 use electro_core::paths;
 use electro_core::types::config::{ElectroConfig, MemoryStrategy};
-use electro_core::types::model_registry::{default_model};
-use electro_core::config::credentials::{load_saved_credentials, load_active_provider_keys, save_credentials, detect_api_key, is_placeholder_key};
-use crate::app::onboarding::{build_system_prompt, decrypt_otk_blob, onboarding_message_with_link, ONBOARDING_REFERENCE, validate_provider_key};
-use crate::app::cli::{list_configured_providers, remove_provider, handle_model_command};
-use electro_core::Channel;
-use crate::bootstrap::{SecretCensorChannel};
+use electro_core::types::model_registry::default_model;
 use electro_core::types::session::SessionContext;
+use electro_core::Channel;
+use std::sync::Arc;
 
 pub async fn run_chat_mode(
     config: ElectroConfig,
@@ -57,31 +63,37 @@ pub async fn run_chat_mode(
     let mut agent_opt = None;
     if let Some((pname, key, model)) = credentials {
         if !is_placeholder_key(&key) {
-             let provider_config = build_provider_config(&config, &pname, &key, &model);
-             match create_provider(&provider_config, &pname, &model).await {
-                 Ok(provider) => {
-                     agent_opt = Some(create_agent(
-                         &config,
-                         provider,
-                         core.memory.clone(),
-                         tools.clone(),
-                         model.clone(),
-                         Some(build_system_prompt()),
-                         hive_enabled,
-                         shared_mode.clone(),
-                         shared_memory_strategy.clone(),
-                     ).await);
-                     println!("Connected to {} (model: {})", pname, model);
-                 }
-                 Err(e) => eprintln!("Failed to create provider: {}", e),
-             }
+            let provider_config = build_provider_config(&config, &pname, &key, &model);
+            match create_provider(&provider_config, &pname, &model).await {
+                Ok(provider) => {
+                    agent_opt = Some(
+                        create_agent(
+                            &config,
+                            provider,
+                            core.memory.clone(),
+                            tools.clone(),
+                            model.clone(),
+                            Some(build_system_prompt()),
+                            hive_enabled,
+                            shared_mode.clone(),
+                            shared_memory_strategy.clone(),
+                        )
+                        .await,
+                    );
+                    println!("Connected to {} (model: {})", pname, model);
+                }
+                Err(e) => eprintln!("Failed to create provider: {}", e),
+            }
         }
     }
 
     if agent_opt.is_none() {
         println!("No API key configured — running in onboarding mode.");
         let otk = core.setup_tokens.generate("cli").await;
-        let link = format!("https://dawsonblock.github.io/Electro/setup#{}", hex::encode(otk));
+        let link = format!(
+            "https://dawsonblock.github.io/Electro/setup#{}",
+            hex::encode(otk)
+        );
         println!("\n{}", onboarding_message_with_link(&link));
         println!("\n{}", ONBOARDING_REFERENCE);
     }
@@ -89,11 +101,14 @@ pub async fn run_chat_mode(
 
     // ── Message Loop ──
     let mut rx = cli_rx.expect("CLI channel receiver unavailable");
-    
+
     // Restore history
     let mut history = restore_history(core.memory.clone()).await;
     if !history.is_empty() {
-        println!("  Restored {} messages from previous session.", history.len());
+        println!(
+            "  Restored {} messages from previous session.",
+            history.len()
+        );
     }
 
     while let Some(msg) = rx.recv().await {
@@ -111,22 +126,34 @@ pub async fn run_chat_mode(
 
         // Handle Chat Commands
         if handle_chat_command(
-            &lower, 
-            text, 
-            &core, 
-            &mut agent_opt, 
-            &config, 
-            &tools, 
+            &lower,
+            text,
+            &core,
+            &mut agent_opt,
+            &config,
+            &tools,
             &hive_enabled,
             &shared_mode,
-            &shared_memory_strategy
-        ).await? {
+            &shared_memory_strategy,
+        )
+        .await?
+        {
             continue;
         }
 
         // Handle Encrypted Blobs
         if text.trim().starts_with("enc:v1:") {
-            if let Some(agent) = handle_encrypted_blob(text, &core, &config, &tools, &hive_enabled, &shared_mode, &shared_memory_strategy).await? {
+            if let Some(agent) = handle_encrypted_blob(
+                text,
+                &core,
+                &config,
+                &tools,
+                &hive_enabled,
+                &shared_mode,
+                &shared_memory_strategy,
+            )
+            .await?
+            {
                 agent_opt = Some(agent);
             }
             continue;
@@ -134,64 +161,94 @@ pub async fn run_chat_mode(
 
         // Normal Agent Interaction
         if let Some(ref mut agent) = agent_opt {
-             let mut session_ctx = SessionContext {
-                 session_id: "cli".to_string(),
-                 channel: "cli".to_string(),
-                 chat_id: msg.chat_id.clone(),
-                 user_id: msg.user_id.clone(),
-                 history: history.clone(),
-                 workspace_path: workspace.clone(),
-             };
+            let mut session_ctx = SessionContext {
+                session_id: "cli".to_string(),
+                channel: "cli".to_string(),
+                chat_id: msg.chat_id.clone(),
+                user_id: msg.user_id.clone(),
+                history: history.clone(),
+                workspace_path: workspace.clone(),
+            };
 
-             let (status_tx, mut status_rx) = tokio::sync::watch::channel(electro_agent::AgentTaskStatus::default());
-             
-             // Monitor status updates in background
-             let status_handle = tokio::spawn(async move {
-                 use std::io::Write;
-                 let mut last_phase = None;
-                 while status_rx.changed().await.is_ok() {
-                     let status = status_rx.borrow().clone();
-                     if Some(status.phase.clone()) != last_phase {
-                         match &status.phase {
-                             electro_agent::AgentTaskPhase::Preparing => print!("\r[Preparing] "),
-                             electro_agent::AgentTaskPhase::Classifying => print!("\r[Classifying] "),
-                             electro_agent::AgentTaskPhase::CallingProvider { round } => print!("\r[Round {}: Calling LLM] ", round),
-                             electro_agent::AgentTaskPhase::ExecutingTool { round, tool_name, .. } => print!("\r[Round {}: Tool {}] ", round, tool_name),
-                             electro_agent::AgentTaskPhase::Finishing => print!("\r[Finishing] "),
-                             electro_agent::AgentTaskPhase::Done => print!("\r[Done] "),
-                             electro_agent::AgentTaskPhase::Interrupted { .. } => print!("\r[Interrupted] "),
-                         }
-                         std::io::stdout().flush().ok();
-                         last_phase = Some(status.phase.clone());
-                     }
-                 }
-             });
+            let (status_tx, mut status_rx) =
+                tokio::sync::watch::channel(electro_agent::AgentTaskStatus::default());
 
-             match agent.process_message(&msg, &mut session_ctx, None, None, None, Some(status_tx), None).await {
-                 Ok((reply, usage)) => {
-                     status_handle.abort();
-                     println!("\r{}", reply.text);
-                     println!("\nUsage: {} calls, {} tokens, ${:.4}", usage.api_calls, usage.combined_tokens(), usage.total_cost_usd);
-                     
-                     // Update history and sync back
-                     history = session_ctx.history;
-                     
-                     // Save to memory
-                     let history_json = serde_json::to_string(&history)?;
-                     core.memory.store(electro_core::MemoryEntry {
-                         id: "chat_history:cli".to_string(),
-                         content: history_json,
-                         metadata: serde_json::json!({}),
-                         timestamp: chrono::Utc::now(),
-                         session_id: Some("cli".to_string()),
-                         entry_type: electro_core::MemoryEntryType::Conversation,
-                     }).await.ok();
-                 }
-                 Err(e) => {
-                     status_handle.abort();
-                     eprintln!("\nError: {}", e);
-                 }
-             }
+            // Monitor status updates in background
+            let status_handle = tokio::spawn(async move {
+                use std::io::Write;
+                let mut last_phase = None;
+                while status_rx.changed().await.is_ok() {
+                    let status = status_rx.borrow().clone();
+                    if Some(status.phase.clone()) != last_phase {
+                        match &status.phase {
+                            electro_agent::AgentTaskPhase::Preparing => print!("\r[Preparing] "),
+                            electro_agent::AgentTaskPhase::Classifying => {
+                                print!("\r[Classifying] ")
+                            }
+                            electro_agent::AgentTaskPhase::CallingProvider { round } => {
+                                print!("\r[Round {}: Calling LLM] ", round)
+                            }
+                            electro_agent::AgentTaskPhase::ExecutingTool {
+                                round,
+                                tool_name,
+                                ..
+                            } => print!("\r[Round {}: Tool {}] ", round, tool_name),
+                            electro_agent::AgentTaskPhase::Finishing => print!("\r[Finishing] "),
+                            electro_agent::AgentTaskPhase::Done => print!("\r[Done] "),
+                            electro_agent::AgentTaskPhase::Interrupted { .. } => {
+                                print!("\r[Interrupted] ")
+                            }
+                        }
+                        std::io::stdout().flush().ok();
+                        last_phase = Some(status.phase.clone());
+                    }
+                }
+            });
+
+            match agent
+                .process_message(
+                    &msg,
+                    &mut session_ctx,
+                    None,
+                    None,
+                    None,
+                    Some(status_tx),
+                    None,
+                )
+                .await
+            {
+                Ok((reply, usage)) => {
+                    status_handle.abort();
+                    println!("\r{}", reply.text);
+                    println!(
+                        "\nUsage: {} calls, {} tokens, ${:.4}",
+                        usage.api_calls,
+                        usage.combined_tokens(),
+                        usage.total_cost_usd
+                    );
+
+                    // Update history and sync back
+                    history = session_ctx.history;
+
+                    // Save to memory
+                    let history_json = serde_json::to_string(&history)?;
+                    core.memory
+                        .store(electro_core::MemoryEntry {
+                            id: "chat_history:cli".to_string(),
+                            content: history_json,
+                            metadata: serde_json::json!({}),
+                            timestamp: chrono::Utc::now(),
+                            session_id: Some("cli".to_string()),
+                            entry_type: electro_core::MemoryEntryType::Conversation,
+                        })
+                        .await
+                        .ok();
+                }
+                Err(e) => {
+                    status_handle.abort();
+                    eprintln!("\nError: {}", e);
+                }
+            }
         } else {
             println!("Agent offline. Use /help to see commands or add an API key.");
         }
@@ -205,24 +262,40 @@ pub async fn run_chat_mode(
 fn resolve_credentials(config: &ElectroConfig) -> Option<(String, String, String)> {
     if let Some(ref key) = config.provider.api_key {
         if !key.is_empty() && !key.starts_with("${") {
-            let name = config.provider.name.clone().unwrap_or_else(|| "anthropic".to_string());
-            let model = config.provider.model.clone().unwrap_or_else(|| default_model(&name).to_string());
+            let name = config
+                .provider
+                .name
+                .clone()
+                .unwrap_or_else(|| "anthropic".to_string());
+            let model = config
+                .provider
+                .model
+                .clone()
+                .unwrap_or_else(|| default_model(&name).to_string());
             return Some((name, key.clone(), model));
         }
     }
     load_saved_credentials()
 }
 
-fn build_provider_config(config: &ElectroConfig, pname: &str, key: &str, model: &str) -> electro_core::types::config::ProviderConfig {
+fn build_provider_config(
+    config: &ElectroConfig,
+    pname: &str,
+    key: &str,
+    model: &str,
+) -> electro_core::types::config::ProviderConfig {
     let (all_keys, saved_base_url) = load_active_provider_keys()
         .map(|(_, keys, _, burl)| {
-            let valid: Vec<String> = keys.into_iter().filter(|k| !is_placeholder_key(k)).collect();
+            let valid: Vec<String> = keys
+                .into_iter()
+                .filter(|k| !is_placeholder_key(k))
+                .collect();
             (valid, burl)
         })
         .unwrap_or_else(|| (vec![key.to_string()], None));
-    
+
     let effective_base_url = saved_base_url.or_else(|| config.provider.base_url.clone());
-    
+
     electro_core::types::config::ProviderConfig {
         name: Some(pname.to_string()),
         api_key: Some(key.to_string()),
@@ -233,7 +306,9 @@ fn build_provider_config(config: &ElectroConfig, pname: &str, key: &str, model: 
     }
 }
 
-async fn restore_history(memory: Arc<dyn electro_core::Memory>) -> Vec<electro_core::types::message::ChatMessage> {
+async fn restore_history(
+    memory: Arc<dyn electro_core::Memory>,
+) -> Vec<electro_core::types::message::ChatMessage> {
     match memory.get("chat_history:cli").await {
         Ok(Some(entry)) => serde_json::from_str(&entry.content).unwrap_or_default(),
         _ => Vec::new(),
@@ -253,7 +328,10 @@ async fn handle_chat_command(
 ) -> Result<bool> {
     if lower == "/addkey" {
         let otk = core.setup_tokens.generate("cli").await;
-        let link = format!("https://dawsonblock.github.io/Electro/setup#{}", hex::encode(otk));
+        let link = format!(
+            "https://dawsonblock.github.io/Electro/setup#{}",
+            hex::encode(otk)
+        );
         println!("\nSecure key setup: {}\n", link);
         return Ok(true);
     }
@@ -264,14 +342,18 @@ async fn handle_chat_command(
     if lower.starts_with("/removekey") {
         let provider = text["/removekey".len()..].trim();
         println!("\n{}\n", remove_provider(provider));
-        return Ok(true); 
+        return Ok(true);
     }
     if lower == "/usage" {
         // ... usage logic ...
         return Ok(true);
     }
     if lower == "/model" || lower.starts_with("/model ") {
-        let args = if lower == "/model" { "" } else { text["/model".len()..].trim() };
+        let args = if lower == "/model" {
+            ""
+        } else {
+            text["/model".len()..].trim()
+        };
         println!("\n{}\n", handle_model_command(args));
         return Ok(true);
     }
@@ -290,22 +372,33 @@ async fn handle_encrypted_blob(
     let blob = &text.trim()["enc:v1:".len()..];
     if let Ok(key_text) = decrypt_otk_blob(blob, &core.setup_tokens, "cli").await {
         if let Some(cred) = detect_api_key(&key_text) {
-             let model = default_model(cred.provider).to_string();
-             let provider_config = build_provider_config(config, cred.provider, &cred.api_key, &model);
-             if let Ok(provider) = validate_provider_key(&provider_config).await {
-                 save_credentials(cred.provider, &cred.api_key, &model, cred.base_url.as_deref()).await.ok();
-                 return Ok(Some(create_agent(
-                     config,
-                     provider,
-                     core.memory.clone(),
-                     tools.to_vec(),
-                     model,
-                     Some(build_system_prompt()),
-                     *_hive_enabled,
-                     shared_mode.clone(),
-                     shared_memory_strategy.clone(),
-                 ).await));
-             }
+            let model = default_model(cred.provider).to_string();
+            let provider_config =
+                build_provider_config(config, cred.provider, &cred.api_key, &model);
+            if let Ok(provider) = validate_provider_key(&provider_config).await {
+                save_credentials(
+                    cred.provider,
+                    &cred.api_key,
+                    &model,
+                    cred.base_url.as_deref(),
+                )
+                .await
+                .ok();
+                return Ok(Some(
+                    create_agent(
+                        config,
+                        provider,
+                        core.memory.clone(),
+                        tools.to_vec(),
+                        model,
+                        Some(build_system_prompt()),
+                        *_hive_enabled,
+                        shared_mode.clone(),
+                        shared_memory_strategy.clone(),
+                    )
+                    .await,
+                ));
+            }
         }
     }
     Ok(None)

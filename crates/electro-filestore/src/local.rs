@@ -36,12 +36,13 @@ async fn atomic_write_bytes(path: &Path, data: &[u8]) -> Result<(), ElectroError
         std::process::id()
     ));
 
-    fs::write(&tmp_path, data).await.map_err(|e| {
-        ElectroError::FileTransfer(format!(
+    if let Err(e) = fs::write(&tmp_path, data).await {
+        let _ = fs::remove_file(&tmp_path).await;
+        return Err(ElectroError::FileTransfer(format!(
             "Failed to write temporary file {}: {e}",
             tmp_path.display()
-        ))
-    })?;
+        )));
+    }
 
     if let Err(e) = fs::rename(&tmp_path, path).await {
         let _ = fs::remove_file(&tmp_path).await;
@@ -130,7 +131,9 @@ impl FileStore for LocalFileStore {
                     path = %full_path.display(),
                     expected_size,
                     actual_size = data.len(),
-                    "File metadata size does not match stored byte length"
+                    "File metadata size mismatch: meta={} actual={}",
+                    expected_size,
+                    data.len()
                 );
             }
         }
@@ -168,7 +171,9 @@ impl FileStore for LocalFileStore {
                     path = %full_path.display(),
                     expected_size,
                     actual_size = buf.len(),
-                    "Streamed file metadata size does not match stored byte length"
+                    "Streamed file metadata size mismatch: meta={} actual={}",
+                    expected_size,
+                    buf.len()
                 );
             }
         }
@@ -667,5 +672,28 @@ mod tests {
         // List should be empty
         let files = store.list("crud").await.unwrap();
         assert!(files.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_cleanup_after_successful_store() {
+        let dir = tempdir().unwrap();
+        let store = LocalFileStore::new(dir.path()).await.unwrap();
+
+        // Ensure no .tmp files are left after a SUCCESSFUL store.
+        store
+            .store(
+                "success.txt",
+                Bytes::from("data"),
+                test_metadata("success.txt"),
+            )
+            .await
+            .unwrap();
+
+        let mut entries = fs::read_dir(dir.path()).await.unwrap();
+        while let Some(entry) = entries.next_entry().await.unwrap() {
+            let name = entry.file_name();
+            let name_str = name.to_string_lossy();
+            assert!(!name_str.contains(".tmp-"));
+        }
     }
 }
