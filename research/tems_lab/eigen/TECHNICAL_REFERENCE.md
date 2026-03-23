@@ -1,4 +1,7 @@
-# Eigen-Tune — Technical Reference
+# Eigen-Tune: Self-Tuning Knowledge Distillation Engine
+> [!NOTE]
+> This document is part of the historical Eigen-Tune research and is not applicable to the current v3.2.0 workspace.
+> This document describes the historical `electro-distill` experimental crate, which was removed in v3.2.0. The implementation details below are preserved for research purposes only and are not part of the active workspace.
 
 ## Implementation-Level Detail for Every Component
 

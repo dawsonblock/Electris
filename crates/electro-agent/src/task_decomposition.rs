@@ -858,6 +858,7 @@ mod tests {
             SubTask::new("3", "Verify").with_dependency("1"),
         ];
         let mut graph = TaskGraph::new("goal", tasks).unwrap();
+        graph.mark_running("1").unwrap();
         graph.mark_completed("1", "deployed".into()).unwrap();
 
         let ready = graph.ready_tasks();
@@ -1447,6 +1448,7 @@ mod tests {
         let tasks = vec![SubTask::new("1", "Generate report")];
         let mut graph = TaskGraph::new("report", tasks).unwrap();
         let long_result = "x".repeat(500);
+        graph.mark_running("1").unwrap();
         graph.mark_completed("1", long_result).unwrap();
 
         let prompt = graph.to_prompt();
@@ -1472,9 +1474,12 @@ mod tests {
         let mut graph = TaskGraph::new("goal", tasks).unwrap();
         // Skip mark_running, try to complete directly
         let result = graph.mark_completed("1", "done".into());
-        // Currently, mark_completed doesn't strictly check if it was Running.
-        // Let's check if we WANT it to. 
-        // Actually, the implementation of mark_completed just sets the status.
-        // If we want to harden this, we should change the implementation too.
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("must be Running"));
+
+        // Now do it right
+        graph.mark_running("1").unwrap();
+        graph.mark_completed("1", "done".into()).unwrap();
+        assert_eq!(graph.get("1").unwrap().status, SubTaskStatus::Completed);
     }
 }

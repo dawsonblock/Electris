@@ -64,11 +64,11 @@ Eigen-Tune is complementary. It operates on a different axis: instead of giving 
 
 ### What Makes Eigen-Tune Different
 
-| Feature | DeepSeek-R1 | OpenAI Fine-tuning | Mem0 / RAG | Eigen-Tune |
-|---------|-------------|-------------------|------------|------------|
-| Automated data collection | No | No | N/A | Yes |
-| Zero added LLM cost | N/A | N/A | N/A | Yes |
-| Statistical graduation gates | No | No | N/A | Yes (SPRT + CUSUM + Wilson) |
+| Feature | Agentic Workflow | Static RAG | Long-Context LLM | Eigen-Tune |
+| :--- | :--- | :--- | :--- | :--- |
+| **Logic** | Multi-hop reasoning | Vector search | Sliding window | User behavior score |
+| **Memory** | Task-based | Key-value | Full history | Neural anchors |
+| **Cost** | High (multiple calls) | Medium (DB + LLM) | Extreme (token count) | **Zero added cost** |
 | User behavior as ground truth | No | No | No | Yes |
 | Automatic fallback on failure | N/A | N/A | N/A | Yes (degrades to cloud) |
 | Per-tier state machine | No | No | N/A | Yes (Simple/Standard/Complex) |
@@ -95,6 +95,13 @@ Stage 7: MONITOR     Graduated model in production, CUSUM on behavior → detect
 Each complexity tier (Simple, Standard, Complex) has an independent state machine:
 
 ```
+[Input Query] ──▶ [Local Router] ─┬─▶ [Cloud Model (Teacher)] ─▶ [Output]
+                                  │             │
+                                  │             ▼
+                                  └─▶ [Local Model (Student)] ─▶ [Output]
+```
+
+```text
                     ┌──────────────────────────────────────────────────┐
                     │                                                  │
                     ▼                                                  │
@@ -103,28 +110,28 @@ Each complexity tier (Simple, Standard, Complex) has an independent state machin
               │            │     │           │     │               │  │
               │ pairs < N  │     │ QLoRA     │     │ Wilson gate   │  │
               │ or J < 0.75│     │ running   │     │ lower >= 0.95 │  │
-              └───────────┘     └───────────┘     └───────┬───────┘  │
-                    ▲                                      │          │
-                    │                              pass    │   fail   │
-                    │                              ┌───────┴───┐      │
-                    │                              ▼           │      │
-                    │                        ┌───────────┐     │      │
-                    │                        │ Shadowing │     │      │
-                    │                        │           │     │      │
-                    │                        │ SPRT on   │     │      │
-                    │                        │ behavior  │     │      │
-                    │                        └─────┬─────┘     │      │
-                    │                     H1       │    H0     │      │
-                    │                    ┌─────────┴──────┐    │      │
-                    │                    ▼                │    │      │
-                    │              ┌───────────┐          │    │      │
-                    │              │ Graduated │          │    │      │
-                    │              │           │          │    │      │
-                    │              │ CUSUM     │          │    │      │
-                    │              │ monitor   │          │    │      │
-                    │              └─────┬─────┘          │    │      │
-                    │                    │ alarm          │    │      │
-                    └────────────────────┴────────────────┘────┘──────┘
+              └───────────┘     └───────┬───┘     └───────┬───────┘  │
+                    ▲                   │                   │          │
+                    │                   │           pass    │   fail   │
+                    │                   │           ┌───────┴───┐      │
+                    │                   │           ▼           │      │
+                    │                   │     ┌───────────┐     │      │
+                    │                   │     │ Shadowing │     │      │
+                    │                   │     │           │     │      │
+                    │                   │     │ SPRT on   │     │      │
+                    │                   │     │ behavior  │     │      │
+                    │                   │     └─────┬─────┘     │      │
+                    │                   │          H1 │    H0   │      │
+                    │                   │     ┌───────┴──────┐  │      │
+                    │                   │     ▼                │  │      │
+                    │                   │ ┌───────────┐        │  │      │
+                    │                   │ │ Graduated │        │  │      │
+                    │                   │ │           │        │  │      │
+                    │                   │ │ CUSUM     │        │  │      │
+                    │                   │ │ monitor   │        │  │      │
+                    │                   │ └─────┬─────┘        │  │      │
+                    │                   │       │ alarm        │  │      │
+                    └───────────────────┴───────┴──────────────┘──┘──────┘
 ```
 
 Every backward arrow leads to Collecting. Every failure mode degrades to cloud. The system never silently serves bad responses.
@@ -267,8 +274,8 @@ Detection uses a two-tier architecture that combines instant heuristics with sem
 
 **Tier 2 — Embedding similarity (~100ms, zero LLM cost):**
 When Tier 1 reports "continued normally," Tier 2 checks semantic signals using the same `nomic-embed-text` model already loaded for evaluation:
-- **Semantic retry:** Cosine similarity > 0.80 between current and previous user message within 60s. Catches paraphrased retries that Levenshtein misses (e.g., "What's the weather?" → "Tell me the temperature outside").
-- **Semantic rejection:** Cosine similarity > 0.75 between the current message and pre-computed rejection prototype embeddings. Catches paraphrased rejections ("that doesn't help at all", "completely useless") and **non-English rejections** across 12 languages.
+-   **Semantic retry:** Cosine similarity > 0.80 between current and previous user message within 60s. Catches paraphrased retries that Levenshtein misses (e.g., "What's the weather?" → "Tell me the temperature outside").
+-   **Semantic rejection:** Cosine similarity > 0.75 between the current message and pre-computed rejection prototype embeddings. Catches paraphrased rejections ("that doesn't help at all", "completely useless") and **non-English rejections** across 12 languages.
 
 The rejection prototypes are multilingual anchors covering English, Vietnamese, Japanese, Chinese, Korean, Spanish, French, German, Portuguese, Arabic, Thai, and Indonesian. Modern embedding models encode meaning, not words — a Vietnamese "Sai rồi" or Japanese "違います" produces high cosine similarity to "That's wrong" because the embedding captures the semantic intent (disagreement), not the surface language. This makes Eigen-Tune's behavior judge work globally without language-specific code.
 
@@ -276,11 +283,11 @@ This costs nothing because: (a) user behavior signals are already observable in 
 
 ### Why User-as-Judge is Better than LLM-as-Judge
 
-1. **Ground truth.** The user knows whether the response solved their problem. GPT-4 does not.
-2. **No position bias.** There is no "first option" — the user only sees one response.
-3. **No self-preference.** The user does not know (or care) which model generated the response.
-4. **Free.** The signal exists whether or not Eigen-Tune is running.
-5. **Continuous.** Every interaction produces a signal, not just explicit evaluation queries.
+1.  **Ground truth.** The user knows whether the response solved their problem. GPT-4 does not.
+2.  **No position bias.** There is no "first option" — the user only sees one response.
+3.  **No self-preference.** The user does not know (or care) which model generated the response.
+4.  **Free.** The signal exists whether or not Eigen-Tune is running.
+5.  **Continuous.** Every interaction produces a signal, not just explicit evaluation queries.
 
 The limitation: user behavior is noisy. A user might continue the conversation even if the response was mediocre. A user might retry for reasons unrelated to quality (changed their mind, typo). SPRT handles this noise by requiring sustained statistical evidence before making a decision. It does not graduate on one good day or demote on one bad interaction.
 
@@ -294,9 +301,16 @@ For users who want stronger evaluation guarantees, Teacher Mode enables a premiu
 
 ### Crate Structure
 
-Eigen-Tune is implemented as `electro-distill`, a leaf crate in the ELECTRO workspace. It depends only on `electro-core` (shared traits and error types) and standard ecosystem crates (sqlx, tokio, serde, chrono, rand).
+Eigen-Tune was originally implemented as `electro-distill`, an experimental crate in the ELECTRO workspace (removed in v3.2.0 to simplify the production runtime). It depended on `electro-core` (shared traits and error types) and standard ecosystem crates (sqlx, tokio, serde, chrono, rand).
 
+```text
+.
+├── core_engine/          # Shared runtime logic
+├── memory_plane/         # Vector and relational storage
+└── eigentune_pipeline/   # The self-tuning harness
 ```
+
+```text
 crates/electro-distill/
 ├── Cargo.toml
 ├── src/
@@ -661,7 +675,7 @@ The user does not need to know it exists. The model will find its own eigenvalue
 
 ## Appendix A: Full Pipeline Proof Log
 
-The complete, unedited output of the Eigen-Tune pipeline proof — from data collection through fine-tuning through inference — run on 2026-03-18 on an Apple M2 MacBook with 16 GB RAM.
+Eigen-Tune's core pipeline — from data collection through fine-tuning through inference — was verified on an Apple M2 MacBook with 16 GB RAM during its initial development phase.
 
 [Full log →](PIPELINE_PROOF_LOG.txt)
 

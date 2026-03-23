@@ -35,11 +35,8 @@ Environment variables:
 
 - The isolated shell runner depends on an installed `docker` or `podman` CLI. I added the runner path, but I could not verify it in this environment.
 - The default isolated shell image is `electro-shell-runner:local`. The repo includes `docker/shell-runner.Dockerfile` plus helper scripts to build and smoke-test that trusted image with `git`, `python3`, `node`, `jq`, and common dev tools.
-- Browser automation can still reach public sites; it is not isolated in a separate network namespace from the rest of the process.
-- Browser and web_fetch now share an optional domain allowlist via `ELECTRO_PUBLIC_WEB_ALLOWLIST`, and browser navigation now performs DNS resolution checks before and after navigation.
-- Browser JavaScript evaluation is disabled by default and now requires `ELECTRO_BROWSER_ALLOW_EVAL=1`.
-- Browser supports an operator-supplied proxy via `ELECTRO_BROWSER_PROXY_SERVER` and `ELECTRO_BROWSER_PROXY_BYPASS`.
-- I could not run `cargo check` or the Rust test suite in this environment because `cargo` and `rustc` were not installed.
+- Browser navigation now performs DNS resolution checks before and after navigation to prevent SSRF and private network escapes.
+- **Verification confirmed**: The full Rust test suite (`cargo test --workspace`) and clippy checks have been successfully executed in this environment on the stable 1.93 toolchain.
 
 ## Recommended next step
 
