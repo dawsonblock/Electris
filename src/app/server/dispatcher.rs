@@ -62,16 +62,8 @@ pub async fn run_message_dispatcher(
         let hive_clone = hive_instance.clone();
         let tenant_mgr_clone = tenant_manager.clone();
         let tenant_isolation_enabled = config.electro.tenant_isolation;
-        let browser_ref_clone = {
-            #[cfg(feature = "browser")]
-            {
-                browser_tool_ref.clone()
-            }
-            #[cfg(not(feature = "browser"))]
-            {
-                ()
-            }
-        };
+        #[cfg(feature = "browser")]
+        let browser_ref_clone = browser_tool_ref.clone();
         let queue_tx_redispatch = runtime.queue_tx.clone();
         let chat_slots: Arc<Mutex<HashMap<String, DispatchEntry>>> =
             Arc::new(Mutex::new(HashMap::new()));
@@ -80,7 +72,7 @@ pub async fn run_message_dispatcher(
         let housekeeping_queue = runtime.queue_tx.clone();
         tokio::spawn(async move {
             loop {
-                tokio::time::sleep(Duration::from_millis(100)).await;
+                tokio::time::sleep(Duration::from_millis(250)).await;
                 let mut buffered = Vec::new();
                 let mut reap = Vec::new();
 
@@ -155,9 +147,7 @@ pub async fn run_message_dispatcher(
                     && entry.slot.is_heartbeat.load(Ordering::Relaxed)
                 {
                     entry.slot.interrupt.store(true, Ordering::Relaxed);
-                    if let Ok(cancel) = entry.slot.cancel_token.lock() {
-                        cancel.cancel();
-                    }
+                    entry.slot.cancel_token.lock().await.cancel();
                 }
 
                 match inbound_kind {
@@ -210,7 +200,7 @@ pub async fn run_message_dispatcher(
 
 pub(crate) struct StopRequest {
     pub(crate) interrupt: Arc<std::sync::atomic::AtomicBool>,
-    pub(crate) cancel_token: Arc<std::sync::Mutex<tokio_util::sync::CancellationToken>>,
+    pub(crate) cancel_token: Arc<tokio::sync::Mutex<tokio_util::sync::CancellationToken>>,
     pub(crate) state: Arc<tokio::sync::RwLock<WorkerState>>,
 }
 
@@ -234,18 +224,12 @@ fn ensure_worker<'a>(
     usage_store: &Arc<dyn UsageStore>,
     hive_instance: &Option<Arc<electro_hive::Hive>>,
     workspace_path: &std::path::Path,
-    tenant_isolation_enabled: bool,
+    _tenant_isolation_enabled: bool,
     personality_locked: bool,
     _tenant_manager: Arc<electro_core::tenant_impl::TenantManager>,
     #[cfg(feature = "browser")] browser_tool_ref: &Option<Arc<electro_tools::BrowserTool>>,
     vault: &Option<Arc<dyn Vault>>,
 ) -> &'a mut DispatchEntry {
-    let chat_workspace = if tenant_isolation_enabled {
-        workspace_path.to_path_buf()
-    } else {
-        workspace_path.to_path_buf()
-    };
-
     slots.entry(chat_id.to_string()).or_insert_with(|| {
         let slot = crate::app::server::worker::create_chat_worker(
             chat_id,
@@ -264,7 +248,7 @@ fn ensure_worker<'a>(
             config.agent.v2_optimizations,
             config.agent.parallel_phases,
             &config.provider.base_url,
-            &chat_workspace,
+            workspace_path,
             pending_messages,
             setup_tokens,
             pending_raw_keys,
@@ -350,9 +334,7 @@ fn maybe_intercept_busy_message(
 
                 if should_cancel {
                     icpt_interrupt.store(true, Ordering::Relaxed);
-                    if let Ok(cancel) = icpt_cancel.lock() {
-                        cancel.cancel();
-                    }
+                    icpt_cancel.lock().await.cancel();
                 }
             }
         }

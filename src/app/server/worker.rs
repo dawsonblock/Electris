@@ -52,9 +52,7 @@ pub fn create_chat_worker(
     let interrupt = Arc::new(AtomicBool::new(false));
     let is_heartbeat = Arc::new(AtomicBool::new(false));
     let current_task = Arc::new(std::sync::Mutex::new(String::new()));
-    let cancel_token = Arc::new(std::sync::Mutex::new(
-        tokio_util::sync::CancellationToken::new(),
-    ));
+    let cancel_token = Arc::new(Mutex::new(tokio_util::sync::CancellationToken::new()));
     let state = Arc::new(RwLock::new(WorkerState::Idle));
     let last_active = Arc::new(Mutex::new(Instant::now()));
 
@@ -142,9 +140,10 @@ pub fn create_chat_worker(
 
             let request_id = msg.id.clone();
             let request_cancel = tokio_util::sync::CancellationToken::new();
-            if let Ok(mut cancel_slot) = cancel_token_worker.lock() {
-                *cancel_slot = request_cancel.clone();
-            }
+            let mut cancel_slot = cancel_token_worker.lock().await;
+            cancel_slot.cancel();
+            *cancel_slot = request_cancel.clone();
+            drop(cancel_slot);
             *state_worker.write().await = WorkerState::Running {
                 request_id: request_id.clone(),
             };
@@ -312,9 +311,10 @@ pub fn create_chat_worker(
             if let Ok(mut task) = current_task_worker.lock() {
                 task.clear();
             }
-            if let Ok(mut cancel_slot) = cancel_token_worker.lock() {
-                *cancel_slot = tokio_util::sync::CancellationToken::new();
-            }
+            let mut cancel_slot = cancel_token_worker.lock().await;
+            cancel_slot.cancel();
+            *cancel_slot = tokio_util::sync::CancellationToken::new();
+            drop(cancel_slot);
             *last_active_worker.lock().await = Instant::now();
             is_heartbeat_worker.store(false, Ordering::Relaxed);
         }

@@ -84,28 +84,21 @@ pub async fn handle_model_command(
     runtime: RuntimeHandle,
     args: &[String],
 ) -> anyhow::Result<String> {
-    let active_provider = runtime.active_provider().await.or_else(|| {
-        load_credentials_file().and_then(|creds| {
-            creds
-                .providers
-                .into_iter()
-                .find(|provider| provider.name == creds.active)
-                .map(|provider| provider.name)
-        })
+    let saved_active = load_credentials_file().and_then(|creds| {
+        creds
+            .providers
+            .into_iter()
+            .find(|provider| provider.name == creds.active)
     });
+    let active_provider = runtime
+        .active_provider()
+        .await
+        .or_else(|| saved_active.as_ref().map(|provider| provider.name.clone()));
     let active_model = runtime
         .agent()
         .await
         .map(|agent| agent.model().to_string())
-        .or_else(|| {
-            load_credentials_file().and_then(|creds| {
-                creds
-                    .providers
-                    .into_iter()
-                    .find(|provider| provider.name == creds.active)
-                    .map(|provider| provider.model)
-            })
-        });
+        .or_else(|| saved_active.as_ref().map(|provider| provider.model.clone()));
 
     if args.is_empty() {
         return Ok(config_service::current_provider_summary(
@@ -154,8 +147,13 @@ pub async fn handle_model_command(
             .await?;
 
             let hive_enabled = check_hive_enabled().await;
-            let config = electro_core::config::load_config(None)
-                .unwrap_or_else(|_| ElectroConfig::default());
+            let config = match electro_core::config::load_config(None) {
+                Ok(config) => config,
+                Err(error) => {
+                    tracing::warn!(%error, "Falling back to default config for /model switch");
+                    ElectroConfig::default()
+                }
+            };
             let rebuilt_agent = create_agent(
                 &config,
                 provider,
@@ -177,9 +175,6 @@ pub async fn handle_model_command(
             if persist {
                 config_service::persist_model_selection(&selection.provider, &selection.model)
                     .await?;
-            }
-
-            if persist {
                 Ok(format!(
                     "switched model to {}:{} and persisted it",
                     selection.provider, selection.model

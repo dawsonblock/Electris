@@ -131,16 +131,11 @@ pub async fn run_chat_mode(
     )
     .await;
 
-    let queue_tx = runtime.queue_tx.clone();
-    let bridge = tokio::spawn(async move {
-        let mut cli_rx = cli_rx;
-        while let Some(msg) = cli_rx.recv().await {
-            if queue_tx.send(msg).await.is_err() {
-                break;
-            }
+    let mut cli_rx = cli_rx;
+    while let Some(msg) = cli_rx.recv().await {
+        if runtime.queue_tx.send(msg).await.is_err() {
+            break;
         }
-    });
-
-    let _ = bridge.await;
+    }
     Ok(())
 }

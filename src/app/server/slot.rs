@@ -13,7 +13,7 @@ pub struct ChatSlot {
     pub interrupt: Arc<AtomicBool>,
     pub is_heartbeat: Arc<AtomicBool>,
     pub current_task: Arc<std::sync::Mutex<String>>,
-    pub cancel_token: Arc<std::sync::Mutex<CancellationToken>>,
+    pub cancel_token: Arc<Mutex<CancellationToken>>,
     pub state: Arc<RwLock<WorkerState>>,
     pub last_active: Arc<Mutex<Instant>>,
 }

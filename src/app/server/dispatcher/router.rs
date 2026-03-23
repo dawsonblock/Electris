@@ -11,7 +11,7 @@ pub fn queue_pending_message(
     inbound: InboundMessage,
     pending_messages: &electro_tools::PendingMessages,
 ) {
-    if entry.pending.len() == MAX_PENDING_PER_CHAT {
+    if entry.pending.len() >= MAX_PENDING_PER_CHAT {
         if let Some(dropped) = entry.pending.pop_front() {
             tracing::warn!(
                 chat_id = %dropped.chat_id,
@@ -42,8 +42,12 @@ pub fn queue_pending_message(
     entry.pending.push_back(inbound);
 }
 
-pub async fn request_stop(stop: StopRequest, sender: &Arc<dyn Channel>, inbound: &InboundMessage) {
-    let request_id = match &*stop.state.read().await {
+pub async fn request_stop(
+    stop_request: StopRequest,
+    sender: &Arc<dyn Channel>,
+    inbound: &InboundMessage,
+) {
+    let request_id = match &*stop_request.state.read().await {
         WorkerState::Running { request_id } | WorkerState::Cancelling { request_id } => {
             Some(request_id.clone())
         }
@@ -51,11 +55,9 @@ pub async fn request_stop(stop: StopRequest, sender: &Arc<dyn Channel>, inbound:
     };
 
     if let Some(request_id) = request_id {
-        stop.interrupt.store(true, Ordering::Relaxed);
-        if let Ok(cancel) = stop.cancel_token.lock() {
-            cancel.cancel();
-        }
-        *stop.state.write().await = WorkerState::Cancelling {
+        stop_request.interrupt.store(true, Ordering::Relaxed);
+        stop_request.cancel_token.lock().await.cancel();
+        *stop_request.state.write().await = WorkerState::Cancelling {
             request_id: request_id.clone(),
         };
         tracing::info!(
@@ -107,14 +109,10 @@ pub async fn redispatch_pending(
 }
 
 fn classify_inbound_label(inbound: &InboundMessage) -> &'static str {
-    match classify_from_message(inbound) {
+    match super::classify::classify_inbound(inbound) {
         InboundKind::UserMessage => "user",
         InboundKind::StopCommand => "stop",
         InboundKind::AdminCommand(_) => "admin",
         InboundKind::SystemEvent => "system",
     }
-}
-
-fn classify_from_message(inbound: &InboundMessage) -> InboundKind {
-    super::classify::classify_inbound(inbound)
 }

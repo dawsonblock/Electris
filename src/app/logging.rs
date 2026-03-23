@@ -1,5 +1,5 @@
-use std::panic::AssertUnwindSafe;
 use electro_core::paths;
+use std::panic::AssertUnwindSafe;
 use tracing_subscriber::prelude::*;
 
 pub fn init_logging(is_tui: bool) {

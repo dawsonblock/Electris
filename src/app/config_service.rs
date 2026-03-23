@@ -22,8 +22,16 @@ pub fn list_available_models(
     current_model: Option<&str>,
 ) -> Vec<String> {
     let mut entries = Vec::new();
+    let saved_credentials = load_credentials_file();
+    let saved_active = saved_credentials.as_ref().and_then(|creds| {
+        creds
+            .providers
+            .iter()
+            .find(|provider| provider.name == creds.active)
+            .map(|provider| (provider.name.clone(), provider.model.clone()))
+    });
 
-    if let Some(creds) = load_credentials_file() {
+    if let Some(creds) = saved_credentials {
         for provider in creds.providers {
             extend_provider_models(&mut entries, &provider.name, Some(&provider.model));
         }
@@ -37,16 +45,7 @@ pub fn list_available_models(
     if entries.is_empty() {
         if let Some(provider) = current_provider {
             extend_provider_models(&mut entries, provider, current_model);
-        } else if let (Some(provider), Some(model)) = (
-            load_credentials_file()
-                .as_ref()
-                .and_then(|creds| creds.providers.iter().find(|p| p.name == creds.active))
-                .map(|p| p.name.as_str()),
-            load_credentials_file()
-                .as_ref()
-                .and_then(|creds| creds.providers.iter().find(|p| p.name == creds.active))
-                .map(|p| p.model.as_str()),
-        ) {
+        } else if let Some((provider, model)) = saved_active.as_ref() {
             extend_provider_models(&mut entries, provider, Some(model));
         }
     }
@@ -60,11 +59,11 @@ pub fn parse_model_target(raw: &str) -> Result<(String, String)> {
     let trimmed = raw.trim();
     let (provider, model) = trimmed
         .split_once(':')
-        .ok_or_else(|| anyhow!("usage: /model use <provider:model> [--persist]"))?;
-    if provider.trim().is_empty() || model.trim().is_empty() {
-        bail!("usage: /model use <provider:model> [--persist]");
+        .ok_or_else(|| anyhow!("model target must be in format provider:model"))?;
+    if provider.is_empty() || model.is_empty() {
+        bail!("model target must be in format provider:model");
     }
-    Ok((provider.trim().to_string(), model.trim().to_string()))
+    Ok((provider.to_string(), model.to_string()))
 }
 
 pub fn resolve_provider_selection(provider: &str, model: &str) -> Result<ProviderSelection> {
@@ -168,7 +167,9 @@ mod tests {
     #[test]
     fn parse_model_target_requires_provider_and_model() {
         let err = parse_model_target("anthropic").expect_err("missing model should fail");
-        assert!(err.to_string().contains("usage: /model use"));
+        assert!(err
+            .to_string()
+            .contains("model target must be in format provider:model"));
     }
 
     #[test]
