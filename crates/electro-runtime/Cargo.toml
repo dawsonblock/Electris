@@ -8,6 +8,7 @@ rust-version.workspace = true
 [dependencies]
 electro-agent.workspace = true
 electro-core.workspace = true
+serde.workspace = true
 tokio.workspace = true
 
 [dev-dependencies]
