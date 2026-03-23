@@ -740,10 +740,27 @@ impl BrowserTool {
     /// Lazily launch the browser on first use, or relaunch if dead.
     /// Applies stealth flags and injects anti-detection patches.
     async fn ensure_browser(&self) -> Result<Page, ElectroError> {
+        // High-frequency fast path: check if page exists and is alive without
+        // holding the global locks for more than a microsecond.
+        let existing_page = {
+            let p = self.page.lock().await;
+            p.clone()
+        };
+
+        if let Some(page) = existing_page {
+            match page.get_title().await {
+                Ok(_) => return Ok(page),
+                Err(_) => {
+                    tracing::warn!("Browser connection lost — cleaning up stale handle");
+                    // Continue to full relaunch logic — locks will be re-acquired below
+                }
+            }
+        }
+
         let mut browser_guard = self.browser.lock().await;
         let mut page_guard = self.page.lock().await;
 
-        // If we have a cached page, verify it's still alive with a quick probe
+        // Double-check inside locks
         if let Some(ref page) = *page_guard {
             match page.get_title().await {
                 Ok(_) => return Ok(page.clone()),
@@ -752,11 +769,9 @@ impl BrowserTool {
                     let old_pid = self.chrome_pid.swap(0, Ordering::Relaxed);
                     *page_guard = None;
                     *browser_guard = None;
-                    // Abort the stale CDP handler from the dead browser.
                     if let Some(handle) = self.cdp_handle.lock().await.take() {
                         handle.abort();
                     }
-                    // Clean up any lingering child processes from the dead browser.
                     if old_pid > 0 {
                         kill_chrome_children(old_pid);
                     }

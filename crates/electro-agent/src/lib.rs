@@ -15,11 +15,13 @@ pub mod learning;
 pub mod llm_classifier;
 pub mod model_router;
 pub mod output_compression;
+pub mod parallel_executor;
 pub mod proactive;
 pub mod prompt_optimizer;
 pub mod prompt_patches;
 pub mod prompted_tool_calling;
 pub mod recovery;
+pub mod scheduler;
 pub mod runtime;
 pub mod self_correction;
 pub mod startup;
@@ -40,6 +42,7 @@ pub use history_pruning::{
 };
 pub use learning::TaskLearning;
 pub use model_router::{ModelRouter, ModelRouterConfig, ModelTier, TaskComplexity};
+pub use parallel_executor::execute_parallel;
 pub use proactive::{ProactiveAction, ProactiveManager, Trigger, TriggerRule};
 pub use prompt_optimizer::{
     build_system_prompt, build_tiered_system_prompt, estimate_prompt_tokens, SystemPromptBuilder,
@@ -52,4 +55,5 @@ pub use startup::{LazyResource, StartupMetrics};
 pub use streaming::{StreamBuffer, StreamingConfig, StreamingNotifier};
 pub use task_decomposition::{SubTask, SubTaskStatus, TaskGraph};
 pub use task_queue::{TaskQueue, TaskStatus};
+pub use scheduler::{Priority, Scheduler, TaskMetadata};
 pub use watchdog::{HealthReport, SubsystemStatus, Watchdog, WatchdogConfig};

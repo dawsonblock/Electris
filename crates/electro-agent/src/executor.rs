@@ -14,9 +14,7 @@ use electro_core::policy::{FileAccessPolicy, PolicyDecision, PolicyEngine};
 use electro_core::types::error::ElectroError;
 use electro_core::types::session::SessionContext;
 use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
-use futures::stream::{FuturesUnordered, StreamExt};
-use tokio::sync::Semaphore;
-use tracing::{debug, info, warn};
+use tokio_util::sync::CancellationToken;
 
 // ── Parallel execution types ────────────────────────────────────────────
 
@@ -50,115 +48,92 @@ const DEFAULT_MAX_CONCURRENT: usize = 5;
 /// parallel execution of independent groups.
 ///
 /// Independent tool calls run concurrently (up to `max_concurrent`), while
-/// dependent tool calls within a group run sequentially. Results are always
-/// returned in the original call order regardless of execution order.
-///
-/// Individual tool failures do **not** abort other parallel executions —
-/// each result carries its own `Result`.
+/// dependent tool calls within a group run sequentially.
 pub async fn execute_tools_parallel(
     tool_calls: Vec<ToolCall>,
     tools: &[Arc<dyn Tool>],
     session: &SessionContext,
     max_concurrent: usize,
+    cancel: Option<CancellationToken>,
+    scheduler_opt: Option<Arc<crate::scheduler::Scheduler>>,
 ) -> Vec<ToolCallResult> {
     if tool_calls.is_empty() {
         return Vec::new();
     }
 
-    let max_concurrent = if max_concurrent == 0 {
-        DEFAULT_MAX_CONCURRENT
-    } else {
-        max_concurrent
-    };
-
+    // Detect dependencies and group tool calls.
     let groups = detect_dependencies(&tool_calls);
 
-    info!(
-        total_calls = tool_calls.len(),
-        groups = groups.len(),
-        max_concurrent,
-        "Executing tool calls with dependency grouping"
-    );
-
-    // Pre-allocate results with None placeholders; we fill them by index.
+    // Results from each group call.
     let mut results: Vec<Option<ToolCallResult>> = (0..tool_calls.len()).map(|_| None).collect();
 
-    let semaphore = Arc::new(Semaphore::new(max_concurrent));
+    // Use provided scheduler or create a temporary one for this batch.
+    let scheduler = scheduler_opt.unwrap_or_else(|| {
+        Arc::new(crate::scheduler::Scheduler::new().with_concurrency_limit(max_concurrent))
+    });
 
-    // Each group contains indices of tool calls that are mutually dependent
-    // and must run sequentially within the group.  Different groups are
-    // independent and may run concurrently.
-    let mut group_futures = FuturesUnordered::new();
+    let mut futures = Vec::new();
 
-    for group in &groups {
-        let group = group.clone();
-        let semaphore = Arc::clone(&semaphore);
+    for (group_idx, group) in groups.into_iter().enumerate() {
+        let meta = crate::scheduler::TaskMetadata {
+            id: format!("group_{}_{}", session.session_id, group_idx),
+            priority: crate::scheduler::Priority::Normal,
+            chat_id: session.chat_id.clone(),
+            created_at: std::time::Instant::now(),
+        };
+
+        let scheduler = scheduler.clone();
         let tools = tools.to_vec();
         let session = session.clone();
-        let calls: Vec<(usize, ToolCall)> = group
-            .iter()
-            .map(|&idx| (idx, tool_calls[idx].clone()))
-            .collect();
+        let tool_calls = tool_calls.clone();
+        let cancel = cancel.clone();
 
-        let is_parallel = group.len() == 1;
-        if is_parallel {
-            debug!(
-                tool = %calls[0].1.name,
-                id = %calls[0].1.id,
-                "Scheduling independent tool call"
-            );
-        } else {
-            let names: Vec<&str> = calls.iter().map(|(_, c)| c.name.as_str()).collect();
-            debug!(
-                tools = ?names,
-                "Scheduling sequential dependency group"
-            );
-        }
-
-        group_futures.push(tokio::spawn(async move {
-            let mut group_results = Vec::new();
-            for (idx, call) in calls {
-                // Acquire a semaphore permit to respect max_concurrent
-                let _permit = match semaphore.acquire().await {
-                    Ok(permit) => permit,
-                    Err(_) => {
-                        warn!("Tool semaphore closed, returning partial results");
-                        return group_results;
+        futures.push(async move {
+            scheduler.submit(meta, async move {
+                let mut group_results = Vec::new();
+                for idx in group {
+                    // Check for cancellation before each tool call in the group
+                    if let Some(ref c) = cancel {
+                        if c.is_cancelled() {
+                            break;
+                        }
                     }
-                };
 
-                let output = execute_tool(&call.name, call.arguments, &tools, &session).await;
+                    let call = &tool_calls[idx];
+                    let tool_instance = tools.iter().find(|t| t.name() == call.name);
 
-                group_results.push((
-                    idx,
-                    ToolCallResult {
-                        id: call.id,
-                        output,
-                    },
-                ));
-            }
-            group_results
-        }));
+                    let output = if let Some(tool) = tool_instance {
+                        let ctx = ToolContext {
+                            workspace_path: session.workspace_path.clone(),
+                            session_id: session.session_id.clone(),
+                            chat_id: session.chat_id.clone(),
+                        };
+                        let input = ToolInput {
+                            name: call.name.clone(),
+                            arguments: call.arguments.clone(),
+                        };
+                        tool.execute(input, &ctx).await
+                    } else {
+                        Err(ElectroError::Tool(format!("Tool '{}' not found", call.name)))
+                    };
+                    group_results.push((idx, ToolCallResult { id: call.id.clone(), output }));
+                }
+                group_results
+            }).await
+        });
     }
 
-    // Collect all results from spawned tasks
-    while let Some(join_result) = group_futures.next().await {
-        match join_result {
-            Ok(group_results) => {
-                for (idx, result) in group_results {
-                    results[idx] = Some(result);
-                }
-            }
-            Err(join_err) => {
-                // A spawned task panicked — this should not happen in normal
-                // operation. Log and leave corresponding slots as errors.
-                warn!(error = %join_err, "Tool execution task panicked");
-            }
+    // Run all groups in parallel. The scheduler handles concurrency and priority.
+    let all_results = futures::future::join_all(futures).await;
+
+    // Flatten results back into the ordered vector.
+    for group_res in all_results {
+        for (idx, res) in group_res {
+            results[idx] = Some(res);
         }
     }
 
-    // Unwrap all Option<ToolCallResult> — any None slots are from panicked
-    // tasks, which we convert to error results.
+    // Convert any missing results (due to cancellation) to error results.
     results
         .into_iter()
         .enumerate()
@@ -166,7 +141,7 @@ pub async fn execute_tools_parallel(
             opt.unwrap_or_else(|| ToolCallResult {
                 id: tool_calls[idx].id.clone(),
                 output: Err(ElectroError::Tool(
-                    "Tool execution task panicked".to_string(),
+                    "Tool execution task cancelled or failed".to_string(),
                 )),
             })
         })
@@ -1178,7 +1153,7 @@ mod tests {
         let tools: Vec<Arc<dyn Tool>> = vec![Arc::new(MockTool::new("t"))];
         let session = make_session();
 
-        let results = execute_tools_parallel(vec![], &tools, &session, 5).await;
+        let results = execute_tools_parallel(vec![], &tools, &session, 5, None, None).await;
         assert!(results.is_empty());
     }
 
@@ -1194,7 +1169,7 @@ mod tests {
             arguments: serde_json::json!({}),
         }];
 
-        let results = execute_tools_parallel(calls, &tools, &session, 5).await;
+        let results = execute_tools_parallel(calls, &tools, &session, 5, None, None).await;
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].id, "tc_1");
         assert!(results[0].output.is_ok());
@@ -1225,7 +1200,7 @@ mod tests {
             },
         ];
 
-        let results = execute_tools_parallel(calls, &tools, &session, 5).await;
+        let results = execute_tools_parallel(calls, &tools, &session, 5, None, None).await;
 
         assert_eq!(results.len(), 2);
         assert!(results[0].output.is_ok());
@@ -1258,7 +1233,7 @@ mod tests {
             },
         ];
 
-        let results = execute_tools_parallel(calls, &tools, &session, 5).await;
+        let results = execute_tools_parallel(calls, &tools, &session, 5, None, None).await;
         assert_eq!(results.len(), 3);
         assert_eq!(results[0].id, "first");
         assert_eq!(results[1].id, "second");
@@ -1292,7 +1267,7 @@ mod tests {
             },
         ];
 
-        let results = execute_tools_parallel(calls, &tools, &session, 5).await;
+        let results = execute_tools_parallel(calls, &tools, &session, 5, None, None).await;
         assert_eq!(results.len(), 3);
 
         // First and third should succeed
@@ -1319,7 +1294,7 @@ mod tests {
             arguments: serde_json::json!({}),
         }];
 
-        let results = execute_tools_parallel(calls, &tools, &session, 5).await;
+        let results = execute_tools_parallel(calls, &tools, &session, 5, None, None).await;
         assert_eq!(results.len(), 1);
         assert!(results[0].output.is_err());
         let err = results[0].output.as_ref().unwrap_err();
@@ -1339,7 +1314,7 @@ mod tests {
         }];
 
         // max_concurrent=0 should not panic, should use default
-        let results = execute_tools_parallel(calls, &tools, &session, 0).await;
+        let results = execute_tools_parallel(calls, &tools, &session, 0, None, None).await;
         assert_eq!(results.len(), 1);
         assert!(results[0].output.is_ok());
     }
@@ -1366,7 +1341,7 @@ mod tests {
             })
             .collect();
 
-        let results = execute_tools_parallel(calls, &tools, &session, 2).await;
+        let results = execute_tools_parallel(calls, &tools, &session, 2, None, None).await;
 
         assert_eq!(results.len(), 6);
         for r in &results {
@@ -1675,7 +1650,7 @@ mod tests {
             },
         ];
 
-        let results = execute_tools_parallel(calls, &tools, &session, 5).await;
+        let results = execute_tools_parallel(calls, &tools, &session, 5, None, None).await;
         assert_eq!(results.len(), 2);
         assert_eq!(results[0].id, "tc_r");
         assert_eq!(results[0].output.as_ref().unwrap().content, "read result");

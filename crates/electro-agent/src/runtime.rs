@@ -16,7 +16,7 @@ use electro_core::types::message::{
 };
 use electro_core::types::model_registry;
 use electro_core::types::session::SessionContext;
-use electro_core::{Memory, Provider, Tool};
+use electro_core::{Memory, MemoryEntryType, Tool, ToolContext, ToolInput, ToolOutput};
 use tracing::{debug, info, warn};
 
 /// Image MIME types that vision-capable models can process.
@@ -35,7 +35,7 @@ use crate::budget::{self, BudgetTracker, ModelPricing};
 use crate::circuit_breaker::CircuitBreaker;
 use crate::context::build_context;
 use crate::done_criteria::{self, DoneCriteria};
-use crate::executor::execute_tool;
+use crate::executor::{execute_tool, execute_tools_parallel, ToolCall};
 use crate::learning;
 use crate::prompted_tool_calling::{self, PromptedToolResult};
 use crate::self_correction::FailureTracker;
@@ -48,7 +48,7 @@ pub type SharedMode = Arc<RwLock<ElectroMode>>;
 const MAX_TOOL_OUTPUT_CHARS: usize = 30_000;
 
 /// Shared pending-message queue (same type as electro_tools::PendingMessages).
-pub type PendingMessages = Arc<std::sync::Mutex<HashMap<String, Vec<String>>>>;
+pub type PendingMessages = Arc<dashmap::DashMap<String, Vec<String>>>;
 
 /// The core agent runtime. Holds references to the AI provider, memory backend,
 /// and registered tools.
@@ -92,6 +92,8 @@ pub struct AgentRuntime {
     shared_mode: Option<SharedMode>,
     /// Shared memory strategy (Lambda or Echo). Updated at runtime by /memory command.
     shared_memory_strategy: Option<Arc<RwLock<electro_core::types::config::MemoryStrategy>>>,
+    /// Global task/tool scheduler for O(1) ready-queue management.
+    scheduler: Arc<crate::scheduler::Scheduler>,
 }
 
 impl AgentRuntime {
@@ -125,6 +127,7 @@ impl AgentRuntime {
             parallel_phases: false,
             shared_mode: None,
             shared_memory_strategy: None,
+            scheduler: Arc::new(crate::scheduler::Scheduler::new()),
         }
     }
 
@@ -192,6 +195,7 @@ impl AgentRuntime {
             parallel_phases: false,
             shared_mode: None,
             shared_memory_strategy: None,
+            scheduler: Arc::new(crate::scheduler::Scheduler::new()),
         }
     }
 
@@ -1315,29 +1319,40 @@ impl AgentRuntime {
             // Execute each tool call and collect results
             let mut tool_result_parts: Vec<ContentPart> = Vec::new();
 
-            let tool_total = tool_uses.len() as u32;
-            for (tool_index, (tool_use_id, tool_name, arguments)) in tool_uses.iter().enumerate() {
+            // Prepare parallel tool calls
+            let tool_calls: Vec<ToolCall> = tool_uses
+                .iter()
+                .map(|(tool_use_id, tool_name, arguments)| ToolCall {
+                    id: tool_use_id.clone(),
+                    name: tool_name.clone(),
+                    arguments: arguments.clone(),
+                })
+                .collect();
+
+            // Determine max concurrency from execution profile or default
+            let max_concurrent = execution_profile
+                .as_ref()
+                .map_or(DEFAULT_MAX_CONCURRENT, |p| p.max_concurrent_tools);
+
+            // Execute in parallel using the shared O(1) scheduler
+            let results = execute_tools_parallel(
+                tool_calls,
+                &self.tools,
+                session,
+                max_concurrent,
+                cancel.clone(),
+                Some(self.scheduler.clone()),
+            )
+            .await;
+
+            // Process results sequentially to handle side-effects (status, vision, tracking)
+            for (tool_index, (tool_use_id, tool_name, _arguments)) in tool_uses.iter().enumerate() {
                 turn_tools_used = turn_tools_used.saturating_add(1);
-                info!(tool = %tool_name, id = %tool_use_id, "Executing tool call");
-
-                // ── Status: ExecutingTool ────────────────────────
-                if let Some(ref tx) = status_tx {
-                    let tname = tool_name.clone();
-                    let tidx = tool_index as u32;
-                    let ttotal = tool_total;
-                    tx.send_modify(|s| {
-                        s.phase = AgentTaskPhase::ExecutingTool {
-                            round: rounds as u32,
-                            tool_name: tname,
-                            tool_index: tidx,
-                            tool_total: ttotal,
-                        };
-                    });
-                }
-
-                let result = execute_tool(tool_name, arguments.clone(), &self.tools, session).await;
-
-                if tool_name == "send_message" && result.as_ref().is_ok_and(|o| !o.is_error) {
+                
+                // Get pre-computed result
+                let parallel_result = &results[tool_index];
+                
+                if tool_name == "send_message" && parallel_result.output.as_ref().is_ok_and(|o| !o.is_error) {
                     send_message_used = true;
                 }
 
@@ -1345,77 +1360,40 @@ impl AgentRuntime {
                     .as_ref()
                     .map_or(MAX_TOOL_OUTPUT_CHARS, |p| p.max_tool_output_chars);
 
-                let (mut content, is_error) = match result {
+                let (mut content, is_error) = match &parallel_result.output {
                     Ok(output) => {
                         let c = if output.content.len() > output_cap {
-                            // V2: use compress_tool_output for smarter truncation
                             if self.v2_optimizations {
-                                compress_tool_output(
-                                    tool_name,
-                                    &output.content,
-                                    output_cap / 4, // convert chars to approx tokens
-                                )
+                                compress_tool_output(tool_name, &output.content, output_cap / 4)
                             } else {
-                                // Safe UTF-8 truncation: find a char boundary at or before output_cap
                                 let safe_end = if output.content.is_char_boundary(output_cap) {
                                     output_cap
                                 } else {
-                                    output.content[..output_cap]
-                                        .char_indices()
-                                        .last()
-                                        .map(|(i, _)| i)
-                                        .unwrap_or(0)
+                                    output.content[..output_cap].char_indices().last().map(|(i, _)| i).unwrap_or(0)
                                 };
-                                let truncated = &output.content[..safe_end];
-                                format!(
-                                    "{}...\n\n[Output truncated — {} chars total]",
-                                    truncated,
-                                    output.content.len()
-                                )
+                                format!("{}...\n\n[Output truncated]", &output.content[..safe_end])
                             }
                         } else {
-                            output.content
+                            output.content.clone()
                         };
                         (c, output.is_error)
                     }
                     Err(e) => (format!("Tool execution error: {}", e), true),
                 };
 
-                // ── Self-Correction: track failures and inject strategy rotation ──
+                // Tracking and injection
                 if is_error {
                     failure_tracker.record_failure(tool_name, &content);
-                    debug!(
-                        tool = %tool_name,
-                        consecutive_failures = failure_tracker.failure_count(tool_name),
-                        "Tool failure recorded"
-                    );
-
-                    // If the tool has exceeded the failure threshold, append
-                    // a strategy rotation prompt to guide the LLM away from
-                    // the broken approach.
-                    if let Some(rotation_prompt) = failure_tracker.format_rotation_prompt(tool_name)
-                    {
-                        info!(
-                            tool = %tool_name,
-                            failures = failure_tracker.failure_count(tool_name),
-                            "Strategy rotation triggered"
-                        );
-                        content.push_str(&rotation_prompt);
+                    if let Some(rotation) = failure_tracker.format_rotation_prompt(tool_name) {
+                        content.push_str(&rotation);
                     }
                 } else {
                     failure_tracker.record_success(tool_name);
                 }
 
-                // V2: Structured failure classification
                 if self.v2_optimizations && is_error {
                     let structured = classify_tool_failure(tool_name, None, &content);
-                    let compact = structured.to_context_string();
-                    content.push_str(&format!("\n\n{}", compact));
-                    debug!(
-                        kind = %structured.kind,
-                        retryable = %structured.retryable,
-                        "V2: Structured failure classified"
-                    );
+                    content.push_str(&format!("\n\n{}", structured.to_context_string()));
                 }
 
                 tool_result_parts.push(ContentPart::ToolResult {
@@ -1424,31 +1402,14 @@ impl AgentRuntime {
                     is_error,
                 });
 
-                // ── Vision injection: feed tool images back to the LLM ──
-                // If the tool produced an image (e.g., browser screenshot),
-                // inject it as a ContentPart::Image so the LLM can see it.
-                // Only works with vision-capable models; silently skipped otherwise.
+                // Vision injection
                 if let Some(tool_ref) = self.tools.iter().find(|t| t.name() == tool_name) {
                     if let Some(img) = tool_ref.take_last_image() {
                         if model_supports_vision(&self.model) {
-                            info!(
-                                tool = %tool_name,
-                                media_type = %img.media_type,
-                                bytes = img.data.len(),
-                                "Injecting tool image for vision analysis"
-                            );
                             tool_result_parts.push(ContentPart::Image {
                                 media_type: img.media_type,
                                 data: img.data,
                             });
-                        } else {
-                            warn!(
-                                model = %self.model,
-                                "Tool produced image but model '{}' does not support vision — image discarded. \
-                                 Switch to a vision-capable model (claude-3.5-sonnet, gpt-4o, gemini-2.0-flash, etc.) \
-                                 for visual browser interaction.",
-                                self.model
-                            );
                         }
                     }
                 }
@@ -1457,41 +1418,28 @@ impl AgentRuntime {
             // Inject pending user messages into the last tool result so the
             // LLM sees them without any extra API call or tool invocation.
             if let Some(ref pq) = pending {
-                if let Ok(mut map) = pq.lock() {
-                    if let Some(msgs) = map.remove(&msg.chat_id) {
-                        if !msgs.is_empty() {
-                            info!(
-                                count = msgs.len(),
-                                chat_id = %msg.chat_id,
-                                "Injecting pending user messages into tool results"
-                            );
-                            let notice = format!(
-                                "\n\n---\n[PENDING MESSAGES — the user sent new message(s) while you were working. \
-                                 Acknowledge with send_message and decide: finish current task or stop and respond.]\n{}",
-                                msgs.iter()
-                                    .enumerate()
-                                    .map(|(i, t)| format!("  {}. \"{}\"", i + 1, t))
-                                    .collect::<Vec<_>>()
-                                    .join("\n")
-                            );
-                            // Append to last ToolResult (not .last_mut() which
-                            // could be an Image from vision injection).
-                            if let Some(ContentPart::ToolResult { content, .. }) = tool_result_parts
-                                .iter_mut()
-                                .rfind(|p| matches!(p, ContentPart::ToolResult { .. }))
-                            {
-                                content.push_str(&notice);
-                            }
+                if let Some((_, msgs)) = pq.remove(&msg.chat_id) {
+                    if !msgs.is_empty() {
+                        let notice = format!(
+                            "\n\n---\n[PENDING MESSAGES — the user sent new message(s) while you were working. \
+                             Acknowledge with send_message and decide: finish current task or stop and respond.]\n{}",
+                            msgs.iter()
+                                .enumerate()
+                                .map(|(i, t)| format!("  {}. \"{}\"", i + 1, t))
+                                .collect::<Vec<_>>()
+                                .join("\n")
+                        );
+                        if let Some(ContentPart::ToolResult { content, .. }) = tool_result_parts
+                            .iter_mut()
+                            .rfind(|p| matches!(p, ContentPart::ToolResult { .. }))
+                        {
+                            content.push_str(&notice);
                         }
                     }
                 }
             }
 
             // ── Verification Engine ────────────────────────────────
-            // Append a verification hint to the last tool result so the
-            // LLM reviews outputs before proceeding. This is a zero-cost
-            // prompt injection — no extra API call.
-            // V2: Skip verification for Trivial/Simple tasks with VerifyMode::Skip or RuleBased
             let should_verify = if let Some(ref profile) = execution_profile {
                 !matches!(profile.verify_mode, VerifyMode::Skip)
             } else {

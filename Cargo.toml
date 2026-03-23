@@ -101,6 +101,7 @@ dirs = "6"
 pin-project-lite = "0.2"
 tokio-stream = "0.1"
 tokio-util = { version = "0.7", features = ["rt"] }
+dashmap = "6"
 
 # Internal crates
 electro-core = { path = "crates/electro-core" }

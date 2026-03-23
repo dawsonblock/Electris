@@ -15,7 +15,6 @@ use crate::jsonrpc::{
 use crate::transport::Transport;
 use async_trait::async_trait;
 use electro_core::types::error::ElectroError;
-use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
@@ -30,7 +29,7 @@ const MAX_LINE_LENGTH: usize = 10 * 1024 * 1024;
 
 pub struct StdioTransport {
     stdin: Arc<Mutex<tokio::process::ChildStdin>>,
-    pending: Arc<Mutex<HashMap<u64, oneshot::Sender<JsonRpcResponse>>>>,
+    pending: Arc<dashmap::DashMap<u64, oneshot::Sender<JsonRpcResponse>>>,
     next_id: AtomicU64,
     alive: Arc<AtomicBool>,
     timeout: Duration,
@@ -102,8 +101,7 @@ impl StdioTransport {
         })?;
 
         let alive = Arc::new(AtomicBool::new(true));
-        let pending: Arc<Mutex<HashMap<u64, oneshot::Sender<JsonRpcResponse>>>> =
-            Arc::new(Mutex::new(HashMap::new()));
+        let pending = Arc::new(dashmap::DashMap::<u64, tokio::sync::oneshot::Sender<JsonRpcResponse>>::new());
 
         let server_name = config.name.clone();
 
@@ -128,8 +126,7 @@ impl StdioTransport {
                         match parse_incoming(&line) {
                             Some(IncomingMessage::Response(resp)) => {
                                 if let Some(id) = resp.id {
-                                    let mut map = reader_pending.lock().await;
-                                    if let Some(sender) = map.remove(&id) {
+                                    if let Some((_, sender)) = reader_pending.remove(&id) {
                                         let _ = sender.send(resp);
                                     } else {
                                         debug!(
@@ -164,18 +161,20 @@ impl StdioTransport {
                         reader_alive.store(false, Ordering::Relaxed);
                         warn!(server = %reader_name, "MCP server stdout closed — process exited");
                         // Wake up all pending requests with an error
-                        let mut map = reader_pending.lock().await;
-                        for (_, sender) in map.drain() {
-                            let _ = sender.send(JsonRpcResponse {
-                                jsonrpc: "2.0".to_string(),
-                                id: None,
-                                result: None,
-                                error: Some(crate::jsonrpc::JsonRpcError {
-                                    code: -1,
-                                    message: "MCP server process exited".to_string(),
-                                    data: None,
-                                }),
-                            });
+                        let ids: Vec<_> = reader_pending.iter().map(|r| *r.key()).collect();
+                        for id in ids {
+                            if let Some((_, sender)) = reader_pending.remove(&id) {
+                                let _ = sender.send(JsonRpcResponse {
+                                    jsonrpc: "2.0".to_string(),
+                                    id: None,
+                                    result: None,
+                                    error: Some(crate::jsonrpc::JsonRpcError {
+                                        code: -1,
+                                        message: "MCP server process exited".to_string(),
+                                        data: None,
+                                    }),
+                                });
+                            }
                         }
                         break;
                     }
@@ -241,7 +240,7 @@ impl Transport for StdioTransport {
         let request = JsonRpcRequest::new(id, method, params);
 
         let (tx, rx) = oneshot::channel();
-        self.pending.lock().await.insert(id, tx);
+        self.pending.insert(id, tx);
 
         // Serialize and write to stdin
         let json = serde_json::to_string(&request).map_err(|e| {
@@ -251,21 +250,21 @@ impl Transport for StdioTransport {
         {
             let mut stdin = self.stdin.lock().await;
             if let Err(e) = stdin.write_all(json.as_bytes()).await {
-                self.pending.lock().await.remove(&id);
+                self.pending.remove(&id);
                 return Err(ElectroError::Tool(format!(
                     "Failed to write to MCP server '{}' stdin: {}",
                     self.server_name, e
                 )));
             }
             if let Err(e) = stdin.write_all(b"\n").await {
-                self.pending.lock().await.remove(&id);
+                self.pending.remove(&id);
                 return Err(ElectroError::Tool(format!(
                     "Failed to write newline to MCP server '{}': {}",
                     self.server_name, e
                 )));
             }
             if let Err(e) = stdin.flush().await {
-                self.pending.lock().await.remove(&id);
+                self.pending.remove(&id);
                 return Err(ElectroError::Tool(format!(
                     "Failed to flush MCP server '{}' stdin: {}",
                     self.server_name, e
@@ -285,7 +284,7 @@ impl Transport for StdioTransport {
             }
             Err(_) => {
                 // Timeout
-                self.pending.lock().await.remove(&id);
+                self.pending.remove(&id);
                 Err(ElectroError::Tool(format!(
                     "MCP call to '{}' method '{}' timed out after {}s",
                     self.server_name,
@@ -364,8 +363,7 @@ impl Transport for StdioTransport {
             }
         }
         // Cancel all pending requests
-        let mut map = self.pending.lock().await;
-        map.clear();
+        self.pending.clear();
         Ok(())
     }
 }

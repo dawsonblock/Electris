@@ -23,6 +23,7 @@ serde_yaml.workspace = true
 sha2.workspace = true
 hex.workspace = true
 url.workspace = true
+dashmap.workspace = true
 
 [dev-dependencies]
 electro-test-utils.workspace = true

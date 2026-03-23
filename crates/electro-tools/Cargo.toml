@@ -23,6 +23,7 @@ dirs.workspace = true
 zeroize.workspace = true
 regex.workspace = true
 url.workspace = true
+dashmap.workspace = true
 
 # Optional: Browser automation
 chromiumoxide = { workspace = true, optional = true }

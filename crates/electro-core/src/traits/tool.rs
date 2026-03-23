@@ -28,6 +28,7 @@ pub struct ToolOutputImage {
 }
 
 /// Context provided to tools during execution
+#[derive(Debug, Clone)]
 pub struct ToolContext {
     pub workspace_path: std::path::PathBuf,
     pub session_id: String,

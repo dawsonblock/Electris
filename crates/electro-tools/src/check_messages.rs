@@ -7,8 +7,8 @@
 //! waiting. Messages are cleared after reading so the agent won't see
 //! duplicates on subsequent checks.
 
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use dashmap::DashMap;
 
 use async_trait::async_trait;
 use electro_core::policy::CapabilityPolicy;
@@ -16,7 +16,7 @@ use electro_core::types::error::ElectroError;
 use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
 
 /// Shared pending-message queue. Maps chat_id → list of message texts.
-pub type PendingMessages = Arc<Mutex<HashMap<String, Vec<String>>>>;
+pub type PendingMessages = Arc<DashMap<String, Vec<String>>>;
 
 pub struct CheckMessagesTool {
     pending: PendingMessages,
@@ -64,8 +64,7 @@ impl Tool for CheckMessagesTool {
         _input: ToolInput,
         ctx: &ToolContext,
     ) -> Result<ToolOutput, ElectroError> {
-        let mut pending = self.pending.lock().unwrap_or_else(|e| e.into_inner());
-        let messages = pending.remove(&ctx.chat_id).unwrap_or_default();
+        let messages = self.pending.remove(&ctx.chat_id).map(|(_, v)| v).unwrap_or_default();
 
         let content = if messages.is_empty() {
             "No pending messages.".to_string()

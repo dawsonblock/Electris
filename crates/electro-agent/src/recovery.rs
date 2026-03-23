@@ -2,8 +2,8 @@
 //! tasks in SQLite, loads their checkpoints, classifies the appropriate
 //! recovery action, and formats user notifications for resumed tasks.
 
-use std::collections::HashSet;
-use std::sync::Mutex;
+use dashmap::DashMap;
+use std::sync::Arc; // This was added in the user's diff, keeping it.
 
 use chrono::{DateTime, Duration, Utc};
 use electro_core::types::error::ElectroError;
@@ -86,14 +86,14 @@ pub struct RecoveryPlan {
 /// recovered to prevent double-recovery across multiple calls.
 pub struct RecoveryManager {
     /// Set of task IDs that have already been recovered (idempotency guard).
-    recovered_ids: Mutex<HashSet<String>>,
+    recovered_ids: DashMap<String, ()>,
 }
 
 impl RecoveryManager {
     /// Create a new `RecoveryManager` with an empty recovered-ID set.
     pub fn new() -> Self {
         Self {
-            recovered_ids: Mutex::new(HashSet::new()),
+            recovered_ids: DashMap::new(),
         }
     }
 
@@ -119,18 +119,12 @@ impl RecoveryManager {
 
         for task in &incomplete {
             // Idempotency: skip tasks we have already recovered
-            {
-                let recovered = self
-                    .recovered_ids
-                    .lock()
-                    .map_err(|e| ElectroError::Internal(format!("Lock poisoned: {e}")))?;
-                if recovered.contains(&task.task_id) {
-                    debug!(
-                        task_id = %task.task_id,
-                        "Skipping already-recovered task"
-                    );
-                    continue;
-                }
+            if self.recovered_ids.contains_key(&task.task_id) {
+                debug!(
+                    task_id = %task.task_id,
+                    "Skipping already-recovered task"
+                );
+                continue;
             }
 
             let action = classify_recovery(task);
@@ -154,13 +148,7 @@ impl RecoveryManager {
             );
 
             // Mark this task as recovered
-            {
-                let mut recovered = self
-                    .recovered_ids
-                    .lock()
-                    .map_err(|e| ElectroError::Internal(format!("Lock poisoned: {e}")))?;
-                recovered.insert(task.task_id.clone());
-            }
+            self.recovered_ids.insert(task.task_id.clone(), ());
 
             plans.push(plan);
         }
@@ -187,15 +175,12 @@ impl RecoveryManager {
 
     /// Check whether a task has already been recovered.
     pub fn is_recovered(&self, task_id: &str) -> bool {
-        self.recovered_ids
-            .lock()
-            .map(|set| set.contains(task_id))
-            .unwrap_or(false)
+        self.recovered_ids.contains_key(task_id)
     }
 
     /// Return the number of tasks that have been recovered so far.
     pub fn recovered_count(&self) -> usize {
-        self.recovered_ids.lock().map(|set| set.len()).unwrap_or(0)
+        self.recovered_ids.len()
     }
 
     /// Mark incomplete tasks as abandoned in the task queue. This updates

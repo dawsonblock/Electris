@@ -44,6 +44,8 @@ pub struct ExecutionProfile {
     pub max_tool_output_chars: usize,
     /// Whether to skip the tool loop entirely (Trivial fast-path).
     pub skip_tool_loop: bool,
+    /// Maximum concurrent tools for this task.
+    pub max_concurrent_tools: usize,
 }
 
 impl ExecutionProfile {
@@ -56,6 +58,7 @@ impl ExecutionProfile {
             max_iterations: 1,
             max_tool_output_chars: 5_000,
             skip_tool_loop: true,
+            max_concurrent_tools: 1,
         }
     }
 
@@ -68,6 +71,7 @@ impl ExecutionProfile {
             max_iterations: 2,
             max_tool_output_chars: 5_000,
             skip_tool_loop: false,
+            max_concurrent_tools: 3,
         }
     }
 
@@ -80,6 +84,7 @@ impl ExecutionProfile {
             max_iterations: 5,
             max_tool_output_chars: 15_000,
             skip_tool_loop: false,
+            max_concurrent_tools: 5,
         }
     }
 
@@ -92,6 +97,7 @@ impl ExecutionProfile {
             max_iterations: 10,
             max_tool_output_chars: 30_000,
             skip_tool_loop: false,
+            max_concurrent_tools: 10,
         }
     }
 }
