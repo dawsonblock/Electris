@@ -1,4 +1,5 @@
 use crate::app::server::commands::handle_slash_command;
+use crate::app::server::dispatcher::state::WorkerState;
 use crate::app::server::slot::ChatSlot;
 use electro_core::types::message::{ChatMessage, InboundMessage, OutboundMessage};
 use electro_core::types::session::SessionContext;
@@ -7,7 +8,15 @@ use electro_runtime::RuntimeHandle;
 use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use std::time::{Duration, Instant};
+use tokio::sync::{Mutex, RwLock};
+
+pub enum WorkerOutcome {
+    Success { response: String },
+    Timeout,
+    Cancelled,
+    Failed { error: String },
+}
 
 #[allow(clippy::too_many_arguments)]
 pub fn create_chat_worker(
@@ -16,16 +25,16 @@ pub fn create_chat_worker(
     runtime: &RuntimeHandle,
     memory: &Arc<dyn Memory>,
     tools_template: &[Arc<dyn Tool>],
-    custom_registry: &Arc<electro_tools::CustomToolRegistry>,
-    #[cfg(feature = "mcp")] mcp_mgr: &Arc<electro_mcp::McpManager>,
-    max_turns: usize,
-    max_ctx: usize,
-    max_rounds: usize,
+    _custom_registry: &Arc<electro_tools::CustomToolRegistry>,
+    #[cfg(feature = "mcp")] _mcp_mgr: &Arc<electro_mcp::McpManager>,
+    _max_turns: usize,
+    _max_ctx: usize,
+    _max_rounds: usize,
     max_task_duration: u64,
-    max_spend: f64,
-    v2_opt: bool,
-    pp_opt: bool,
-    base_url: &Option<String>,
+    _max_spend: f64,
+    _v2_opt: bool,
+    _pp_opt: bool,
+    _base_url: &Option<String>,
     ws_path: &std::path::Path,
     pending_clone: &electro_tools::PendingMessages,
     setup_tokens_clone: &electro_gateway::SetupTokenStore,
@@ -33,8 +42,8 @@ pub fn create_chat_worker(
     #[cfg(feature = "browser")] login_sessions_clone: &Arc<
         Mutex<HashMap<String, electro_tools::browser_session::InteractiveBrowseSession>>,
     >,
-    usage_store_clone: &Arc<dyn UsageStore>,
-    hive_clone: &Option<Arc<electro_hive::Hive>>,
+    _usage_store_clone: &Arc<dyn UsageStore>,
+    _hive_clone: &Option<Arc<electro_hive::Hive>>,
     personality_locked: bool,
     #[cfg(feature = "browser")] browser_ref_worker: &Option<Arc<electro_tools::BrowserTool>>,
     vault: &Option<Arc<dyn Vault>>,
@@ -42,19 +51,23 @@ pub fn create_chat_worker(
     let (chat_tx, mut chat_rx) = tokio::sync::mpsc::channel::<InboundMessage>(4);
     let interrupt = Arc::new(AtomicBool::new(false));
     let is_heartbeat = Arc::new(AtomicBool::new(false));
-    let is_busy = Arc::new(AtomicBool::new(false));
     let current_task = Arc::new(std::sync::Mutex::new(String::new()));
-    let cancel_token = tokio_util::sync::CancellationToken::new();
+    let cancel_token = Arc::new(std::sync::Mutex::new(
+        tokio_util::sync::CancellationToken::new(),
+    ));
+    let state = Arc::new(RwLock::new(WorkerState::Idle));
+    let last_active = Arc::new(Mutex::new(Instant::now()));
 
     let worker_chat_id = worker_chat_id.to_string();
     let sender = sender.clone();
     let memory = memory.clone();
     let runtime = runtime.clone();
-    let is_busy_worker = is_busy.clone();
     let current_task_worker = current_task.clone();
     let interrupt_worker = interrupt.clone();
     let is_heartbeat_worker = is_heartbeat.clone();
     let cancel_token_worker = cancel_token.clone();
+    let state_worker = state.clone();
+    let last_active_worker = last_active.clone();
     let tools_template = tools_template.to_vec();
     let ws_path = ws_path.to_path_buf();
     let pending_messages = pending_clone.clone();
@@ -62,14 +75,11 @@ pub fn create_chat_worker(
     let pending_raw_keys = pending_raw_keys_clone.clone();
     #[cfg(feature = "browser")]
     let login_sessions = login_sessions_clone.clone();
-    let _usage_store = usage_store_clone.clone();
-    let _hive = hive_clone.clone();
     #[cfg(feature = "browser")]
     let browser_ref = browser_ref_worker.clone();
     let vault = vault.clone();
 
     tokio::spawn(async move {
-        // Restore conversation history
         let history_key = format!("chat_history:{}", worker_chat_id);
         let mut persistent_history: Vec<ChatMessage> = match memory.get(&history_key).await {
             Ok(Some(entry)) => serde_json::from_str(&entry.content).unwrap_or_default(),
@@ -78,6 +88,15 @@ pub fn create_chat_worker(
 
         while let Some(msg) = chat_rx.recv().await {
             is_heartbeat_worker.store(msg.channel == "heartbeat", Ordering::Relaxed);
+            *last_active_worker.lock().await = Instant::now();
+
+            tracing::info!(
+                chat_id = %msg.chat_id,
+                request_id = %msg.id,
+                channel = %msg.channel,
+                "worker request dequeued"
+            );
+
             if handle_slash_command(
                 &msg,
                 &sender,
@@ -96,6 +115,7 @@ pub fn create_chat_worker(
             )
             .await
             {
+                *state_worker.write().await = WorkerState::Idle;
                 is_heartbeat_worker.store(false, Ordering::Relaxed);
                 continue;
             }
@@ -110,16 +130,29 @@ pub fn create_chat_worker(
                         parse_mode: None,
                     })
                     .await;
+                *state_worker.write().await = WorkerState::Failed;
                 is_heartbeat_worker.store(false, Ordering::Relaxed);
                 continue;
             };
 
             interrupt_worker.store(false, Ordering::Relaxed);
-            is_busy_worker.store(true, Ordering::Relaxed);
-
             if let Ok(mut task) = current_task_worker.lock() {
                 *task = msg.text.clone().unwrap_or_default();
             }
+
+            let request_id = msg.id.clone();
+            let request_cancel = tokio_util::sync::CancellationToken::new();
+            if let Ok(mut cancel_slot) = cancel_token_worker.lock() {
+                *cancel_slot = request_cancel.clone();
+            }
+            *state_worker.write().await = WorkerState::Running {
+                request_id: request_id.clone(),
+            };
+            tracing::info!(
+                chat_id = %msg.chat_id,
+                request_id = %request_id,
+                "worker request started"
+            );
 
             let mut session_ctx = SessionContext {
                 session_id: worker_chat_id.clone(),
@@ -130,20 +163,57 @@ pub fn create_chat_worker(
                 workspace_path: ws_path.clone(),
             };
 
-            let result = agent
-                .process_message(
+            let (status_tx, mut status_rx) =
+                tokio::sync::watch::channel(electro_agent::AgentTaskStatus::default());
+            let request_id_for_logs = request_id.clone();
+            let chat_id_for_logs = msg.chat_id.clone();
+            let lifecycle_logger = tokio::spawn(async move {
+                let mut last_phase = None;
+                while status_rx.changed().await.is_ok() {
+                    let status = status_rx.borrow().clone();
+                    if Some(status.phase.clone()) == last_phase {
+                        continue;
+                    }
+                    match &status.phase {
+                        electro_agent::AgentTaskPhase::CallingProvider { round } => tracing::info!(
+                            chat_id = %chat_id_for_logs,
+                            request_id = %request_id_for_logs,
+                            round = *round,
+                            "provider_called"
+                        ),
+                        electro_agent::AgentTaskPhase::ExecutingTool {
+                            round, tool_name, ..
+                        } => tracing::info!(
+                            chat_id = %chat_id_for_logs,
+                            request_id = %request_id_for_logs,
+                            round = *round,
+                            tool = %tool_name,
+                            "tool_called"
+                        ),
+                        _ => {}
+                    }
+                    last_phase = Some(status.phase);
+                }
+            });
+
+            let result = tokio::time::timeout(
+                Duration::from_secs(max_task_duration),
+                agent.process_message(
                     &msg,
                     &mut session_ctx,
                     Some(interrupt_worker.clone()),
                     Some(pending_messages.clone()),
                     None,
-                    None,
-                    Some(cancel_token_worker.clone()),
-                )
-                .await;
+                    Some(status_tx),
+                    Some(request_cancel.clone()),
+                ),
+            )
+            .await;
+            lifecycle_logger.abort();
 
-            match result {
-                Ok((reply, _usage)) => {
+            let outcome = match result {
+                Ok(Ok((reply, _usage))) => {
+                    let response_text = reply.text.clone();
                     let _ = sender.send_message(reply).await;
                     persistent_history = session_ctx.history.clone();
 
@@ -162,23 +232,90 @@ pub fn create_chat_worker(
                             })
                             .await;
                     }
+
+                    WorkerOutcome::Success {
+                        response: response_text,
+                    }
                 }
-                Err(error) => {
+                Ok(Err(error)) => {
+                    if request_cancel.is_cancelled() || interrupt_worker.load(Ordering::Relaxed) {
+                        WorkerOutcome::Cancelled
+                    } else {
+                        WorkerOutcome::Failed {
+                            error: error.to_string(),
+                        }
+                    }
+                }
+                Err(_) => {
+                    request_cancel.cancel();
+                    WorkerOutcome::Timeout
+                }
+            };
+
+            match &outcome {
+                WorkerOutcome::Success { response } => {
+                    tracing::info!(
+                        chat_id = %msg.chat_id,
+                        request_id = %request_id,
+                        response_len = response.len(),
+                        "worker request completed"
+                    );
+                    *state_worker.write().await = WorkerState::Idle;
+                }
+                WorkerOutcome::Timeout => {
+                    tracing::warn!(
+                        chat_id = %msg.chat_id,
+                        request_id = %request_id,
+                        timeout_secs = max_task_duration,
+                        "worker request timed out"
+                    );
                     let _ = sender
                         .send_message(OutboundMessage {
                             chat_id: msg.chat_id.clone(),
-                            text: format!("Error: {}", error),
+                            text: format!(
+                                "Error: request timed out after {} seconds",
+                                max_task_duration
+                            ),
                             reply_to: Some(msg.id.clone()),
                             parse_mode: None,
                         })
                         .await;
+                    *state_worker.write().await = WorkerState::Idle;
+                }
+                WorkerOutcome::Cancelled => {
+                    tracing::info!(
+                        chat_id = %msg.chat_id,
+                        request_id = %request_id,
+                        "worker request cancelled"
+                    );
+                    *state_worker.write().await = WorkerState::Idle;
+                }
+                WorkerOutcome::Failed { error } => {
+                    tracing::error!(
+                        chat_id = %msg.chat_id,
+                        request_id = %request_id,
+                        error = %error,
+                        "worker request failed"
+                    );
+                    let _ = sender
+                        .send_message(OutboundMessage {
+                            chat_id: msg.chat_id.clone(),
+                            text: format!("Error: {error}"),
+                            reply_to: Some(msg.id.clone()),
+                            parse_mode: None,
+                        })
+                        .await;
+                    *state_worker.write().await = WorkerState::Failed;
                 }
             }
 
             if let Ok(mut task) = current_task_worker.lock() {
                 task.clear();
             }
-            is_busy_worker.store(false, Ordering::Relaxed);
+            if let Ok(mut cancel_slot) = cancel_token_worker.lock() {
+                *cancel_slot = tokio_util::sync::CancellationToken::new();
+            }
+            *last_active_worker.lock().await = Instant::now();
             is_heartbeat_worker.store(false, Ordering::Relaxed);
         }
     });
@@ -187,15 +324,17 @@ pub fn create_chat_worker(
         tx: chat_tx,
         interrupt,
         is_heartbeat,
-        is_busy,
         current_task,
         cancel_token,
+        state,
+        last_active,
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::create_chat_worker;
+    use crate::app::server::dispatcher::state::WorkerState;
     use electro_agent::AgentRuntime;
     use electro_core::types::config::{ElectroMode, MemoryStrategy};
     use electro_core::{Channel, Memory, UsageStore};
@@ -227,6 +366,7 @@ mod tests {
             Arc::new(RwLock::new(MemoryStrategy::Lambda)),
         );
         runtime.set_agent(agent).await;
+        runtime.set_active_provider("anthropic").await;
 
         let usage_store: Arc<dyn UsageStore> = Arc::new(
             electro_memory::SqliteUsageStore::new("sqlite::memory:")
@@ -292,5 +432,6 @@ mod tests {
             .expect("worker should persist chat history");
         assert!(history.content.contains("hello worker"));
         assert!(history.content.contains("worker reply"));
+        assert!(matches!(&*slot.state.read().await, WorkerState::Idle));
     }
 }

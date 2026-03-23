@@ -1,6 +1,6 @@
+use crate::app::agent::{build_provider_config, resolve_credentials};
 use crate::app::onboarding::build_system_prompt;
 use crate::app::server::dispatcher::run_message_dispatcher;
-use crate::app::agent::{build_provider_config, resolve_credentials};
 use crate::app::{create_agent, create_provider, init_core_stack, init_tools, load_hive_config};
 use crate::bootstrap::SecretCensorChannel;
 use crate::daemon::remove_pid_file;
@@ -21,7 +21,7 @@ pub mod worker;
 pub async fn start_server(
     config: &mut ElectroConfig,
     personality: String,
-    cli_mode: String,
+    _cli_mode: String,
 ) -> Result<()> {
     // ── Parse personality mode ──
     let electro_mode = match personality.to_lowercase().as_str() {
@@ -227,6 +227,7 @@ pub async fn start_server(
                     )
                     .await;
                     runtime.set_agent(agent).await;
+                    runtime.set_active_provider(provider_name).await;
                 }
                 Err(error) => {
                     tracing::warn!(%provider_name, %error, "Failed to initialize server agent");

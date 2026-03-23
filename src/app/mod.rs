@@ -1,15 +1,16 @@
 pub mod agent;
+pub mod chat;
+pub mod cli;
+pub mod config_service;
 pub mod init;
 pub mod logging;
-pub mod security;
-pub mod tools;
-pub mod chat;
-pub mod server;
 pub mod onboarding;
-pub mod cli;
+pub mod security;
+pub mod server;
+pub mod tools;
 
 pub use agent::{create_agent, create_provider};
-pub use init::{init_core_stack, CoreStack, check_hive_enabled, load_hive_config};
+pub use init::{check_hive_enabled, init_core_stack, load_hive_config};
 pub use logging::{init_logging, init_panic_hook};
 pub use security::enforce_security_policy;
 pub use tools::init_tools;

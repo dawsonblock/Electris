@@ -11,18 +11,18 @@ use tokio::sync::Mutex;
 pub async fn handle_slash_command(
     msg: &InboundMessage,
     sender: &Arc<dyn Channel>,
-    _runtime: &RuntimeHandle,
+    runtime: &RuntimeHandle,
     memory: &Arc<dyn Memory>,
-    history: &[ChatMessage],
-    tools_template: &[Arc<dyn Tool>],
+    _history: &[ChatMessage],
+    _tools_template: &[Arc<dyn Tool>],
     setup_tokens: &electro_gateway::SetupTokenStore,
-    pending_raw_keys: &Arc<Mutex<HashSet<String>>>,
-    #[cfg(feature = "browser")] login_sessions: &Arc<
+    _pending_raw_keys: &Arc<Mutex<HashSet<String>>>,
+    #[cfg(feature = "browser")] _login_sessions: &Arc<
         Mutex<HashMap<String, electro_tools::browser_session::InteractiveBrowseSession>>,
     >,
-    #[cfg(feature = "browser")] browser_ref: &Option<Arc<electro_tools::BrowserTool>>,
-    vault: &Option<Arc<dyn Vault>>,
-    personality_locked: bool,
+    #[cfg(feature = "browser")] _browser_ref: &Option<Arc<electro_tools::BrowserTool>>,
+    _vault: &Option<Arc<dyn Vault>>,
+    _personality_locked: bool,
 ) -> bool {
     let text = msg.text.as_deref().unwrap_or_default().trim();
     if !text.starts_with('/') && !text.starts_with("enc:v1:") {
@@ -36,7 +36,7 @@ pub async fn handle_slash_command(
     if text.starts_with("enc:v1:") {
         let blob_b64 = &text["enc:v1:".len()..];
         match decrypt_otk_blob(blob_b64, setup_tokens, &chat_id).await {
-            Ok(key_text) => {
+            Ok(_key_text) => {
                 // Key detection and validation logic...
                 let _ = sender
                     .send_message(OutboundMessage {
@@ -79,7 +79,14 @@ pub async fn handle_slash_command(
             true
         }
         "/model" => {
-            let resp = handle_model_command(&args);
+            let args_vec = parts[1..]
+                .iter()
+                .map(|part| (*part).to_string())
+                .collect::<Vec<_>>();
+            let resp = match handle_model_command(runtime.clone(), &args_vec).await {
+                Ok(resp) => resp,
+                Err(error) => format!("Error: {error}"),
+            };
             let _ = sender
                 .send_message(OutboundMessage {
                     chat_id,
