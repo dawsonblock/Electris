@@ -18,6 +18,15 @@ pub enum WorkerOutcome {
     Failed { error: String },
 }
 
+fn emit_outbound_event(runtime: &RuntimeHandle, event: OutboundEvent) {
+    if let Err(error) = runtime.emit_outbound_event(event) {
+        tracing::debug!(
+            ?error,
+            "Skipping outbound event broadcast without subscribers"
+        );
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn create_chat_worker(
     worker_chat_id: &str,
@@ -139,9 +148,12 @@ pub fn create_chat_worker(
             }
 
             let request_id = msg.id.clone();
-            let _ = runtime.emit_outbound_event(OutboundEvent::Started {
-                request_id: request_id.clone(),
-            });
+            emit_outbound_event(
+                &runtime,
+                OutboundEvent::Started {
+                    request_id: request_id.clone(),
+                },
+            );
             let request_cancel = tokio_util::sync::CancellationToken::new();
             let mut cancel_slot = cancel_token_worker.lock().await;
             cancel_slot.cancel();
@@ -217,10 +229,13 @@ pub fn create_chat_worker(
                 Ok(Ok((reply, _usage))) => {
                     let response_text = reply.text.clone();
                     let _ = sender.send_message(reply).await;
-                    let _ = runtime.emit_outbound_event(OutboundEvent::Completed {
-                        request_id: request_id.clone(),
-                        content: response_text.clone(),
-                    });
+                    emit_outbound_event(
+                        &runtime,
+                        OutboundEvent::Completed {
+                            request_id: request_id.clone(),
+                            content: response_text.clone(),
+                        },
+                    );
                     persistent_history = session_ctx.history.clone();
 
                     if let Ok(history_json) = serde_json::to_string(&persistent_history) {
@@ -248,19 +263,25 @@ pub fn create_chat_worker(
                         WorkerOutcome::Cancelled
                     } else {
                         let error = error.to_string();
-                        let _ = runtime.emit_outbound_event(OutboundEvent::Failed {
-                            request_id: request_id.clone(),
-                            error: error.clone(),
-                        });
+                        emit_outbound_event(
+                            &runtime,
+                            OutboundEvent::Failed {
+                                request_id: request_id.clone(),
+                                error: error.clone(),
+                            },
+                        );
                         WorkerOutcome::Failed { error }
                     }
                 }
                 Err(_) => {
                     request_cancel.cancel();
-                    let _ = runtime.emit_outbound_event(OutboundEvent::Failed {
-                        request_id: request_id.clone(),
-                        error: format!("request timed out after {} seconds", max_task_duration),
-                    });
+                    emit_outbound_event(
+                        &runtime,
+                        OutboundEvent::Failed {
+                            request_id: request_id.clone(),
+                            error: format!("request timed out after {} seconds", max_task_duration),
+                        },
+                    );
                     WorkerOutcome::Timeout
                 }
             };
