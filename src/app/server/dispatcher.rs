@@ -1,12 +1,12 @@
 use crate::app::onboarding::build_system_prompt;
 use crate::app::server::slot::ChatSlot;
-use electro_agent::AgentRuntime;
-use electro_core::types::config::{ElectroConfig, MemoryStrategy};
+use crate::app::server::context::WorkerServices;
+use electro_core::Tenant;
 use electro_core::types::message::{
     ChatMessage, CompletionRequest, InboundMessage, MessageContent, Role,
 };
-use electro_core::{Channel, Memory, Tool, UsageStore, Vault};
-use std::collections::{HashMap, HashSet};
+use electro_core::Channel;
+use std::collections::HashMap;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -16,52 +16,15 @@ pub async fn run_message_dispatcher(
     mut msg_rx: tokio::sync::mpsc::Receiver<InboundMessage>,
     msg_tx: tokio::sync::mpsc::Sender<InboundMessage>,
     primary_channel: Option<Arc<dyn Channel>>,
-    agent_state: Arc<tokio::sync::RwLock<Option<Arc<AgentRuntime>>>>,
-    memory: Arc<dyn Memory>,
-    tools: Vec<Arc<dyn Tool>>,
-    custom_tool_registry: Arc<electro_tools::CustomToolRegistry>,
-    #[cfg(feature = "mcp")] mcp_manager: Arc<electro_mcp::McpManager>,
-    config: ElectroConfig,
-    pending_messages: electro_tools::PendingMessages,
-    setup_tokens: electro_gateway::SetupTokenStore,
-    pending_raw_keys: Arc<Mutex<HashSet<String>>>,
-    #[cfg(feature = "browser")] login_sessions: Arc<
-        Mutex<HashMap<String, electro_tools::browser_session::InteractiveBrowseSession>>,
-    >,
-    usage_store: Arc<dyn UsageStore>,
-    hive_instance: Option<Arc<electro_hive::Hive>>,
-    shared_mode: electro_tools::SharedMode,
-    shared_memory_strategy: Arc<tokio::sync::RwLock<MemoryStrategy>>,
-    workspace_path: std::path::PathBuf,
-    personality_locked: bool,
-    tenant_manager: Arc<electro_core::tenant_impl::TenantManager>,
-    #[cfg(feature = "browser")] browser_tool_ref: Option<Arc<electro_tools::BrowserTool>>,
-    vault: Option<Arc<dyn Vault>>,
+    services: WorkerServices,
 ) {
     if let Some(sender) = primary_channel {
-        let agent_state_clone = agent_state.clone();
-        let memory_clone = memory.clone();
-        let tools_clone = tools.clone();
-        let custom_registry_clone = custom_tool_registry.clone();
-        #[cfg(feature = "mcp")]
-        let mcp_manager_clone = mcp_manager.clone();
-
-        let config_clone = config.clone();
-        let ws_path = workspace_path.clone();
-        let pending_clone = pending_messages.clone();
-        let setup_tokens_clone = setup_tokens.clone();
-        let pending_raw_keys_clone = pending_raw_keys.clone();
-        #[cfg(feature = "browser")]
-        let login_sessions_clone = login_sessions.clone();
-        let usage_store_clone = usage_store.clone();
-        let hive_clone = hive_instance.clone();
-        let _tenant_mgr_clone = tenant_manager.clone();
-        let tenant_isolation_enabled = config.electro.tenant_isolation;
-
         let chat_slots: Arc<Mutex<HashMap<String, ChatSlot>>> =
             Arc::new(Mutex::new(HashMap::new()));
 
         let msg_tx_redispatch = msg_tx.clone();
+        let services_clone = services.clone();
+
         tokio::spawn(async move {
             while let Some(inbound) = msg_rx.recv().await {
                 let chat_id = inbound.chat_id.clone();
@@ -91,7 +54,7 @@ pub async fn run_message_dispatcher(
 
                         if slot.is_busy.load(Ordering::Relaxed) {
                             if let Some(text) = inbound.text.as_deref() {
-                                if let Ok(mut pq) = pending_clone.lock() {
+                                if let Ok(mut pq) = services_clone.pending_messages.lock() {
                                     pq.entry(chat_id.clone())
                                         .or_default()
                                         .push(text.to_string());
@@ -106,11 +69,12 @@ pub async fn run_message_dispatcher(
                             let icpt_interrupt = slot.interrupt.clone();
                             let icpt_cancel = slot.cancel_token.clone();
                             let icpt_task = slot.current_task.clone();
-                            let icpt_agent_state = agent_state_clone.clone();
+                            let icpt_services = services_clone.clone();
+
                             tokio::spawn(async move {
                                 let task_desc =
                                     icpt_task.lock().map(|t| t.clone()).unwrap_or_default();
-                                let agent_guard = icpt_agent_state.read().await;
+                                let agent_guard = icpt_services.agent_state.read().await;
                                 if let Some(agent) = agent_guard.as_ref() {
                                     let provider = agent.provider_arc();
                                     let model = agent.model().to_string();
@@ -161,40 +125,23 @@ pub async fn run_message_dispatcher(
                 }
 
                 // Ensure a worker exists for this chat_id
-                let chat_workspace = ws_path.clone();
+                let chat_workspace = if services_clone.config.electro.tenant_isolation {
+                    let tid = services_clone
+                        .tenant_manager
+                        .resolve_tenant(&inbound.channel, &inbound.user_id)
+                        .await
+                        .unwrap_or_else(|_| electro_core::traits::TenantId::default_tenant());
+                    services_clone.tenant_manager.workspace_path(&tid)
+                } else {
+                    services_clone.workspace_root.clone()
+                };
 
                 let slot = slots.entry(chat_id.clone()).or_insert_with(|| {
                     crate::app::server::worker::create_chat_worker(
                         &chat_id,
                         &sender,
-                        &agent_state_clone,
-                        &memory_clone,
-                        &tools_clone,
-                        &custom_registry_clone,
-                        #[cfg(feature = "mcp")]
-                        &mcp_manager_clone,
-                        config_clone.agent.max_turns,
-                        config_clone.agent.max_context_tokens,
-                        config_clone.agent.max_tool_rounds,
-                        config_clone.agent.max_task_duration_secs,
-                        config_clone.agent.max_spend_usd,
-                        config_clone.agent.v2_optimizations,
-                        config_clone.agent.parallel_phases,
-                        &config_clone.provider.base_url,
-                        &chat_workspace,
-                        &pending_clone,
-                        &setup_tokens_clone,
-                        &pending_raw_keys_clone,
-                        #[cfg(feature = "browser")]
-                        &login_sessions_clone,
-                        &usage_store_clone,
-                        &hive_clone,
-                        shared_mode.clone(),
-                        shared_memory_strategy.clone(),
-                        personality_locked,
-                        #[cfg(feature = "browser")]
-                        &browser_tool_ref,
-                        &vault,
+                        &services_clone,
+                        chat_workspace,
                     )
                 });
 

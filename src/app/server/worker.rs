@@ -1,45 +1,16 @@
 use crate::app::server::commands::handle_slash_command;
+use crate::app::server::context::WorkerServices;
 use crate::app::server::slot::ChatSlot;
-use electro_agent::AgentRuntime;
-use electro_core::types::config::MemoryStrategy;
-use electro_core::types::message::{ChatMessage, InboundMessage};
-use electro_core::{Channel, Memory, Tool, UsageStore, Vault};
-use std::collections::{HashMap, HashSet};
+use electro_core::types::message::InboundMessage;
+use electro_core::Channel;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use tokio::sync::Mutex;
 
-#[allow(clippy::too_many_arguments)]
 pub fn create_chat_worker(
     worker_chat_id: &str,
     sender: &Arc<dyn Channel>,
-    agent_state: &Arc<tokio::sync::RwLock<Option<Arc<AgentRuntime>>>>,
-    memory: &Arc<dyn Memory>,
-    tools_template: &[Arc<dyn Tool>],
-    _custom_registry: &Arc<electro_tools::CustomToolRegistry>,
-    #[cfg(feature = "mcp")] _mcp_mgr: &Arc<electro_mcp::McpManager>,
-    _max_turns: usize,
-    _max_ctx: usize,
-    _max_rounds: usize,
-    _max_task_duration: u64,
-    _max_spend: f64,
-    _v2_opt: bool,
-    _pp_opt: bool,
-    _base_url: &Option<String>,
-    ws_path: &std::path::Path,
-    pending_clone: &electro_tools::PendingMessages,
-    setup_tokens_clone: &electro_gateway::SetupTokenStore,
-    pending_raw_keys_clone: &Arc<Mutex<HashSet<String>>>,
-    #[cfg(feature = "browser")] login_sessions_clone: &Arc<
-        Mutex<HashMap<String, electro_tools::browser_session::InteractiveBrowseSession>>,
-    >,
-    usage_store_clone: &Arc<dyn UsageStore>,
-    hive_clone: &Option<Arc<electro_hive::Hive>>,
-    shared_mode: electro_tools::SharedMode,
-    shared_memory_strategy: Arc<tokio::sync::RwLock<MemoryStrategy>>,
-    personality_locked: bool,
-    #[cfg(feature = "browser")] browser_ref_worker: &Option<Arc<electro_tools::BrowserTool>>,
-    vault: &Option<Arc<dyn Vault>>,
+    services: &WorkerServices,
+    ws_path: std::path::PathBuf,
 ) -> ChatSlot {
     let (chat_tx, mut chat_rx) = tokio::sync::mpsc::channel::<InboundMessage>(4);
     let interrupt = Arc::new(AtomicBool::new(false));
@@ -50,54 +21,36 @@ pub fn create_chat_worker(
 
     let worker_chat_id = worker_chat_id.to_string();
     let sender = sender.clone();
-    let memory = memory.clone();
-    let agent_state = agent_state.clone();
+    let services = services.clone();
     let is_busy_worker = is_busy.clone();
-    let _current_task_worker = current_task.clone();
-    let _interrupt_worker = interrupt.clone();
-    let _is_heartbeat_worker = is_heartbeat.clone();
-    let _cancel_token_worker = cancel_token.clone();
-    let tools_template = tools_template.to_vec();
-    let _ws_path = ws_path.to_path_buf();
-    let _pending_messages = pending_clone.clone();
-    let setup_tokens = setup_tokens_clone.clone();
-    let pending_raw_keys = pending_raw_keys_clone.clone();
-    #[cfg(feature = "browser")]
-    let login_sessions = login_sessions_clone.clone();
-    let _usage_store = usage_store_clone.clone();
-    let _hive = hive_clone.clone();
-    let shared_mode = shared_mode.clone();
-    let shared_memory_strategy = shared_memory_strategy.clone();
-    #[cfg(feature = "browser")]
-    let browser_ref = browser_ref_worker.clone();
-    let vault = vault.clone();
+    let _ws_path = ws_path;
 
     tokio::spawn(async move {
-        // Restore conversation history
-        let history_key = format!("chat_history:{}", worker_chat_id);
-        let persistent_history: Vec<ChatMessage> = match memory.get(&history_key).await {
-            Ok(Some(entry)) => serde_json::from_str(&entry.content).unwrap_or_default(),
-            _ => Vec::new(),
-        };
-
         while let Some(msg) = chat_rx.recv().await {
+            // Restore conversation history (simplified for now, handled in deeper layers usually)
+            let history_key = format!("chat_history:{}", worker_chat_id);
+            let persistent_history = match services.memory.get(&history_key).await {
+                Ok(Some(entry)) => serde_json::from_str(&entry.content).unwrap_or_default(),
+                _ => Vec::new(),
+            };
+
             if handle_slash_command(
                 &msg,
                 &sender,
-                &agent_state,
-                &memory,
+                &services.agent_state,
+                &services.memory,
                 &persistent_history,
-                &tools_template,
-                &setup_tokens,
-                &pending_raw_keys,
+                &services.tools_template,
+                &services.setup_tokens,
+                &services.pending_raw_keys,
                 #[cfg(feature = "browser")]
-                &login_sessions,
+                &services.login_sessions,
                 #[cfg(feature = "browser")]
-                &browser_ref,
-                &vault,
-                &shared_mode,
-                &shared_memory_strategy,
-                personality_locked,
+                &services.browser_tool_ref,
+                &services.vault,
+                &services.shared_mode,
+                &services.shared_memory_strategy,
+                services.personality_locked,
             )
             .await
             {
@@ -106,7 +59,8 @@ pub fn create_chat_worker(
 
             // Regular message processing...
             is_busy_worker.store(true, Ordering::Relaxed);
-            // ... (Full implementation of agent loop, usage tracking, memory update) ...
+            // In a real implementation, we would call agent_state.read().await.process_message(...)
+            // For now, we maintain the structural integrity of the refactor.
             is_busy_worker.store(false, Ordering::Relaxed);
         }
     });

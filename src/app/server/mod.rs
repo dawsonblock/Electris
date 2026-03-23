@@ -6,14 +6,17 @@ use anyhow::Result;
 use electro_core::types::config::{ElectroConfig, ElectroMode, MemoryStrategy};
 use electro_core::types::message::InboundMessage;
 use electro_core::Channel;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
 pub mod commands;
+pub mod context;
 pub mod dispatcher;
 pub mod slot;
 pub mod worker;
+
+use self::context::WorkerServices;
 
 pub async fn start_server(
     config: &mut ElectroConfig,
@@ -204,33 +207,30 @@ pub async fn start_server(
     // ── Tenant Manager ──
     let tenant_manager = Arc::new(electro_core::tenant_impl::create_tenant_manager(&config));
 
+    // ── Worker Context ──
+    let services = WorkerServices::new(
+        &core,
+        &config,
+        tools,
+        custom_tool_registry,
+        #[cfg(feature = "mcp")]
+        mcp_manager,
+        hive_instance,
+        tenant_manager,
+        workspace_path,
+        shared_mode,
+        shared_memory_strategy,
+        personality_locked,
+        #[cfg(feature = "browser")]
+        browser_tool_ref,
+    );
+
     // ── Message Dispatcher Loop ──
     run_message_dispatcher(
         msg_rx,
         msg_tx.clone(),
         primary_channel,
-        agent_state.clone(),
-        core.memory.clone(),
-        tools,
-        custom_tool_registry,
-        #[cfg(feature = "mcp")]
-        mcp_manager,
-        config.clone(),
-        pending_messages,
-        core.setup_tokens,
-        Arc::new(Mutex::new(HashSet::new())), // pending_raw_keys
-        #[cfg(feature = "browser")]
-        Arc::new(Mutex::new(HashMap::new())), // login_sessions
-        core.usage_store.clone(),
-        hive_instance,
-        shared_mode,
-        shared_memory_strategy,
-        workspace_path,
-        personality_locked,
-        tenant_manager,
-        #[cfg(feature = "browser")]
-        browser_tool_ref,
-        core.vault.clone(),
+        services,
     )
     .await;
 

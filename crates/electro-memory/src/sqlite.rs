@@ -230,18 +230,14 @@ impl Memory for SqliteMemory {
         query: &str,
         opts: SearchOpts,
     ) -> Result<Vec<MemoryEntry>, ElectroError> {
-        // Split multi-word queries into individual word matches (AND logic).
-        // Each word is matched against both content AND id fields.
-        // This handles cases like "cat name" matching "cat's name" in content.
         let words: Vec<&str> = query.split_whitespace().collect();
 
-        let mut sql = String::from(
-            "SELECT id, content, metadata, timestamp, session_id, entry_type \
-             FROM memory_entries WHERE 1=1",
-        );
-        let mut bind_values: Vec<String> = Vec::new();
+        let mut sql = String::with_capacity(256);
+        sql.push_str("SELECT id, content, metadata, timestamp, session_id, entry_type FROM memory_entries WHERE 1=1");
 
-        for word in &words {
+        let mut bind_values: Vec<String> = Vec::with_capacity(words.len() * 2 + 3);
+
+        for word in words {
             sql.push_str(" AND (content LIKE ? OR id LIKE ?)");
             let pattern = format!("%{word}%");
             bind_values.push(pattern.clone());
@@ -254,19 +250,16 @@ impl Memory for SqliteMemory {
         }
         if let Some(ref et) = opts.entry_type_filter {
             sql.push_str(" AND entry_type = ?");
-            bind_values.push(entry_type_to_str(et).to_string());
+            bind_values.push(entry_type_to_str(et).to_owned());
         }
 
         sql.push_str(" ORDER BY timestamp DESC LIMIT ?");
-        bind_values.push(opts.limit.to_string());
 
-        // We have to build the query dynamically because the number of binds
-        // varies. sqlx's `query_as` doesn't support that ergonomically for raw
-        // SQL, so we use `sqlx::query` and bind manually.
         let mut q = sqlx::query_as::<_, MemoryRow>(&sql);
         for v in &bind_values {
             q = q.bind(v);
         }
+        q = q.bind(opts.limit as i64);
 
         let rows: Vec<MemoryRow> = timeout(DB_TIMEOUT, q.fetch_all(&self.pool))
             .await
