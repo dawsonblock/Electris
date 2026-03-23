@@ -84,18 +84,24 @@ pub fn build_provider_config(
     key: &str,
     model: &str,
 ) -> ProviderConfig {
-    let (all_keys, saved_base_url) = load_active_provider_keys()
-        .map(|(_, keys, _, burl)| {
-            let valid: Vec<String> = keys
-                .into_iter()
-                .filter(|candidate| !is_placeholder_key(candidate))
-                .collect();
-            (valid, burl)
+    let (all_keys, effective_base_url) = load_active_provider_keys()
+        .and_then(|(saved_name, keys, _, burl)| {
+            if saved_name == pname {
+                let valid: Vec<String> = keys
+                    .into_iter()
+                    .filter(|candidate| !is_placeholder_key(candidate))
+                    .collect();
+                Some((valid, burl))
+            } else {
+                None
+            }
         })
-        .unwrap_or_else(|| (vec![key.to_string()], None));
-
-    let effective_base_url = saved_base_url.or_else(|| config.provider.base_url.clone());
-
+        .unwrap_or_else(|| {
+            (
+                vec![key.to_string()],
+                config.provider.base_url.clone(),
+            )
+        });
     ProviderConfig {
         name: Some(pname.to_string()),
         api_key: Some(key.to_string()),
