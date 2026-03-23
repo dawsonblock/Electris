@@ -1,9 +1,9 @@
 use crate::app::cli::{handle_model_command, list_configured_providers, remove_provider};
 use crate::app::onboarding::decrypt_otk_blob;
 use electro_agent::AgentRuntime;
-use electro_core::types::config::{ElectroMode, MemoryStrategy};
+use electro_core::types::config::MemoryStrategy;
 use electro_core::types::message::{ChatMessage, InboundMessage, OutboundMessage};
-use electro_core::{Channel, Memory, Provider, Tool, Vault};
+use electro_core::{Channel, Memory, Tool, Vault};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -12,20 +12,20 @@ use tokio::sync::Mutex;
 pub async fn handle_slash_command(
     msg: &InboundMessage,
     sender: &Arc<dyn Channel>,
-    agent_state: &Arc<tokio::sync::RwLock<Option<Arc<AgentRuntime>>>>,
+    _agent_state: &Arc<tokio::sync::RwLock<Option<Arc<AgentRuntime>>>>,
     memory: &Arc<dyn Memory>,
-    history: &[ChatMessage],
-    tools_template: &[Arc<dyn Tool>],
+    _history: &[ChatMessage],
+    _tools_template: &[Arc<dyn Tool>],
     setup_tokens: &electro_gateway::SetupTokenStore,
-    pending_raw_keys: &Arc<Mutex<HashSet<String>>>,
-    #[cfg(feature = "browser")] login_sessions: &Arc<
+    _pending_raw_keys: &Arc<Mutex<HashSet<String>>>,
+    #[cfg(feature = "browser")] _login_sessions: &Arc<
         Mutex<HashMap<String, electro_tools::browser_session::InteractiveBrowseSession>>,
     >,
-    #[cfg(feature = "browser")] browser_ref: &Option<Arc<electro_tools::BrowserTool>>,
-    vault: &Option<Arc<dyn Vault>>,
-    shared_mode: &electro_tools::SharedMode,
-    shared_memory_strategy: &Arc<tokio::sync::RwLock<MemoryStrategy>>,
-    personality_locked: bool,
+    #[cfg(feature = "browser")] _browser_ref: &Option<Arc<electro_tools::BrowserTool>>,
+    _vault: &Option<Arc<dyn Vault>>,
+    _shared_mode: &electro_tools::SharedMode,
+    _shared_memory_strategy: &Arc<tokio::sync::RwLock<MemoryStrategy>>,
+    _personality_locked: bool,
 ) -> bool {
     let text = msg.text.as_deref().unwrap_or_default().trim();
     if !text.starts_with('/') && !text.starts_with("enc:v1:") {
@@ -36,10 +36,9 @@ pub async fn handle_slash_command(
     let msg_id = msg.id.clone();
 
     // Handle encrypted blobs from onboarding flow
-    if text.starts_with("enc:v1:") {
-        let blob_b64 = &text["enc:v1:".len()..];
+    if let Some(blob_b64) = text.strip_prefix("enc:v1:") {
         match decrypt_otk_blob(blob_b64, setup_tokens, &chat_id).await {
-            Ok(key_text) => {
+            Ok(_key_text) => {
                 // Key detection and validation logic...
                 let _ = sender
                     .send_message(OutboundMessage {

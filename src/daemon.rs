@@ -78,7 +78,7 @@ pub fn stop_daemon() -> Result<bool, String> {
                 ))
             }
         }
-        Some(pid) => {
+        Some(_pid) => {
             // Stale PID file — clean up
             remove_pid_file();
             Ok(false)

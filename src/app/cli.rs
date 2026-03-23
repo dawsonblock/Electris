@@ -1,8 +1,7 @@
 use crate::cli::{Commands, ConfigCommands, SkillCommands};
 use electro_core::config::credentials::{
-    credentials_path, is_placeholder_key, load_active_provider_keys, load_credentials_file,
+    credentials_path, is_placeholder_key, load_credentials_file,
 };
-use electro_core::types::model_registry::{available_models_for_provider, is_vision_model};
 
 pub fn format_user_error(e: &electro_core::types::error::ElectroError) -> String {
     use electro_core::types::error::ElectroError;

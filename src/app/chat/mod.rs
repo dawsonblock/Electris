@@ -315,16 +315,17 @@ async fn restore_history(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn handle_chat_command(
     lower: &str,
     text: &str,
     core: &crate::app::CoreStack,
-    agent_opt: &mut Option<electro_agent::AgentRuntime>,
-    config: &ElectroConfig,
-    tools: &[Arc<dyn electro_core::Tool>],
-    hive_enabled: &bool,
-    shared_mode: &Arc<tokio::sync::RwLock<electro_core::types::config::ElectroMode>>,
-    shared_memory_strategy: &Arc<tokio::sync::RwLock<MemoryStrategy>>,
+    _agent_opt: &mut Option<electro_agent::AgentRuntime>,
+    _config: &ElectroConfig,
+    _tools: &[Arc<dyn electro_core::Tool>],
+    _hive_enabled: &bool,
+    _shared_mode: &Arc<tokio::sync::RwLock<electro_core::types::config::ElectroMode>>,
+    _shared_memory_strategy: &Arc<tokio::sync::RwLock<MemoryStrategy>>,
 ) -> Result<bool> {
     if lower == "/addkey" {
         let otk = core.setup_tokens.generate("cli").await;
@@ -360,6 +361,7 @@ async fn handle_chat_command(
     Ok(false)
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn handle_encrypted_blob(
     text: &str,
     core: &crate::app::CoreStack,

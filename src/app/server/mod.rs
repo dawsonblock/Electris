@@ -1,9 +1,5 @@
-use crate::app::onboarding::build_system_prompt;
 use crate::app::server::dispatcher::run_message_dispatcher;
-use crate::app::{
-    check_hive_enabled, create_agent, create_provider, init_core_stack, init_tools,
-    load_hive_config,
-};
+use crate::app::{init_core_stack, init_tools, load_hive_config};
 use crate::bootstrap::SecretCensorChannel;
 use crate::daemon::remove_pid_file;
 use anyhow::Result;
@@ -22,7 +18,7 @@ pub mod worker;
 pub async fn start_server(
     config: &mut ElectroConfig,
     personality: String,
-    cli_mode: String,
+    _cli_mode: String,
 ) -> Result<()> {
     // ── Parse personality mode ──
     let electro_mode = match personality.to_lowercase().as_str() {

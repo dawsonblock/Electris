@@ -1,6 +1,4 @@
 use base64::Engine;
-use electro_core::config::credentials::{is_placeholder_key, load_credentials_file};
-use electro_core::types::model_registry::default_model;
 use std::sync::Arc;
 
 pub async fn validate_provider_key(
@@ -103,11 +101,4 @@ pub async fn decrypt_otk_blob(
         .decrypt(nonce, ciphertext)
         .map_err(|_| "Decryption failed".to_string())?;
     String::from_utf8(plaintext).map_err(|_| "Decrypted data is not valid UTF-8.".to_string())
-}
-
-pub async fn send_with_retry(
-    sender: &dyn electro_core::Channel,
-    reply: electro_core::types::message::OutboundMessage,
-) {
-    // ... retry logic ...
 }

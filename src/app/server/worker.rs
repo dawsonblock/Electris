@@ -2,9 +2,7 @@ use crate::app::server::commands::handle_slash_command;
 use crate::app::server::slot::ChatSlot;
 use electro_agent::AgentRuntime;
 use electro_core::types::config::MemoryStrategy;
-use electro_core::types::message::{
-    ChatMessage, InboundMessage, MessageContent, OutboundMessage, Role,
-};
+use electro_core::types::message::{ChatMessage, InboundMessage};
 use electro_core::{Channel, Memory, Tool, UsageStore, Vault};
 use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -18,16 +16,16 @@ pub fn create_chat_worker(
     agent_state: &Arc<tokio::sync::RwLock<Option<Arc<AgentRuntime>>>>,
     memory: &Arc<dyn Memory>,
     tools_template: &[Arc<dyn Tool>],
-    custom_registry: &Arc<electro_tools::CustomToolRegistry>,
-    #[cfg(feature = "mcp")] mcp_mgr: &Arc<electro_mcp::McpManager>,
-    max_turns: usize,
-    max_ctx: usize,
-    max_rounds: usize,
-    max_task_duration: u64,
-    max_spend: f64,
-    v2_opt: bool,
-    pp_opt: bool,
-    base_url: &Option<String>,
+    _custom_registry: &Arc<electro_tools::CustomToolRegistry>,
+    #[cfg(feature = "mcp")] _mcp_mgr: &Arc<electro_mcp::McpManager>,
+    _max_turns: usize,
+    _max_ctx: usize,
+    _max_rounds: usize,
+    _max_task_duration: u64,
+    _max_spend: f64,
+    _v2_opt: bool,
+    _pp_opt: bool,
+    _base_url: &Option<String>,
     ws_path: &std::path::Path,
     pending_clone: &electro_tools::PendingMessages,
     setup_tokens_clone: &electro_gateway::SetupTokenStore,
@@ -55,19 +53,19 @@ pub fn create_chat_worker(
     let memory = memory.clone();
     let agent_state = agent_state.clone();
     let is_busy_worker = is_busy.clone();
-    let current_task_worker = current_task.clone();
-    let interrupt_worker = interrupt.clone();
-    let is_heartbeat_worker = is_heartbeat.clone();
-    let cancel_token_worker = cancel_token.clone();
+    let _current_task_worker = current_task.clone();
+    let _interrupt_worker = interrupt.clone();
+    let _is_heartbeat_worker = is_heartbeat.clone();
+    let _cancel_token_worker = cancel_token.clone();
     let tools_template = tools_template.to_vec();
-    let ws_path = ws_path.to_path_buf();
-    let pending_messages = pending_clone.clone();
+    let _ws_path = ws_path.to_path_buf();
+    let _pending_messages = pending_clone.clone();
     let setup_tokens = setup_tokens_clone.clone();
     let pending_raw_keys = pending_raw_keys_clone.clone();
     #[cfg(feature = "browser")]
     let login_sessions = login_sessions_clone.clone();
-    let usage_store = usage_store_clone.clone();
-    let hive = hive_clone.clone();
+    let _usage_store = usage_store_clone.clone();
+    let _hive = hive_clone.clone();
     let shared_mode = shared_mode.clone();
     let shared_memory_strategy = shared_memory_strategy.clone();
     #[cfg(feature = "browser")]
@@ -77,7 +75,7 @@ pub fn create_chat_worker(
     tokio::spawn(async move {
         // Restore conversation history
         let history_key = format!("chat_history:{}", worker_chat_id);
-        let mut persistent_history: Vec<ChatMessage> = match memory.get(&history_key).await {
+        let persistent_history: Vec<ChatMessage> = match memory.get(&history_key).await {
             Ok(Some(entry)) => serde_json::from_str(&entry.content).unwrap_or_default(),
             _ => Vec::new(),
         };

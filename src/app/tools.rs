@@ -3,6 +3,7 @@ use electro_core::{Channel, Memory, SetupLinkGenerator, Tool, UsageStore, Vault}
 use electro_tools::{BrowserTool, CustomToolRegistry, PendingMessages, SharedMode};
 use std::sync::Arc;
 
+#[allow(clippy::too_many_arguments)]
 pub fn init_tools(
     config: &ToolsConfig,
     channel: Option<Arc<dyn Channel>>,

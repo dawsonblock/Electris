@@ -5,6 +5,7 @@ use electro_core::{Memory, Provider, Tool};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
+#[allow(clippy::too_many_arguments)]
 pub async fn create_agent(
     config: &ElectroConfig,
     provider: Arc<dyn Provider>,

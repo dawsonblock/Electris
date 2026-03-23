@@ -1,10 +1,4 @@
 use clap::{Parser, Subcommand};
-use electro_core::config::credentials::{
-    credentials_path, is_placeholder_key, load_active_provider_keys, load_credentials_file,
-};
-use electro_core::types::model_registry::{
-    available_models_for_provider, default_model, is_vision_model,
-};
 
 /// Main CLI struct for ELECTRO
 #[derive(Parser)]

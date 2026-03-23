@@ -1,6 +1,5 @@
 use crate::app::onboarding::build_system_prompt;
 use crate::app::server::slot::ChatSlot;
-use crate::bootstrap::SecretCensorChannel;
 use electro_agent::AgentRuntime;
 use electro_core::types::config::{ElectroConfig, MemoryStrategy};
 use electro_core::types::message::{
@@ -11,8 +10,8 @@ use std::collections::{HashMap, HashSet};
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use tokio_util::sync::CancellationToken;
 
+#[allow(clippy::too_many_arguments)]
 pub async fn run_message_dispatcher(
     mut msg_rx: tokio::sync::mpsc::Receiver<InboundMessage>,
     msg_tx: tokio::sync::mpsc::Sender<InboundMessage>,
@@ -56,7 +55,7 @@ pub async fn run_message_dispatcher(
         let login_sessions_clone = login_sessions.clone();
         let usage_store_clone = usage_store.clone();
         let hive_clone = hive_instance.clone();
-        let tenant_mgr_clone = tenant_manager.clone();
+        let _tenant_mgr_clone = tenant_manager.clone();
         let tenant_isolation_enabled = config.electro.tenant_isolation;
 
         let chat_slots: Arc<Mutex<HashMap<String, ChatSlot>>> =
@@ -162,11 +161,7 @@ pub async fn run_message_dispatcher(
                 }
 
                 // Ensure a worker exists for this chat_id
-                let chat_workspace = if tenant_isolation_enabled {
-                    ws_path.clone() // resolution logic remains in full impl
-                } else {
-                    ws_path.clone()
-                };
+                let chat_workspace = ws_path.clone();
 
                 let slot = slots.entry(chat_id.clone()).or_insert_with(|| {
                     crate::app::server::worker::create_chat_worker(
