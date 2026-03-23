@@ -18,10 +18,10 @@
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use serde::{Deserialize, Serialize};
 use electro_core::types::error::ElectroError;
 use electro_core::types::message::OutboundMessage;
 use electro_core::Channel;
+use serde::{Deserialize, Serialize};
 use tracing::{debug, info, warn};
 
 // ---------------------------------------------------------------------------

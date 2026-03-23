@@ -6,8 +6,8 @@
 //! - optional operator allowlist via environment variable
 //! - DNS resolution must stay on public addresses
 
-use url::Url;
 pub use electro_core::net_policy::host_address_is_blocked_for_public_web as host_is_blocked;
+use url::Url;
 
 pub use electro_core::net_policy::host_matches_allow_entry;
 pub use electro_core::net_policy::PUBLIC_WEB_ALLOWLIST_ENV;
@@ -86,7 +86,6 @@ pub fn build_standard_client(
         .map_err(|e| format!("Failed to build reqwest client: {}", e))
 }
 
-
 pub fn validate_public_url(raw: &str) -> Result<Url, String> {
     let url = Url::parse(raw).map_err(|e| format!("Invalid URL: {}", e))?;
     match url.scheme() {
@@ -139,7 +138,10 @@ pub async fn ensure_resolved_host_is_public(url: &Url) -> Result<(), String> {
     }
 
     if !found {
-        return Err(format!("Failed to resolve host '{}': no addresses returned.", host));
+        return Err(format!(
+            "Failed to resolve host '{}': no addresses returned.",
+            host
+        ));
     }
 
     Ok(())

@@ -1,16 +1,16 @@
 use async_trait::async_trait;
-use futures::stream::BoxStream;
-use futures::StreamExt;
-use reqwest::Client;
-use serde::Deserialize;
-use std::collections::HashMap;
-use std::sync::atomic::{AtomicUsize, Ordering};
 use electro_core::types::error::ElectroError;
 use electro_core::types::message::{
     ChatMessage, CompletionRequest, CompletionResponse, ContentPart, MessageContent, Role,
     StreamChunk, ToolDefinition, Usage,
 };
 use electro_core::Provider;
+use futures::stream::BoxStream;
+use futures::StreamExt;
+use reqwest::Client;
+use serde::Deserialize;
+use std::collections::HashMap;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use tracing::{debug, error, info};
 
 /// OpenAI-compatible provider with key rotation.
@@ -598,11 +598,10 @@ impl Provider for OpenAICompatProvider {
         for (k, v) in &self.extra_headers {
             req = req.header(k.as_str(), v.as_str());
         }
-        let response = req
-            .json(&body)
-            .send()
-            .await
-            .map_err(|e| ElectroError::Provider(format!("OpenAI-compat request failed: {e}")))?;
+        let response =
+            req.json(&body).send().await.map_err(|e| {
+                ElectroError::Provider(format!("OpenAI-compat request failed: {e}"))
+            })?;
 
         let status = response.status();
         if !status.is_success() {

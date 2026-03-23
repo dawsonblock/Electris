@@ -3,9 +3,9 @@
 //! current status, and a checkpoint of the session state (serialized history).
 
 use chrono::{DateTime, Utc};
+use electro_core::types::error::ElectroError;
 use serde::{Deserialize, Serialize};
 use sqlx::sqlite::{SqlitePool, SqlitePoolOptions};
-use electro_core::types::error::ElectroError;
 use tracing::{debug, info};
 use uuid::Uuid;
 

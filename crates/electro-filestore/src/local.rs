@@ -2,12 +2,12 @@
 
 use async_trait::async_trait;
 use bytes::Bytes;
-use futures::stream::BoxStream;
-use futures::StreamExt;
-use std::path::{Path, PathBuf};
 use electro_core::error::ElectroError;
 use electro_core::file::FileMetadata;
 use electro_core::FileStore;
+use futures::stream::BoxStream;
+use futures::StreamExt;
+use std::path::{Path, PathBuf};
 use tokio::fs;
 use tracing::{debug, info, warn};
 
@@ -22,17 +22,25 @@ async fn atomic_write_bytes(path: &Path, data: &[u8]) -> Result<(), ElectroError
         ElectroError::FileTransfer(format!("Path {} has no parent directory", path.display()))
     })?;
     fs::create_dir_all(parent).await.map_err(|e| {
-        ElectroError::FileTransfer(format!("Failed to create directory {}: {e}", parent.display()))
+        ElectroError::FileTransfer(format!(
+            "Failed to create directory {}: {e}",
+            parent.display()
+        ))
     })?;
 
     let tmp_path = parent.join(format!(
         ".{}.tmp-{}",
-        path.file_name().and_then(|n| n.to_str()).unwrap_or("electro-upload"),
+        path.file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("electro-upload"),
         std::process::id()
     ));
 
     fs::write(&tmp_path, data).await.map_err(|e| {
-        ElectroError::FileTransfer(format!("Failed to write temporary file {}: {e}", tmp_path.display()))
+        ElectroError::FileTransfer(format!(
+            "Failed to write temporary file {}: {e}",
+            tmp_path.display()
+        ))
     })?;
 
     if let Err(e) = fs::rename(&tmp_path, path).await {
@@ -272,7 +280,10 @@ impl LocalFileStore {
             }
 
             let mut entries = fs::read_dir(&current).await.map_err(|e| {
-                ElectroError::FileTransfer(format!("Failed to read directory {}: {e}", current.display()))
+                ElectroError::FileTransfer(format!(
+                    "Failed to read directory {}: {e}",
+                    current.display()
+                ))
             })?;
 
             while let Some(entry) = entries.next_entry().await.map_err(|e| {

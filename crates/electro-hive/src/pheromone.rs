@@ -266,10 +266,9 @@ impl PheromoneField {
                     "DELETE FROM hive_pheromones WHERE id IN ({})",
                     placeholders.join(",")
                 );
-                sqlx::query(&sql)
-                    .execute(&self.pool)
-                    .await
-                    .map_err(|e| ElectroError::Internal(format!("PheromoneField gc delete: {e}")))?;
+                sqlx::query(&sql).execute(&self.pool).await.map_err(|e| {
+                    ElectroError::Internal(format!("PheromoneField gc delete: {e}"))
+                })?;
             }
             debug!(removed = count, "Pheromone GC sweep");
         }

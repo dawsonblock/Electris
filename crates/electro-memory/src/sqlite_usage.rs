@@ -1,9 +1,9 @@
 //! SQLite-backed usage store implementation.
 
 use async_trait::async_trait;
-use sqlx::sqlite::{SqlitePool, SqlitePoolOptions};
 use electro_core::error::ElectroError;
 use electro_core::{UsageRecord, UsageStore, UsageSummary};
+use sqlx::sqlite::{SqlitePool, SqlitePoolOptions};
 use tracing::info;
 
 /// SQLite-backed persistence for per-turn usage records.
@@ -172,7 +172,9 @@ impl UsageStore for SqliteUsageStore {
         .bind(enabled as i64)
         .execute(&self.pool)
         .await
-        .map_err(|e| ElectroError::Memory(format!("Failed to set usage display preference: {e}")))?;
+        .map_err(|e| {
+            ElectroError::Memory(format!("Failed to set usage display preference: {e}"))
+        })?;
         Ok(())
     }
 

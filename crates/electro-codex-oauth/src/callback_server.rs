@@ -4,9 +4,9 @@
 //! authorization code. Shuts down immediately after receiving the code.
 
 use axum::{extract::Query, response::Html, routing::get, Router};
+use electro_core::types::error::ElectroError;
 use serde::Deserialize;
 use std::net::TcpListener;
-use electro_core::types::error::ElectroError;
 use tokio::sync::oneshot;
 
 /// Query parameters from the OAuth callback redirect.
@@ -45,7 +45,10 @@ pub async fn wait_for_callback(
             let tx = tx_clone.clone();
             let expected = expected.clone();
             async move {
-                let mut guard = tx.lock().unwrap();
+                let mut guard = match tx.lock() {
+                    Ok(g) => g,
+                    Err(_) => return Html(error_page("Internal Error", "Authentication state is corrupted")),
+                };
                 if let Some(sender) = guard.take() {
                     if let Some(error) = params.error {
                         let desc = params.error_description.unwrap_or_default();

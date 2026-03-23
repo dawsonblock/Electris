@@ -3,9 +3,9 @@
 //! fast/cheap model; complex tasks (architecture, debugging) use the
 //! most capable model. Classification is entirely rule-based (no LLM call).
 
-use serde::{Deserialize, Serialize};
 use electro_core::types::message::{ChatMessage, ContentPart, MessageContent, Role};
 use electro_core::types::optimization::ExecutionProfile;
+use serde::{Deserialize, Serialize};
 use tracing::{debug, info};
 
 // ── Read-only / simple tool names ────────────────────────────────────────

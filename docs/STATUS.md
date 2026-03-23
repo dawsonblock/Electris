@@ -1,6 +1,6 @@
 # Current Build Status
 
-This file describes what is actually implemented in this archive.
+## Platform Implementation Status
 
 ## Implemented channels
 - CLI

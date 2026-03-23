@@ -1,10 +1,9 @@
 //! File tool — read, write, and list files within the session workspace.
 
 use async_trait::async_trait;
+use electro_core::policy::{CapabilityPolicy, FileAccessPolicy};
 use electro_core::types::error::ElectroError;
 use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
-use electro_core::policy::{CapabilityPolicy, FileAccessPolicy};
-
 
 /// Maximum file read size (32 KB — keeps tool output within token budget).
 const MAX_READ_SIZE: usize = 32 * 1024;
@@ -62,15 +61,16 @@ impl Tool for FileReadTool {
             .ok_or_else(|| ElectroError::Tool("Missing required parameter: path".into()))?;
 
         let user_path = std::path::Path::new(path_str);
-        let path = match electro_core::path_policy::resolve_safe_path(&ctx.workspace_path, user_path) {
-            Ok(p) => p,
-            Err(e) => {
-                return Ok(ToolOutput {
-                    content: format!("Path error: {e}"),
-                    is_error: true,
-                });
-            }
-        };
+        let path =
+            match electro_core::path_policy::resolve_safe_path(&ctx.workspace_path, user_path) {
+                Ok(p) => p,
+                Err(e) => {
+                    return Ok(ToolOutput {
+                        content: format!("Path error: {e}"),
+                        is_error: true,
+                    });
+                }
+            };
 
         match tokio::fs::read_to_string(&path).await {
             Ok(mut content) => {
@@ -160,15 +160,16 @@ impl Tool for FileWriteTool {
             .ok_or_else(|| ElectroError::Tool("Missing required parameter: content".into()))?;
 
         let user_path = std::path::Path::new(path_str);
-        let path = match electro_core::path_policy::resolve_safe_path(&ctx.workspace_path, user_path) {
-            Ok(p) => p,
-            Err(e) => {
-                return Ok(ToolOutput {
-                    content: format!("Path error: {e}"),
-                    is_error: true,
-                });
-            }
-        };
+        let path =
+            match electro_core::path_policy::resolve_safe_path(&ctx.workspace_path, user_path) {
+                Ok(p) => p,
+                Err(e) => {
+                    return Ok(ToolOutput {
+                        content: format!("Path error: {e}"),
+                        is_error: true,
+                    });
+                }
+            };
 
         if let Some(parent) = path.parent() {
             if let Err(e) = tokio::fs::create_dir_all(parent).await {
@@ -245,15 +246,16 @@ impl Tool for FileListTool {
             .unwrap_or(".");
 
         let user_path = std::path::Path::new(path_str);
-        let path = match electro_core::path_policy::resolve_safe_path(&ctx.workspace_path, user_path) {
-            Ok(p) => p,
-            Err(e) => {
-                return Ok(ToolOutput {
-                    content: format!("Path error: {e}"),
-                    is_error: true,
-                });
-            }
-        };
+        let path =
+            match electro_core::path_policy::resolve_safe_path(&ctx.workspace_path, user_path) {
+                Ok(p) => p,
+                Err(e) => {
+                    return Ok(ToolOutput {
+                        content: format!("Path error: {e}"),
+                        is_error: true,
+                    });
+                }
+            };
 
         match tokio::fs::read_dir(&path).await {
             Ok(mut entries) => {

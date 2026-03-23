@@ -1,14 +1,14 @@
 use async_trait::async_trait;
-use futures::stream::BoxStream;
-use reqwest::Client;
-use serde::Deserialize;
-use std::sync::atomic::{AtomicUsize, Ordering};
 use electro_core::types::error::ElectroError;
 use electro_core::types::message::{
     ChatMessage, CompletionRequest, CompletionResponse, ContentPart, MessageContent, Role,
     StreamChunk, ToolDefinition, Usage,
 };
 use electro_core::Provider;
+use futures::stream::BoxStream;
+use reqwest::Client;
+use serde::Deserialize;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use tracing::{debug, error, info};
 
 /// Anthropic Messages API provider with key rotation.

@@ -6,9 +6,9 @@
 //! prompt. Users can review and approve/reject patches.
 
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
 use electro_core::types::error::ElectroError;
 use electro_core::types::message::{ChatMessage, ContentPart, MessageContent, Role};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 // ---------------------------------------------------------------------------

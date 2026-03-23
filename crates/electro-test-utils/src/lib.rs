@@ -9,6 +9,7 @@ use async_trait::async_trait;
 use futures::stream::BoxStream;
 use tokio::sync::Mutex;
 
+use electro_core::policy::CapabilityPolicy;
 use electro_core::types::config::*;
 use electro_core::types::error::ElectroError;
 use electro_core::types::message::*;
@@ -17,7 +18,6 @@ use electro_core::{
     Channel, FileTransfer, Memory, MemoryEntry, MemoryEntryType, Provider, SearchOpts, Tool,
     ToolContext, ToolInput, ToolOutput,
 };
-use electro_core::policy::CapabilityPolicy;
 
 // ---------------------------------------------------------------------------
 // MockProvider
@@ -173,7 +173,11 @@ impl Memory for MockMemory {
         Ok(())
     }
 
-    async fn search(&self, query: &str, opts: SearchOpts) -> Result<Vec<MemoryEntry>, ElectroError> {
+    async fn search(
+        &self,
+        query: &str,
+        opts: SearchOpts,
+    ) -> Result<Vec<MemoryEntry>, ElectroError> {
         let entries = self.entries.lock().await;
         let results: Vec<MemoryEntry> = entries
             .iter()
@@ -319,7 +323,7 @@ impl MockTool {
                 file_access: Vec::new(),
                 network_access: electro_core::net_policy::NetworkPolicy::Blocked,
                 shell_access: electro_core::policy::ShellPolicy::Blocked,
-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+                browser_access: electro_core::policy::BrowserPolicy::Blocked,
             },
             output: ToolOutput {
                 content: "mock output".to_string(),

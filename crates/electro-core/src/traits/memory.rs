@@ -97,7 +97,8 @@ pub trait Memory: Send + Sync {
     async fn store(&self, entry: MemoryEntry) -> Result<(), ElectroError>;
 
     /// Hybrid search: vector similarity + keyword matching
-    async fn search(&self, query: &str, opts: SearchOpts) -> Result<Vec<MemoryEntry>, ElectroError>;
+    async fn search(&self, query: &str, opts: SearchOpts)
+        -> Result<Vec<MemoryEntry>, ElectroError>;
 
     /// Get a specific memory entry by ID
     async fn get(&self, id: &str) -> Result<Option<MemoryEntry>, ElectroError>;

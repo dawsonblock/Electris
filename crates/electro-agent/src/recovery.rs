@@ -6,8 +6,8 @@ use std::collections::HashSet;
 use std::sync::Mutex;
 
 use chrono::{DateTime, Duration, Utc};
-use serde::{Deserialize, Serialize};
 use electro_core::types::error::ElectroError;
+use serde::{Deserialize, Serialize};
 use tracing::{debug, info, warn};
 
 use crate::task_queue::{TaskEntry, TaskQueue, TaskStatus};

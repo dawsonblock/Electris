@@ -5,12 +5,11 @@
 //! - "remove": Disconnect and remove an MCP server
 //! - "restart": Restart a crashed or misbehaving server
 
-
 use crate::manager::McpManager;
 use async_trait::async_trait;
-use std::sync::Arc;
-use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
 use electro_core::policy::CapabilityPolicy;
+use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
+use std::sync::Arc;
 
 use tracing::info;
 
@@ -85,7 +84,6 @@ impl Tool for McpManageTool {
             }
 
             // 'add' action intentionally unavailable in this build
-
             "remove" => {
                 let name = match args.get("name").and_then(|v| v.as_str()) {
                     Some(n) if !n.is_empty() => n,
@@ -142,10 +140,7 @@ impl Tool for McpManageTool {
             }
 
             _ => Ok(ToolOutput {
-                content: format!(
-                    "Unknown action '{}'. Use: list, remove, restart.",
-                    action
-                ),
+                content: format!("Unknown action '{}'. Use: list, remove, restart.", action),
                 is_error: true,
             }),
         }
@@ -180,7 +175,6 @@ mod tests {
         assert!(!output.is_error);
         assert!(output.content.contains("No MCP servers configured"));
     }
-
 
     #[tokio::test]
     async fn mcp_manage_unknown_action() {

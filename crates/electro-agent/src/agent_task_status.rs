@@ -12,7 +12,7 @@
 use std::time::Instant;
 
 /// What the agent is doing right now.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum AgentTaskPhase {
     /// Parsing user input, loading images, detecting credentials.
     Preparing,

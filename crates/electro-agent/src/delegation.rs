@@ -14,8 +14,8 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 
-use serde::{Deserialize, Serialize};
 use electro_core::types::error::ElectroError;
+use serde::{Deserialize, Serialize};
 use tracing::{debug, info, warn};
 use uuid::Uuid;
 

@@ -4,9 +4,8 @@ use crate::types::error::ElectroError;
 use std::path::{Path, PathBuf};
 
 fn read_config_file(path: &Path) -> Result<String, ElectroError> {
-    std::fs::read_to_string(path).map_err(|e| {
-        ElectroError::Config(format!("Failed to read {}: {}", path.display(), e))
-    })
+    std::fs::read_to_string(path)
+        .map_err(|e| ElectroError::Config(format!("Failed to read {}: {}", path.display(), e)))
 }
 
 fn parse_config_str<T>(expanded: &str, source_label: &str) -> Result<T, ElectroError>

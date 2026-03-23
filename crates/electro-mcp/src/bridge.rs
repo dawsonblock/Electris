@@ -5,9 +5,9 @@
 
 use crate::client::McpClient;
 use async_trait::async_trait;
-use std::sync::Arc;
-use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
 use electro_core::policy::CapabilityPolicy;
+use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
+use std::sync::Arc;
 
 use tracing::{debug, warn};
 
@@ -68,7 +68,7 @@ impl Tool for McpBridgeTool {
             file_access: vec![],
             network_access: electro_core::net_policy::NetworkPolicy::Unrestricted, // MCP tools may access any network
             shell_access: electro_core::policy::ShellPolicy::Blocked,
-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
         }
     }
 

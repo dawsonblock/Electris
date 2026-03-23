@@ -5,11 +5,10 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use electro_core::policy::CapabilityPolicy;
 use electro_core::types::error::ElectroError;
 use electro_core::types::message::OutboundMessage;
-use electro_core::{    Channel, Tool, ToolContext, ToolInput, ToolOutput,
-};
-use electro_core::policy::CapabilityPolicy;
+use electro_core::{Channel, Tool, ToolContext, ToolInput, ToolOutput};
 
 pub struct SendMessageTool {
     channel: Arc<dyn Channel>,
@@ -56,7 +55,7 @@ impl Tool for SendMessageTool {
             file_access: Vec::new(),
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,
-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
         }
     }
 

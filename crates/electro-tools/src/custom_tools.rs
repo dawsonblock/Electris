@@ -7,20 +7,22 @@
 //! A `ScriptToolAdapter` wraps each script as a native `Tool` trait implementation.
 
 use async_trait::async_trait;
+use electro_core::paths;
+use electro_core::policy::CapabilityPolicy;
+use electro_core::types::error::ElectroError;
+use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use electro_core::types::error::ElectroError;
-use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
-use electro_core::policy::CapabilityPolicy;
-use electro_core::paths;
 
 use tracing::{debug, info, warn};
 
 fn custom_tools_enabled() -> bool {
     #[cfg(test)]
-    { return true; }
+    {
+        return true;
+    }
 
     matches!(
         std::env::var("ELECTRO_ENABLE_CUSTOM_TOOLS")
@@ -31,7 +33,6 @@ fn custom_tools_enabled() -> bool {
         "1" | "true" | "yes" | "on"
     )
 }
-
 
 /// Metadata for a custom script tool, stored as `{name}.json`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -103,7 +104,7 @@ impl Tool for ScriptToolAdapter {
             file_access: vec![],
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Allowed,
-browser_access: electro_core::policy::BrowserPolicy::Blocked, // scripts require shell
+            browser_access: electro_core::policy::BrowserPolicy::Blocked, // scripts require shell
         }
     }
 
@@ -154,7 +155,10 @@ browser_access: electro_core::policy::BrowserPolicy::Blocked, // scripts require
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
-            let _ = std::fs::set_permissions(&workspace_script_path, std::fs::Permissions::from_mode(0o755));
+            let _ = std::fs::set_permissions(
+                &workspace_script_path,
+                std::fs::Permissions::from_mode(0o755),
+            );
         }
 
         let parsed = crate::shell::ParsedCommand {
@@ -167,14 +171,27 @@ browser_access: electro_core::policy::BrowserPolicy::Blocked, // scripts require
 
         let result = match backend_res {
             Ok(crate::shell::ResolvedBackend::Host) => {
-                crate::shell::run_host_command(&parsed, 30, _ctx, Some(input_json.into_bytes())).await
+                crate::shell::run_host_command(&parsed, 30, _ctx, Some(input_json.into_bytes()))
+                    .await
             }
-            Ok(backend @ (crate::shell::ResolvedBackend::Docker | crate::shell::ResolvedBackend::Podman)) => {
-                crate::shell::run_container_command(backend, &policy, &parsed, 30, _ctx, Some(input_json.into_bytes())).await
+            Ok(
+                backend @ (crate::shell::ResolvedBackend::Docker
+                | crate::shell::ResolvedBackend::Podman),
+            ) => {
+                crate::shell::run_container_command(
+                    backend,
+                    &policy,
+                    &parsed,
+                    30,
+                    _ctx,
+                    Some(input_json.into_bytes()),
+                )
+                .await
             }
-            Err(e) => {
-                Ok(ToolOutput { content: e, is_error: true })
-            }
+            Err(e) => Ok(ToolOutput {
+                content: e,
+                is_error: true,
+            }),
         };
 
         // Clean up the temporary script
@@ -571,10 +588,13 @@ mod tests {
             name: "greet".to_string(),
             arguments: serde_json::json!({}),
         };
+        // Enable host shell and allow bash for the test to succeed without Docker.
+        std::env::set_var("ELECTRO_SHELL_BACKEND", "host");
+        std::env::set_var("ELECTRO_ENABLE_HOST_SHELL", "1");
+        std::env::set_var("ELECTRO_SHELL_ALLOW_HOST_LAUNCHER", "1");
+
         let output = tools[0].execute(input, &ctx).await.unwrap();
         assert!(!output.is_error);
         assert!(output.content.contains("Hello from script!"));
     }
-
-
 }

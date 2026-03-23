@@ -22,8 +22,7 @@ pub fn env_flag(name: &str) -> bool {
 }
 
 pub fn browser_isolation_mode() -> String {
-    let raw = std::env::var(BROWSER_ISOLATION_MODE_ENV)
-        .unwrap_or_else(|_| "remote".to_string());
+    let raw = std::env::var(BROWSER_ISOLATION_MODE_ENV).unwrap_or_else(|_| "remote".to_string());
     let trimmed = raw.trim().to_ascii_lowercase();
     if trimmed.is_empty() {
         "remote".to_string()
@@ -33,7 +32,10 @@ pub fn browser_isolation_mode() -> String {
 }
 
 pub fn browser_uses_remote() -> bool {
-    !matches!(browser_isolation_mode().as_str(), "local" | "legacy-local" | "host")
+    !matches!(
+        browser_isolation_mode().as_str(),
+        "local" | "legacy-local" | "host"
+    )
 }
 
 pub fn browser_remote_url() -> String {
@@ -49,7 +51,10 @@ pub fn browser_remote_url() -> String {
 
 pub fn browser_proxy_required_for_local() -> bool {
     match std::env::var(BROWSER_PROXY_REQUIRED_ENV) {
-        Ok(v) => !matches!(v.trim().to_ascii_lowercase().as_str(), "0" | "false" | "no" | "off"),
+        Ok(v) => !matches!(
+            v.trim().to_ascii_lowercase().as_str(),
+            "0" | "false" | "no" | "off"
+        ),
         Err(_) => true,
     }
 }
@@ -112,13 +117,16 @@ pub async fn connect_or_launch_browser(
         tracing::info!(context = context, remote = %url, mode = %browser_isolation_mode(), "Connecting to isolated remote browser");
 
         let http_url = if url.starts_with("ws://") || url.starts_with("wss://") {
-            url.replace("ws://", "http://").replace("wss://", "https://")
+            url.replace("ws://", "http://")
+                .replace("wss://", "https://")
         } else {
             url.clone()
         };
         let health_url = format!("{}/json/version", http_url.trim_end_matches('/'));
         let client = build_standard_client(&electro_core::net_policy::NetworkPolicy::Unrestricted)
-            .map_err(|e| ElectroError::Tool(format!("Failed to build health check client: {}", e)))?;
+            .map_err(|e| {
+                ElectroError::Tool(format!("Failed to build health check client: {}", e))
+            })?;
 
         if let Err(e) = client.get(&health_url).send().await {
             return Err(ElectroError::Tool(format!(

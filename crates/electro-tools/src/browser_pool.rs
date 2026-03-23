@@ -16,7 +16,10 @@
 
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 
-use crate::browser_runtime::{browser_isolation_mode, browser_uses_remote, connect_or_launch_browser, ensure_browser_runtime_policy};
+use crate::browser_runtime::{
+    browser_isolation_mode, browser_uses_remote, connect_or_launch_browser,
+    ensure_browser_runtime_policy,
+};
 use std::sync::Arc;
 
 use chromiumoxide::browser::{Browser, BrowserConfig};
@@ -120,8 +123,7 @@ impl BrowserPool {
             .build()
             .map_err(|e| ElectroError::Tool(format!("BrowserPool config: {e}")))?;
 
-        let (mut browser, mut handler) = connect_or_launch_browser(config, "browser pool")
-            .await?;
+        let (mut browser, mut handler) = connect_or_launch_browser(config, "browser pool").await?;
         info!(mode = %browser_isolation_mode(), "BrowserPool runtime ready");
 
         // Capture the Chrome process PID for child-process cleanup on shutdown.

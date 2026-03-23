@@ -6,15 +6,15 @@
 //! calls and runs them concurrently with configurable concurrency limits.
 
 use std::collections::HashSet;
-use url::Url;
 use std::sync::Arc;
+use url::Url;
 
-use futures::stream::{FuturesUnordered, StreamExt};
+use electro_core::audit::CapabilityDecisionRecord;
+use electro_core::policy::{FileAccessPolicy, PolicyDecision, PolicyEngine};
 use electro_core::types::error::ElectroError;
 use electro_core::types::session::SessionContext;
 use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
-use electro_core::audit::CapabilityDecisionRecord;
-use electro_core::policy::{FileAccessPolicy, PolicyEngine, PolicyDecision};
+use futures::stream::{FuturesUnordered, StreamExt};
 use tokio::sync::Semaphore;
 use tracing::{debug, info, warn};
 
@@ -375,21 +375,31 @@ pub async fn execute_tool(
 
     // Validate sandbox declarations against workspace scope
     if let Err(e) = validate_sandbox(tool.as_ref(), session) {
-        let record = CapabilityDecisionRecord::denied(tool_name, &session.session_id, "sandbox_baseline", &electro_core::policy::DenialReason::PathEscape);
-        tracing::warn!(audit = %serde_json::to_string(&record).unwrap(), "Capability denied (sandbox layout)");
+        let record = CapabilityDecisionRecord::denied(
+            tool_name,
+            &session.session_id,
+            "sandbox_baseline",
+            &electro_core::policy::DenialReason::PathEscape,
+        );
+        tracing::warn!(audit = %serde_json::to_string(&record).unwrap_or_else(|e| format!(r#"{{"error":"serialization_failed","message":"{}"}}"#, e)), "Capability denied (sandbox layout)");
         return Err(e);
     }
 
     // Validate runtime arguments against workspace scope and authoritative capability policy
     if let Err(e) = validate_arguments(tool_name, &arguments, session, tool.as_ref()) {
-        let record = CapabilityDecisionRecord::denied(tool_name, &session.session_id, "arguments", &electro_core::policy::DenialReason::UndeclaredFileOp); // Placeholder reason for now
-        tracing::warn!(audit = %serde_json::to_string(&record).unwrap(), "Capability denied (arguments violation)");
+        let record = CapabilityDecisionRecord::denied(
+            tool_name,
+            &session.session_id,
+            "arguments",
+            &electro_core::policy::DenialReason::UndeclaredFileOp,
+        ); // Placeholder reason for now
+        tracing::warn!(audit = %serde_json::to_string(&record).unwrap_or_else(|e| format!(r#"{{"error":"serialization_failed","message":"{}"}}"#, e)), "Capability denied (arguments violation)");
         return Err(e);
     }
-    
+
     // Log the allow decision
     let record = CapabilityDecisionRecord::allowed(tool_name, &session.session_id, "execute");
-    tracing::info!(audit = %serde_json::to_string(&record).unwrap(), "Capability allowed");
+    tracing::info!(audit = %serde_json::to_string(&record).unwrap_or_else(|e| format!(r#"{{"error":"serialization_failed","message":"{}"}}"#, e)), "Capability allowed");
 
     let ctx = ToolContext {
         workspace_path: session.workspace_path.clone(),
@@ -446,9 +456,17 @@ fn validate_arguments(
             if let Some(serde_json::Value::String(path_str)) = map.get(*key) {
                 let requested_path = std::path::Path::new(path_str);
                 // Use resolve_safe_path for authoritative validation
-                let abs_req = match electro_core::path_policy::resolve_safe_path(&session.workspace_path, requested_path) {
+                let abs_req = match electro_core::path_policy::resolve_safe_path(
+                    &session.workspace_path,
+                    requested_path,
+                ) {
                     Ok(p) => p,
-                    Err(e) => return Err(ElectroError::SandboxViolation(format!("Path validation failed: {}", e))),
+                    Err(e) => {
+                        return Err(ElectroError::SandboxViolation(format!(
+                            "Path validation failed: {}",
+                            e
+                        )))
+                    }
                 };
 
                 // Authoritative policy test: are we allowed to access files at all?
@@ -467,7 +485,7 @@ fn validate_arguments(
                         FileAccessPolicy::Write(p) => p,
                         FileAccessPolicy::ReadWrite(p) => p,
                     };
-                    
+
                     if granted_path_str == "*" {
                         allowed = true;
                         break;
@@ -476,7 +494,10 @@ fn validate_arguments(
                     let granted_path = std::path::Path::new(granted_path_str);
                     // Use resolve_safe_path to get a clean, absolute version of the granted path
                     // Note: it's okay if granted_path is "*" or a relative path
-                    if let Ok(abs_granted) = electro_core::path_policy::resolve_safe_path(&session.workspace_path, granted_path) {
+                    if let Ok(abs_granted) = electro_core::path_policy::resolve_safe_path(
+                        &session.workspace_path,
+                        granted_path,
+                    ) {
                         if abs_req.starts_with(&abs_granted) {
                             allowed = true;
                             break;
@@ -534,14 +555,20 @@ fn validate_arguments(
             PolicyDecision::Allow => {
                 if let serde_json::Value::Object(map) = arguments {
                     if let Some(serde_json::Value::String(action)) = map.get("action") {
-                        if let electro_core::policy::BrowserPolicy::Allowed { eval_js, session_persistence } = policy.browser_access {
+                        if let electro_core::policy::BrowserPolicy::Allowed {
+                            eval_js,
+                            session_persistence,
+                        } = policy.browser_access
+                        {
                             if action == "evaluate" && !eval_js {
                                 return Err(ElectroError::SandboxViolation(format!(
                                     "Policy rejection: Tool '{}' attempted to evaluate JavaScript without a policy grant. JS evaluation requires explicit executor override.",
                                     tool_name
                                 )));
                             }
-                            if (action == "save_session" || action == "restore_session") && !session_persistence {
+                            if (action == "save_session" || action == "restore_session")
+                                && !session_persistence
+                            {
                                 return Err(ElectroError::SandboxViolation(format!(
                                     "Policy rejection: Tool '{}' attempted to persist or restore a browser session without a policy grant. Default profiles are ephemeral.",
                                     tool_name
@@ -563,7 +590,11 @@ fn validate_arguments(
     Ok(())
 }
 
-fn validate_public_url_argument(tool_name: &str, raw_url: &str, policy: &electro_core::net_policy::NetworkPolicy) -> Result<(), ElectroError> {
+fn validate_public_url_argument(
+    tool_name: &str,
+    raw_url: &str,
+    policy: &electro_core::net_policy::NetworkPolicy,
+) -> Result<(), ElectroError> {
     if policy == &electro_core::net_policy::NetworkPolicy::Unrestricted {
         return Ok(());
     }
@@ -605,7 +636,10 @@ fn validate_public_url_argument(tool_name: &str, raw_url: &str, policy: &electro
         )));
     }
 
-    if let electro_core::net_policy::NetworkPolicy::PublicWeb { allowlist: Some(ref domains) } = policy {
+    if let electro_core::net_policy::NetworkPolicy::PublicWeb {
+        allowlist: Some(ref domains),
+    } = policy
+    {
         if domains.is_empty() {
             return Ok(());
         }
@@ -669,8 +703,9 @@ fn validate_sandbox(tool: &dyn Tool, session: &SessionContext) -> Result<(), Ele
         }
 
         let path = std::path::Path::new(path_str);
-        electro_core::path_policy::resolve_safe_path(workspace, path)
-            .map_err(|e| ElectroError::SandboxViolation(format!("Sandbox declaration validation failed: {}", e)))?;
+        electro_core::path_policy::resolve_safe_path(workspace, path).map_err(|e| {
+            ElectroError::SandboxViolation(format!("Sandbox declaration validation failed: {}", e))
+        })?;
     }
 
     Ok(())
@@ -680,9 +715,9 @@ fn validate_sandbox(tool: &dyn Tool, session: &SessionContext) -> Result<(), Ele
 mod tests {
     use super::*;
     use async_trait::async_trait;
-    use std::sync::atomic::{AtomicUsize, Ordering};
     use electro_core::policy::CapabilityPolicy;
     use electro_test_utils::{make_session, MockTool};
+    use std::sync::atomic::{AtomicUsize, Ordering};
 
     // ── Test helpers ────────────────────────────────────────────────────
 
@@ -732,7 +767,9 @@ mod tests {
         }
         fn declarations(&self) -> CapabilityPolicy {
             CapabilityPolicy {
-                file_access: vec![electro_core::policy::FileAccessPolicy::ReadWrite("*".to_string())],
+                file_access: vec![electro_core::policy::FileAccessPolicy::ReadWrite(
+                    "*".to_string(),
+                )],
                 network_access: electro_core::net_policy::NetworkPolicy::Blocked,
                 shell_access: electro_core::policy::ShellPolicy::Blocked,
                 browser_access: electro_core::policy::BrowserPolicy::Blocked,
@@ -776,7 +813,7 @@ mod tests {
                 file_access: Vec::new(),
                 network_access: electro_core::net_policy::NetworkPolicy::Blocked,
                 shell_access: electro_core::policy::ShellPolicy::Blocked,
-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+                browser_access: electro_core::policy::BrowserPolicy::Blocked,
             }
         }
         async fn execute(
@@ -808,7 +845,9 @@ browser_access: electro_core::policy::BrowserPolicy::Blocked,
         }
         fn declarations(&self) -> CapabilityPolicy {
             CapabilityPolicy {
-                file_access: vec![electro_core::policy::FileAccessPolicy::ReadWrite("*".to_string())],
+                file_access: vec![electro_core::policy::FileAccessPolicy::ReadWrite(
+                    "*".to_string(),
+                )],
                 network_access: electro_core::net_policy::NetworkPolicy::Blocked,
                 shell_access: electro_core::policy::ShellPolicy::Blocked,
                 browser_access: electro_core::policy::BrowserPolicy::Blocked,
@@ -869,7 +908,7 @@ browser_access: electro_core::policy::BrowserPolicy::Blocked,
             file_access: vec![FileAccessPolicy::Read("subdir".to_string())],
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,
-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
         });
 
         let session = SessionContext {
@@ -895,7 +934,7 @@ browser_access: electro_core::policy::BrowserPolicy::Blocked,
             file_access: vec![FileAccessPolicy::Write("/etc/passwd".to_string())],
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,
-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
         });
 
         let session = SessionContext {
@@ -925,7 +964,7 @@ browser_access: electro_core::policy::BrowserPolicy::Blocked,
             file_access: vec![FileAccessPolicy::Read("../../etc/shadow".to_string())],
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,
-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
         });
 
         let session = SessionContext {
@@ -972,7 +1011,7 @@ browser_access: electro_core::policy::BrowserPolicy::Blocked,
             file_access: vec![FileAccessPolicy::Read("../../../etc/passwd".to_string())],
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,
-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
         });
 
         let session = SessionContext {
@@ -998,7 +1037,7 @@ browser_access: electro_core::policy::BrowserPolicy::Blocked,
             file_access: vec![FileAccessPolicy::ReadWrite("/".to_string())],
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,
-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
         });
 
         let session = SessionContext {
@@ -1025,7 +1064,7 @@ browser_access: electro_core::policy::BrowserPolicy::Blocked,
             file_access: vec![FileAccessPolicy::Read("src/lib".to_string())],
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,
-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
         });
 
         let session = SessionContext {
@@ -1055,7 +1094,7 @@ browser_access: electro_core::policy::BrowserPolicy::Blocked,
             ],
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,
-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
         });
 
         let session = SessionContext {
@@ -1084,7 +1123,7 @@ browser_access: electro_core::policy::BrowserPolicy::Blocked,
             ],
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,
-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
         });
 
         let session = SessionContext {
@@ -1600,7 +1639,9 @@ browser_access: electro_core::policy::BrowserPolicy::Blocked,
     #[tokio::test]
     async fn parallel_multiple_different_tools() {
         let decl_policy = electro_core::policy::CapabilityPolicy {
-            file_access: vec![electro_core::policy::FileAccessPolicy::ReadWrite("*".to_string())],
+            file_access: vec![electro_core::policy::FileAccessPolicy::ReadWrite(
+                "*".to_string(),
+            )],
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,
             browser_access: electro_core::policy::BrowserPolicy::Blocked,

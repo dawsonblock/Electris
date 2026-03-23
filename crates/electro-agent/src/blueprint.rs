@@ -11,9 +11,9 @@
 //! provide ambient breadcrumbs; Blueprints provide full procedures.
 
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
 use electro_core::types::message::{ChatMessage, ContentPart, MessageContent, Role};
 use electro_core::{Memory, MemoryEntryType, SearchOpts};
+use serde::{Deserialize, Serialize};
 use tracing::{debug, info, warn};
 
 // ---------------------------------------------------------------------------

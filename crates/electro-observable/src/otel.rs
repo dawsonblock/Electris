@@ -110,7 +110,10 @@ impl Observable for OtelExporter {
                 ComponentHealth {
                     name: "otlp_exporter".to_string(),
                     status: HealthState::Degraded,
-                    message: Some(format!("Configured endpoint: {} (export transport not implemented)", self.endpoint)),
+                    message: Some(format!(
+                        "Configured endpoint: {} (export transport not implemented)",
+                        self.endpoint
+                    )),
                 },
             ],
         })

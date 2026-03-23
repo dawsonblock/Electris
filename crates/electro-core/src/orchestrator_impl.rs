@@ -22,7 +22,8 @@ use crate::{AgentInstance, AgentSpec, Orchestrator};
 #[async_trait]
 pub trait DockerClient: Send + Sync {
     /// POST /containers/create — returns the container ID on success.
-    async fn create_container(&self, spec: &ContainerCreateRequest) -> Result<String, ElectroError>;
+    async fn create_container(&self, spec: &ContainerCreateRequest)
+        -> Result<String, ElectroError>;
 
     /// POST /containers/{id}/start
     async fn start_container(&self, id: &str) -> Result<(), ElectroError>;
@@ -875,7 +876,10 @@ mod tests {
         );
         config.insert("max_instances".to_string(), "5".to_string());
 
-        let err = create_orchestrator("docker", &config).err().unwrap().to_string();
+        let err = create_orchestrator("docker", &config)
+            .err()
+            .unwrap()
+            .to_string();
         assert!(err.contains("disabled"));
     }
 
@@ -886,7 +890,10 @@ mod tests {
     #[tokio::test]
     async fn test_factory_docker_defaults() {
         let config = HashMap::new();
-        let err = create_orchestrator("docker", &config).err().unwrap().to_string();
+        let err = create_orchestrator("docker", &config)
+            .err()
+            .unwrap()
+            .to_string();
         assert!(err.contains("disabled"));
     }
 
@@ -897,7 +904,10 @@ mod tests {
     #[tokio::test]
     async fn test_factory_kubernetes() {
         let config = HashMap::new();
-        let err = create_orchestrator("kubernetes", &config).err().unwrap().to_string();
+        let err = create_orchestrator("kubernetes", &config)
+            .err()
+            .unwrap()
+            .to_string();
         assert!(err.contains("disabled"));
     }
 

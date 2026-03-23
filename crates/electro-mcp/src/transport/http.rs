@@ -6,11 +6,11 @@
 use crate::jsonrpc::{JsonRpcNotification, JsonRpcRequest, JsonRpcResponse};
 use crate::transport::Transport;
 use async_trait::async_trait;
+use electro_core::types::error::ElectroError;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
-use electro_core::types::error::ElectroError;
 use tokio::sync::RwLock;
 use tracing::{debug, warn};
 
