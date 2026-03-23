@@ -16,12 +16,11 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use electro_core::policy::CapabilityPolicy;
 use electro_core::types::error::ElectroError;
 use electro_core::{
-    Memory, MemoryEntry, MemoryEntryType, SearchOpts, Tool, ToolContext,
-    ToolInput, ToolOutput,
+    Memory, MemoryEntry, MemoryEntryType, SearchOpts, Tool, ToolContext, ToolInput, ToolOutput,
 };
-use electro_core::policy::CapabilityPolicy;
 
 pub struct MemoryManageTool {
     memory: Arc<dyn Memory>,
@@ -532,7 +531,7 @@ impl Tool for MemoryManageTool {
             file_access: Vec::new(),
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,
-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
         }
     }
 
@@ -569,8 +568,8 @@ browser_access: electro_core::policy::BrowserPolicy::Blocked,
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::PathBuf;
     use electro_test_utils::MockMemory;
+    use std::path::PathBuf;
 
     fn test_ctx() -> ToolContext {
         ToolContext {

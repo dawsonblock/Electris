@@ -6,12 +6,12 @@
 //! cooldowns prevent runaway automation.
 
 use chrono::{DateTime, Utc};
+use electro_core::types::error::ElectroError;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Mutex;
 use std::time::Duration;
-use electro_core::types::error::ElectroError;
 use tracing::{debug, info, warn};
 use uuid::Uuid;
 

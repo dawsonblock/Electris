@@ -1,0 +1,432 @@
+    Checking electro v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2)
+error[E0432]: unresolved import `electro_core::types::model_registry::is_placeholder_key`
+ --> src/app/chat/mod.rs:6:58
+  |
+6 | ...del, is_placeholder_key};
+  |         ^^^^^^^^^^^^^^^^^^ no `is_placeholder_key` in `types::model_registry`
+
+error[E0432]: unresolved import `crate::onboarding`
+ --> src/app/server/mod.rs:9:12
+  |
+9 | use crate::onboarding::{build_syst...
+  |            ^^^^^^^^^^ unresolved import
+  |
+help: a similar path exists
+  |
+9 | use crate::app::onboarding::{build_system_prompt};
+  |            +++++
+
+error[E0432]: unresolved import `crate::onboarding`
+  --> src/app/server/dispatcher.rs:12:12
+   |
+12 | ...crate::onboarding::{build_syst...
+   |           ^^^^^^^^^^ unresolved import
+   |
+help: a similar path exists
+   |
+12 | use crate::app::onboarding::{build_system_prompt};
+   |            +++++
+
+error[E0425]: cannot find function `handle_remaining_commands` in module `cli`
+  --> src/main.rs:75:18
+   |
+75 | ...i::handle_remaining_commands(cl...
+   |       ^^^^^^^^^^^^^^^^^^^^^^^^^ not found in `cli`
+   |
+help: consider importing this function
+   |
+ 9 + use crate::app::cli::handle_remaining_commands;
+   |
+help: if you import `handle_remaining_commands`, refer to it directly
+   |
+75 -             cli::handle_remaining_commands(cli.command, &config).await?;
+75 +             handle_remaining_commands(cli.command, &config).await?;
+   |
+
+warning: unused import: `std::panic::AssertUnwindSafe`
+ --> src/app/logging.rs:1:5
+  |
+1 | use std::panic::AssertUnwindSafe;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused imports: `check_hive_enabled`, `create_agent`, and `create_provider`
+ --> src/app/server/mod.rs:8:35
+  |
+8 | ...k, create_agent, create_provider, init_tools, check_hive_enabled, l...
+  |       ^^^^^^^^^^^^  ^^^^^^^^^^^^^^^              ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `tokio_util::sync::CancellationToken`
+ --> src/app/server/dispatcher.rs:5:5
+  |
+5 | use tokio_util::sync::CancellationToken;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::bootstrap::SecretCensorChannel`
+  --> src/app/server/dispatcher.rs:11:5
+   |
+11 | use crate::bootstrap::SecretCensorChannel;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `MessageContent`, `OutboundMessage`, and `Role`
+ --> src/app/server/worker.rs:7:65
+  |
+7 | ...e, Role, MessageContent, OutboundMessage};
+  |       ^^^^  ^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^
+
+warning: unused import: `Provider`
+ --> src/app/server/commands.rs:4:43
+  |
+4 | ...ory, Tool, Provider, Vault};
+  |               ^^^^^^^^
+
+warning: unused import: `ElectroMode`
+ --> src/app/server/commands.rs:6:51
+  |
+6 | ...Strategy, ElectroMode};
+  |              ^^^^^^^^^^^
+
+warning: unused imports: `is_placeholder_key` and `load_credentials_file`
+ --> src/app/onboarding.rs:2:41
+  |
+2 | ...::{is_placeholder_key, load_credentials_file};
+  |       ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `electro_core::types::model_registry::default_model`
+ --> src/app/onboarding.rs:3:5
+  |
+3 | use electro_core::types::model_registry::default_model;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `load_active_provider_keys`
+ --> src/app/cli.rs:2:43
+  |
+2 | ...y, load_active_provider_keys, l...
+  |       ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `available_models_for_provider` and `is_vision_model`
+ --> src/app/cli.rs:5:5
+  |
+5 |     available_models_for_provider, is_vision_model,
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^
+
+warning: unused imports: `credentials_path`, `is_placeholder_key`, `load_active_provider_keys`, and `load_credentials_file`
+ --> src/cli.rs:3:5
+  |
+3 |     credentials_path, is_placeholder_key, load_active_provider_keys, load_credentials_file,
+  |     ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `available_models_for_provider`, `default_model`, and `is_vision_model`
+ --> src/cli.rs:6:5
+  |
+6 |     available_models_for_provider, default_model, is_vision_model,
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^
+
+error[E0369]: binary operation `!=` cannot be applied to type `Option<...>`
+   --> src/app/chat/mod.rs:154:52
+    |
+154 | ...if Some(status.phase.clone()) != last_phase {
+    |       -------------------------- ^^ ---------- Option<...>
+    |       |
+    |       Option<...>
+    |
+note: `AgentTaskPhase` does not implement `PartialEq`
+   --> crates/electro-agent/src/agent_task_status.rs:16:1
+    |
+ 16 | pub enum AgentTaskPhase {
+    | ^^^^^^^^^^^^^^^^^^^^^^^ `AgentTaskPhase` is defined in another crate
+    = note: the full name for the type has been written to '/Users/dawsonblock/Downloads/Electro-main 2/target/debug/deps/electro-1e06f07df264c5f0.long-type-1815185561503131374.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+
+error[E0308]: mismatched types
+  --> src/app/tools.rs:35:22
+   |
+35 |         (tools, Some(browser_ref))
+   |                 ---- ^^^^^^^^^^^ expected `Arc<BrowserTool>`, found `Option<Arc<BrowserTool>>`
+   |                 |
+   |                 arguments to this enum variant are incorrect
+   |
+   = note: expected struct `Arc<_>`
+                found enum `std::option::Option<Arc<_>>`
+help: the type constructed contains `std::option::Option<Arc<BrowserTool>>` due to the type of the argument passed
+  --> src/app/tools.rs:35:17
+   |
+35 |         (tools, Some(browser_ref))
+   |                 ^^^^^-----------^
+   |                      |
+   |                      this argument influences the type of `Some`
+note: tuple variant defined here
+  --> /rustc/20f19f4615200b16e3631816e7824e832ff394db/library/core/src/option.rs:608:4
+help: consider using `Option::expect` to unwrap the `std::option::Option<Arc<BrowserTool>>` value, panicking if the value is an `Option::None`
+   |
+35 |         (tools, Some(browser_ref.expect("REASON")))
+   |                                 +++++++++++++++++
+
+error[E0599]: no variant or associated item named `Tui` found for enum `Commands` in the current scope
+  --> src/main.rs:19:41
+   |
+19 | ... Commands::Tui)
+   |               ^^^ variant or associated item not found in `Commands`
+   |
+  ::: src/cli.rs:29:1
+   |
+29 | pub enum Commands {
+   | ----------------- variant or associated item `Tui` not found for this enum
+
+warning: unused import: `tracing_subscriber::prelude`
+ --> src/app/logging.rs:3:5
+  |
+3 | use tracing_subscriber::prelude::*;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused variable: `agent_opt`
+   --> src/app/chat/mod.rs:247:5
+    |
+247 |     agent_opt: &mut Option<elect...
+    |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_agent_opt`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `config`
+   --> src/app/chat/mod.rs:248:5
+    |
+248 |     config: &ElectroConfig,
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: unused variable: `tools`
+   --> src/app/chat/mod.rs:249:5
+    |
+249 |     tools: &[Arc<dyn electro_cor...
+    |     ^^^^^ help: if this is intentional, prefix it with an underscore: `_tools`
+
+warning: unused variable: `hive_enabled`
+   --> src/app/chat/mod.rs:250:5
+    |
+250 |     hive_enabled: &bool,
+    |     ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_hive_enabled`
+
+warning: unused variable: `shared_mode`
+   --> src/app/chat/mod.rs:251:5
+    |
+251 |     shared_mode: &Arc<tokio::syn...
+    |     ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_shared_mode`
+
+warning: unused variable: `shared_memory_strategy`
+   --> src/app/chat/mod.rs:252:5
+    |
+252 |     shared_memory_strategy: &Arc...
+    |     ^^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_shared_memory_strategy`
+
+warning: variable does not need to be mutable
+  --> src/app/server/worker.rs:78:13
+   |
+78 | ...et mut persistent_history: Vec...
+   |       ----^^^^^^^^^^^^^^^^^^
+   |       |
+   |       help: remove this `mut`
+   |
+   = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `custom_registry`
+  --> src/app/server/worker.rs:19:5
+   |
+19 |     custom_registry: &Arc<electro...
+   |     ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_custom_registry`
+
+warning: unused variable: `mcp_mgr`
+  --> src/app/server/worker.rs:20:29
+   |
+20 | ... "mcp")] mcp_mgr: &Arc<electro...
+   |             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_mcp_mgr`
+
+warning: unused variable: `max_turns`
+  --> src/app/server/worker.rs:21:5
+   |
+21 |     max_turns: usize,
+   |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_turns`
+
+warning: unused variable: `max_ctx`
+  --> src/app/server/worker.rs:22:5
+   |
+22 |     max_ctx: usize,
+   |     ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_ctx`
+
+warning: unused variable: `max_rounds`
+  --> src/app/server/worker.rs:23:5
+   |
+23 |     max_rounds: usize,
+   |     ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_rounds`
+
+warning: unused variable: `max_task_duration`
+  --> src/app/server/worker.rs:24:5
+   |
+24 |     max_task_duration: u64,
+   |     ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_task_duration`
+
+warning: unused variable: `max_spend`
+  --> src/app/server/worker.rs:25:5
+   |
+25 |     max_spend: f64,
+   |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_spend`
+
+warning: unused variable: `v2_opt`
+  --> src/app/server/worker.rs:26:5
+   |
+26 |     v2_opt: bool,
+   |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_v2_opt`
+
+warning: unused variable: `pp_opt`
+  --> src/app/server/worker.rs:27:5
+   |
+27 |     pp_opt: bool,
+   |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_pp_opt`
+
+warning: unused variable: `base_url`
+  --> src/app/server/worker.rs:28:5
+   |
+28 |     base_url: &Option<String>,
+   |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_base_url`
+
+warning: unused variable: `current_task_worker`
+  --> src/app/server/worker.rs:56:9
+   |
+56 |     let current_task_worker = cur...
+   |         ^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_current_task_worker`
+
+warning: unused variable: `interrupt_worker`
+  --> src/app/server/worker.rs:57:9
+   |
+57 |     let interrupt_worker = interr...
+   |         ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_interrupt_worker`
+
+warning: unused variable: `is_heartbeat_worker`
+  --> src/app/server/worker.rs:58:9
+   |
+58 |     let is_heartbeat_worker = is_...
+   |         ^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_is_heartbeat_worker`
+
+warning: unused variable: `cancel_token_worker`
+  --> src/app/server/worker.rs:59:9
+   |
+59 |     let cancel_token_worker = can...
+   |         ^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cancel_token_worker`
+
+warning: unused variable: `ws_path`
+  --> src/app/server/worker.rs:61:9
+   |
+61 |     let ws_path = ws_path.to_path...
+   |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_ws_path`
+
+warning: unused variable: `pending_messages`
+  --> src/app/server/worker.rs:62:9
+   |
+62 |     let pending_messages = pendin...
+   |         ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pending_messages`
+
+warning: unused variable: `usage_store`
+  --> src/app/server/worker.rs:67:9
+   |
+67 |     let usage_store = usage_store...
+   |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_usage_store`
+
+warning: unused variable: `hive`
+  --> src/app/server/worker.rs:68:9
+   |
+68 |     let hive = hive_clone.clone();
+   |         ^^^^ help: if this is intentional, prefix it with an underscore: `_hive`
+
+warning: unused variable: `agent_state`
+  --> src/app/server/commands.rs:15:5
+   |
+15 |     agent_state: &Arc<tokio::sync...
+   |     ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_agent_state`
+
+warning: unused variable: `history`
+  --> src/app/server/commands.rs:17:5
+   |
+17 |     history: &[ChatMessage],
+   |     ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_history`
+
+warning: unused variable: `tools_template`
+  --> src/app/server/commands.rs:18:5
+   |
+18 |     tools_template: &[Arc<dyn Too...
+   |     ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_tools_template`
+
+warning: unused variable: `pending_raw_keys`
+  --> src/app/server/commands.rs:20:5
+   |
+20 |     pending_raw_keys: &Arc<Mutex<...
+   |     ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pending_raw_keys`
+
+warning: unused variable: `login_sessions`
+  --> src/app/server/commands.rs:21:33
+   |
+21 | ...ser")] login_sessions: &Arc<
+   |           ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_login_sessions`
+
+warning: unused variable: `browser_ref`
+  --> src/app/server/commands.rs:24:33
+   |
+24 | ...ser")] browser_ref: &Option<Ar...
+   |           ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_browser_ref`
+
+warning: unused variable: `vault`
+  --> src/app/server/commands.rs:25:5
+   |
+25 |     vault: &Option<Arc<dyn Vault>>,
+   |     ^^^^^ help: if this is intentional, prefix it with an underscore: `_vault`
+
+warning: unused variable: `shared_mode`
+  --> src/app/server/commands.rs:26:5
+   |
+26 |     shared_mode: &electro_tools::...
+   |     ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_shared_mode`
+
+warning: unused variable: `shared_memory_strategy`
+  --> src/app/server/commands.rs:27:5
+   |
+27 |     shared_memory_strategy: &Arc<...
+   |     ^^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_shared_memory_strategy`
+
+warning: unused variable: `personality_locked`
+  --> src/app/server/commands.rs:28:5
+   |
+28 |     personality_locked: bool,
+   |     ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_personality_locked`
+
+warning: unused variable: `key_text`
+  --> src/app/server/commands.rs:40:16
+   |
+40 |             Ok(key_text) => {
+   |                ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_key_text`
+
+warning: unused variable: `cli_mode`
+  --> src/app/server/mod.rs:22:5
+   |
+22 |     cli_mode: String,
+   |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cli_mode`
+
+warning: unused variable: `sender`
+   --> src/app/onboarding.rs:100:5
+    |
+100 |     sender: &dyn electro_core::C...
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_sender`
+
+warning: unused variable: `reply`
+   --> src/app/onboarding.rs:101:5
+    |
+101 |     reply: electro_core::types::...
+    |     ^^^^^ help: if this is intentional, prefix it with an underscore: `_reply`
+
+warning: unused variable: `pid`
+  --> src/daemon.rs:81:14
+   |
+81 |         Some(pid) => {
+   |              ^^^ help: if this is intentional, prefix it with an underscore: `_pid`
+
+Some errors have detailed explanations: E0308, E0369, E0425, E0432, E0599.
+For more information about an error, try `rustc --explain E0308`.
+warning: `electro` (bin "electro") generated 54 warnings
+error: could not compile `electro` (bin "electro") due to 7 previous errors; 54 warnings emitted

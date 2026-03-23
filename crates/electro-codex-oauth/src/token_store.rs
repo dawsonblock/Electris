@@ -4,11 +4,11 @@
 //! and are auto-refreshed using the refresh token. A Mutex ensures only one
 //! refresh happens at a time (prevents `refresh_token_reused` errors).
 
+use electro_core::paths;
+use electro_core::types::error::ElectroError;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
-use electro_core::paths;
-use electro_core::types::error::ElectroError;
 use tokio::sync::Mutex;
 
 /// OAuth token set — stored in ~/.electro/oauth.json

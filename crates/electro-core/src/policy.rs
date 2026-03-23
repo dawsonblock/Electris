@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 /// The unified capability policy schema that defines a tool's permissions.
 /// Every dangerous action must map to one of these categories.

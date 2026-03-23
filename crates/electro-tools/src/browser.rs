@@ -41,14 +41,12 @@ use chromiumoxide::cdp::browser_protocol::network::{
 };
 use chromiumoxide::cdp::browser_protocol::page::AddScriptToEvaluateOnNewDocumentParams;
 use chromiumoxide::page::Page;
+use electro_core::paths;
+use electro_core::policy::{CapabilityPolicy, FileAccessPolicy};
+use electro_core::types::error::ElectroError;
+use electro_core::{Tool, ToolContext, ToolInput, ToolOutput, ToolOutputImage, Vault};
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
-use electro_core::types::error::ElectroError;
-use electro_core::{
-    Tool, ToolContext, ToolInput, ToolOutput, ToolOutputImage, Vault};
-use electro_core::paths;
-use electro_core::policy::{CapabilityPolicy, FileAccessPolicy,
-};
 use tokio::sync::Mutex;
 use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 
@@ -829,7 +827,8 @@ impl BrowserTool {
         if !remote_browser {
             // ── Profile Strategy ──────────────────────────────────────────
             // Local fallback keeps the old clean-by-default profile behavior.
-            let inherit_browser_session = std::env::var("ELECTRO_INHERIT_BROWSER_SESSION").unwrap_or_default() == "1";
+            let inherit_browser_session =
+                std::env::var("ELECTRO_INHERIT_BROWSER_SESSION").unwrap_or_default() == "1";
             let clean_browser = !inherit_browser_session;
 
             let work_profile = dirs::data_dir()
@@ -1037,7 +1036,13 @@ impl BrowserTool {
         let safe_name = sanitize_session_name(session_name);
         let path = sessions_dir.join(format!("{}.json", safe_name));
 
-        if !std::fs::exists(&path).map_err(|e| ElectroError::Tool(format!("Failed to check session file {}: {}", path.display(), e)))? {
+        if !std::fs::exists(&path).map_err(|e| {
+            ElectroError::Tool(format!(
+                "Failed to check session file {}: {}",
+                path.display(),
+                e
+            ))
+        })? {
             return Err(ElectroError::Tool(format!(
                 "Session '{}' not found at {}",
                 safe_name,
@@ -1099,13 +1104,19 @@ impl BrowserTool {
     }
 }
 
-
 fn atomic_write_session_file(path: &std::path::Path, contents: &str) -> Result<(), ElectroError> {
     let parent = path.parent().ok_or_else(|| {
-        ElectroError::Tool(format!("Session path {} has no parent directory", path.display()))
+        ElectroError::Tool(format!(
+            "Session path {} has no parent directory",
+            path.display()
+        ))
     })?;
     std::fs::create_dir_all(parent).map_err(|e| {
-        ElectroError::Tool(format!("Failed to create sessions directory {}: {}", parent.display(), e))
+        ElectroError::Tool(format!(
+            "Failed to create sessions directory {}: {}",
+            parent.display(),
+            e
+        ))
     })?;
 
     #[cfg(unix)]
@@ -1123,7 +1134,9 @@ fn atomic_write_session_file(path: &std::path::Path, contents: &str) -> Result<(
 
     let tmp_path = parent.join(format!(
         ".{}.tmp-{}",
-        path.file_name().and_then(|n| n.to_str()).unwrap_or("session"),
+        path.file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("session"),
         std::process::id()
     ));
 
@@ -1161,7 +1174,11 @@ fn sessions_dir() -> Result<std::path::PathBuf, ElectroError> {
     let electro_home = paths::ensure_electro_home()?;
     let dir = electro_home.join(SESSIONS_DIR);
     std::fs::create_dir_all(&dir).map_err(|e| {
-        ElectroError::Tool(format!("Failed to create sessions directory {}: {}", dir.display(), e))
+        ElectroError::Tool(format!(
+            "Failed to create sessions directory {}: {}",
+            dir.display(),
+            e
+        ))
     })?;
 
     #[cfg(unix)]
@@ -1203,7 +1220,6 @@ fn extract_base_domain(url: &str) -> Option<String> {
 fn browser_domain_allowlist() -> Vec<String> {
     load_domain_allowlist_from_env(PUBLIC_WEB_ALLOWLIST_ENV)
 }
-
 
 /// Sanitize a session name to a safe filename (alphanumeric, dots, dashes, underscores).
 fn sanitize_session_name(name: &str) -> String {
@@ -3141,8 +3157,14 @@ mod tests {
         rt.block_on(async {
             let tool = BrowserTool::new();
             let decl = tool.declarations();
-            assert!(matches!(decl.network_access, electro_core::net_policy::NetworkPolicy::PublicWeb { .. }));
-            assert_eq!(decl.shell_access, electro_core::policy::ShellPolicy::Blocked);
+            assert!(matches!(
+                decl.network_access,
+                electro_core::net_policy::NetworkPolicy::PublicWeb { .. }
+            ));
+            assert_eq!(
+                decl.shell_access,
+                electro_core::policy::ShellPolicy::Blocked
+            );
         });
     }
 

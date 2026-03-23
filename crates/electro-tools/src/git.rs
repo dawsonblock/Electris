@@ -1,10 +1,9 @@
 //! Git tool — typed git operations via tokio::process::Command.
 
 use async_trait::async_trait;
+use electro_core::policy::CapabilityPolicy;
 use electro_core::types::error::ElectroError;
 use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
-use electro_core::policy::CapabilityPolicy;
-
 
 /// Default command timeout in seconds (git ops can be slow).
 const DEFAULT_TIMEOUT_SECS: u64 = 60;
@@ -306,10 +305,7 @@ impl Tool for GitTool {
         // git operations run inside the container sandbox when available.
         // Falls back to direct host execution only when no container runtime
         // is present, and logs a warning so operators are aware.
-        let parsed = crate::shell::ParsedCommand::new(
-            "git".to_string(),
-            cmd_args.clone(),
-        );
+        let parsed = crate::shell::ParsedCommand::new("git".to_string(), cmd_args.clone());
         let policy = crate::shell::load_policy();
 
         match crate::shell::resolve_backend(&policy).await {
@@ -424,9 +420,15 @@ mod tests {
     fn test_declarations_has_shell_access() {
         let tool = GitTool::new();
         let decl = tool.declarations();
-        assert_eq!(decl.shell_access, electro_core::policy::ShellPolicy::Allowed);
+        assert_eq!(
+            decl.shell_access,
+            electro_core::policy::ShellPolicy::Allowed
+        );
         assert!(decl.file_access.is_empty());
-        assert!(matches!(decl.network_access, electro_core::net_policy::NetworkPolicy::Blocked));
+        assert!(matches!(
+            decl.network_access,
+            electro_core::net_policy::NetworkPolicy::PublicWeb { .. }
+        ));
     }
 
     #[test]

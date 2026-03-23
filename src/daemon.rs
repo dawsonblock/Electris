@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use electro_core::paths;
+use std::path::PathBuf;
 
 /// Get the path to the PID file: `~/.electro/electro.pid`
 pub fn pid_file_path() -> Option<PathBuf> {
@@ -73,7 +73,9 @@ pub fn stop_daemon() -> Result<bool, String> {
             }
             #[cfg(not(any(unix, windows)))]
             {
-                Err(format!("Process termination not implemented for this platform"))
+                Err(format!(
+                    "Process termination not implemented for this platform"
+                ))
             }
         }
         Some(pid) => {
@@ -82,6 +84,24 @@ pub fn stop_daemon() -> Result<bool, String> {
             Ok(false)
         }
         None => Ok(false),
+    }
+}
+
+/// Helper for CLI to stop the daemon and print status
+pub fn stop_daemon_cli() -> anyhow::Result<()> {
+    match stop_daemon() {
+        Ok(true) => {
+            println!("ELECTRO daemon stopped.");
+            Ok(())
+        }
+        Ok(false) => {
+            eprintln!("No ELECTRO daemon running.");
+            std::process::exit(1);
+        }
+        Err(e) => {
+            eprintln!("{}", e);
+            std::process::exit(1);
+        }
     }
 }
 
@@ -123,10 +143,10 @@ pub fn start_daemon(log_path: Option<String>) -> Result<u32, String> {
     // Re-exec ourselves as a detached child
     let exe = std::env::current_exe().expect("cannot resolve own executable path");
     let mut args: Vec<String> = std::env::args().collect();
-    
+
     // Remove --daemon / -d flag so the child runs in foreground
     args.retain(|a| a != "--daemon" && a != "-d");
-    
+
     // Remove --log and its value too
     let mut skip_next = false;
     args.retain(|a| {
@@ -149,8 +169,10 @@ pub fn start_daemon(log_path: Option<String>) -> Result<u32, String> {
         .append(true)
         .open(&log_path)
         .map_err(|e| format!("Cannot open log file {}: {}", log_path.display(), e))?;
-    
-    let log_err = log_file.try_clone().map_err(|e| format!("Cannot clone log file handle: {}", e))?;
+
+    let log_err = log_file
+        .try_clone()
+        .map_err(|e| format!("Cannot clone log file handle: {}", e))?;
 
     let child = std::process::Command::new(exe)
         .args(&args[1..]) // skip argv[0]

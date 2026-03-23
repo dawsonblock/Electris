@@ -6,9 +6,9 @@
 
 use std::path::{Path, PathBuf};
 
-use serde::Deserialize;
 use electro_core::error::ElectroError;
 use electro_core::paths;
+use serde::Deserialize;
 use tokio::fs;
 
 /// A parsed skill loaded from a `.md` file.

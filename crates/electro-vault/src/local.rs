@@ -13,9 +13,9 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
 async fn path_exists(path: &std::path::Path) -> Result<bool, ElectroError> {
-    tokio::fs::try_exists(path).await.map_err(|e| {
-        ElectroError::Vault(format!("failed to check path {}: {e}", path.display()))
-    })
+    tokio::fs::try_exists(path)
+        .await
+        .map_err(|e| ElectroError::Vault(format!("failed to check path {}: {e}", path.display())))
 }
 
 async fn write_bytes_atomic(path: &std::path::Path, bytes: &[u8]) -> Result<(), ElectroError> {
@@ -23,7 +23,10 @@ async fn write_bytes_atomic(path: &std::path::Path, bytes: &[u8]) -> Result<(), 
         ElectroError::Vault(format!("path {} has no parent directory", path.display()))
     })?;
     tokio::fs::create_dir_all(parent).await.map_err(|e| {
-        ElectroError::Vault(format!("failed to create parent directory {}: {e}", parent.display()))
+        ElectroError::Vault(format!(
+            "failed to create parent directory {}: {e}",
+            parent.display()
+        ))
     })?;
 
     let tmp_path = parent.join(format!(
@@ -33,7 +36,10 @@ async fn write_bytes_atomic(path: &std::path::Path, bytes: &[u8]) -> Result<(), 
     ));
 
     tokio::fs::write(&tmp_path, bytes).await.map_err(|e| {
-        ElectroError::Vault(format!("failed to write temporary file {}: {e}", tmp_path.display()))
+        ElectroError::Vault(format!(
+            "failed to write temporary file {}: {e}",
+            tmp_path.display()
+        ))
     })?;
 
     #[cfg(unix)]

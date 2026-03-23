@@ -28,7 +28,9 @@ use electro_core::FileStore;
 /// Supported backends:
 /// - `"local"` — uses `config.path` as the base directory (defaults to `"./files"`).
 /// - `"s3"` — requires the `s3` feature and a `config.bucket`.
-pub async fn create_filestore(config: &FileStoreConfig) -> Result<Box<dyn FileStore>, ElectroError> {
+pub async fn create_filestore(
+    config: &FileStoreConfig,
+) -> Result<Box<dyn FileStore>, ElectroError> {
     match config.backend.as_str() {
         "local" => {
             let path = config.path.as_deref().unwrap_or("./files");

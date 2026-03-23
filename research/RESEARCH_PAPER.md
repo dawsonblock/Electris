@@ -2,7 +2,7 @@
 
 **Authors:** Quan Duong, Claude Opus 4.6
 **Date:** March 2026
-**Project:** ELECTRO v3.0.0
+**Project:** ELECTRO v3.2.0
 
 ---
 
@@ -264,7 +264,7 @@ The fundamental difference: other systems use LLM conversations for coordination
 ## 8. Reproducibility
 
 ```bash
-git clone https://github.com/nagisanzenin/electro
+git clone https://github.com/electro-labs/electro
 cd electro && git checkout many-tems
 
 # Unit tests (71 tests including parallelism proofs)

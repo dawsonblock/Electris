@@ -23,8 +23,8 @@
 //! 5. If invalid JSON or no tool_call field: treat the entire original text
 //!    as a plain-text response.
 
-use serde_json::Value;
 use electro_core::types::message::ToolDefinition;
+use serde_json::Value;
 
 /// Result of parsing a model response in prompted-tool-calling mode.
 #[derive(Debug, Clone)]

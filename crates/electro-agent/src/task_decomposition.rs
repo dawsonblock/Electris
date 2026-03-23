@@ -12,8 +12,8 @@
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, VecDeque};
 
-use serde::{Deserialize, Serialize};
 use electro_core::types::error::ElectroError;
+use serde::{Deserialize, Serialize};
 use tracing::{debug, warn};
 
 // ---------------------------------------------------------------------------

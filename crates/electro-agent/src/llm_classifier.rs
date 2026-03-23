@@ -8,7 +8,6 @@
 //! - **Stop**: user wants the agent to stop, cancel, or abandon the current task.
 //!   Short acknowledgement in `chat_text`. Caller should interrupt any active task.
 
-use serde::{Deserialize, Serialize};
 use electro_core::types::config::ElectroMode;
 use electro_core::types::error::ElectroError;
 use electro_core::types::message::{
@@ -16,6 +15,7 @@ use electro_core::types::message::{
 };
 use electro_core::types::optimization::ExecutionProfile;
 use electro_core::Provider;
+use serde::{Deserialize, Serialize};
 use tracing::{debug, info, warn};
 
 /// Classification result from the LLM.

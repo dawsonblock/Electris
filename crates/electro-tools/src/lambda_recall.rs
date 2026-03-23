@@ -6,11 +6,10 @@
 //! naturally appears as hot in subsequent turns.
 
 use async_trait::async_trait;
-use std::sync::Arc;
 use electro_core::error::ElectroError;
-use electro_core::{Memory, Tool, ToolContext, ToolInput, ToolOutput};
 use electro_core::policy::CapabilityPolicy;
-
+use electro_core::{Memory, Tool, ToolContext, ToolInput, ToolOutput};
+use std::sync::Arc;
 
 pub struct LambdaRecallTool {
     memory: Arc<dyn Memory>,
@@ -54,7 +53,7 @@ impl Tool for LambdaRecallTool {
             file_access: Vec::new(),
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,
-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
         }
     }
 

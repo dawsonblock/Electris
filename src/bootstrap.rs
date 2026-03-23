@@ -1,8 +1,8 @@
-use std::sync::Arc;
 use async_trait::async_trait;
-use electro_core::config::credentials::load_credentials_file;
 use electro_core::config::credentials::is_placeholder_key;
+use electro_core::config::credentials::load_credentials_file;
 use electro_core::Channel;
+use std::sync::Arc;
 
 /// Wraps any Channel to censor known API keys from outbound messages.
 /// This is the hardcoded last-line-of-defense filter — the system prompt

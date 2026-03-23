@@ -81,7 +81,9 @@ impl JsonRpcResponse {
     }
 
     /// Extract the result value, or return the error as a ElectroError.
-    pub fn into_result(self) -> Result<serde_json::Value, electro_core::types::error::ElectroError> {
+    pub fn into_result(
+        self,
+    ) -> Result<serde_json::Value, electro_core::types::error::ElectroError> {
         if let Some(err) = self.error {
             Err(electro_core::types::error::ElectroError::Tool(format!(
                 "MCP error {}: {}",

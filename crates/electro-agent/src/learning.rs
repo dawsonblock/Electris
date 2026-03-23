@@ -5,8 +5,8 @@
 //! injected into future context to avoid repeating mistakes.
 
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
 use electro_core::types::message::{ChatMessage, ContentPart, MessageContent, Role};
+use serde::{Deserialize, Serialize};
 
 /// A single learning extracted from a completed task.
 #[derive(Debug, Clone, Serialize, Deserialize)]

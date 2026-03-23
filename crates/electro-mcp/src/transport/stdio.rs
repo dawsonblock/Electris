@@ -14,11 +14,11 @@ use crate::jsonrpc::{
 };
 use crate::transport::Transport;
 use async_trait::async_trait;
+use electro_core::types::error::ElectroError;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
-use electro_core::types::error::ElectroError;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::{Child, Command};
 use tokio::sync::{oneshot, Mutex};

@@ -46,7 +46,9 @@ impl Transport for NullTransport {
         _method: &str,
         _params: Option<serde_json::Value>,
     ) -> Result<JsonRpcResponse, ElectroError> {
-        Err(ElectroError::Tool("MCP server is not connected".to_string()))
+        Err(ElectroError::Tool(
+            "MCP server is not connected".to_string(),
+        ))
     }
 
     async fn notify(
@@ -54,7 +56,9 @@ impl Transport for NullTransport {
         _method: &str,
         _params: Option<serde_json::Value>,
     ) -> Result<(), ElectroError> {
-        Err(ElectroError::Tool("MCP server is not connected".to_string()))
+        Err(ElectroError::Tool(
+            "MCP server is not connected".to_string(),
+        ))
     }
 
     fn is_alive(&self) -> bool {

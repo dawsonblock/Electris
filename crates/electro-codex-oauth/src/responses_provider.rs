@@ -8,12 +8,12 @@
 //! - Different streaming event types
 
 use async_trait::async_trait;
-use futures::stream::BoxStream;
-use futures::StreamExt;
-use std::sync::Arc;
 use electro_core::types::error::ElectroError;
 use electro_core::types::message::*;
 use electro_core::Provider;
+use futures::stream::BoxStream;
+use futures::StreamExt;
+use std::sync::Arc;
 
 use crate::token_store::TokenStore;
 

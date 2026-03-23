@@ -5,10 +5,9 @@ use crate::network_guard::{
     load_domain_allowlist_from_env, validate_public_url, PUBLIC_WEB_ALLOWLIST_ENV,
 };
 use async_trait::async_trait;
+use electro_core::policy::CapabilityPolicy;
 use electro_core::types::error::ElectroError;
 use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
-use electro_core::policy::CapabilityPolicy;
-
 
 /// Default request timeout in seconds.
 /// Maximum response body size (32 KB — keeps tool output within token budget).
@@ -32,7 +31,6 @@ impl WebFetchTool {
         Self { client }
     }
 }
-
 
 #[async_trait]
 impl Tool for WebFetchTool {

@@ -8,10 +8,9 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use electro_core::policy::CapabilityPolicy;
 use electro_core::types::error::ElectroError;
 use electro_core::{Tool, ToolContext, ToolInput, ToolOutput, UsageStore};
-use electro_core::policy::CapabilityPolicy;
-
 
 pub struct UsageAuditTool {
     store: Arc<dyn UsageStore>,
@@ -175,7 +174,7 @@ impl Tool for UsageAuditTool {
             file_access: Vec::new(),
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,
-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
         }
     }
 
@@ -210,9 +209,9 @@ browser_access: electro_core::policy::BrowserPolicy::Blocked,
 #[cfg(test)]
 mod tests {
     use super::*;
+    use electro_core::{UsageRecord, UsageSummary};
     use std::path::PathBuf;
     use std::sync::Mutex;
-    use electro_core::{UsageRecord, UsageSummary};
 
     /// Mock UsageStore for testing.
     struct MockUsageStore {

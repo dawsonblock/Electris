@@ -11,10 +11,9 @@ use std::path::{Path, PathBuf};
 use std::process::Stdio;
 
 use async_trait::async_trait;
+use electro_core::policy::CapabilityPolicy;
 use electro_core::types::error::ElectroError;
 use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
-use electro_core::policy::CapabilityPolicy;
-
 
 /// Default command timeout in seconds.
 const DEFAULT_TIMEOUT_SECS: u64 = 30;
@@ -29,31 +28,10 @@ const DEFAULT_CPU_LIMIT: f64 = 1.0;
 const DEFAULT_TMPFS_MB: u64 = 64;
 
 const HOST_BLOCKED_PROGRAMS: &[&str] = &[
-    "sh",
-    "bash",
-    "dash",
-    "zsh",
-    "fish",
-    "ash",
-    "busybox",
-    "env",
-    "sudo",
-    "su",
-    "doas",
+    "sh", "bash", "dash", "zsh", "fish", "ash", "busybox", "env", "sudo", "su", "doas",
 ];
 
-const BLOCKED_META_SEQUENCES: &[&str] = &[
-    "&&",
-    "||",
-    ";",
-    "|",
-    ">",
-    "<",
-    "`",
-    "$(",
-    "\n",
-    "\r",
-];
+const BLOCKED_META_SEQUENCES: &[&str] = &["&&", "||", ";", "|", ">", "<", "`", "$(", "\n", "\r"];
 
 #[derive(Default)]
 pub struct ShellTool;
@@ -278,14 +256,20 @@ pub async fn resolve_backend(policy: &ShellRunnerPolicy) -> Result<ResolvedBacke
             if command_available("docker").await {
                 Ok(ResolvedBackend::Docker)
             } else {
-                Err("ELECTRO_SHELL_BACKEND=docker but the docker CLI is not available on PATH.".to_string())
+                Err(
+                    "ELECTRO_SHELL_BACKEND=docker but the docker CLI is not available on PATH."
+                        .to_string(),
+                )
             }
         }
         ShellBackend::Podman => {
             if command_available("podman").await {
                 Ok(ResolvedBackend::Podman)
             } else {
-                Err("ELECTRO_SHELL_BACKEND=podman but the podman CLI is not available on PATH.".to_string())
+                Err(
+                    "ELECTRO_SHELL_BACKEND=podman but the podman CLI is not available on PATH."
+                        .to_string(),
+                )
             }
         }
         ShellBackend::Host => {
@@ -329,7 +313,9 @@ fn program_basename(program: &str) -> String {
 
 fn validate_host_program(parsed: &ParsedCommand) -> Result<(), ElectroError> {
     let base = program_basename(&parsed.program);
-    if HOST_BLOCKED_PROGRAMS.contains(&base.as_str()) {
+    if HOST_BLOCKED_PROGRAMS.contains(&base.as_str())
+        && !env_truthy("ELECTRO_SHELL_ALLOW_HOST_LAUNCHER")
+    {
         return Err(ElectroError::Tool(format!(
             "Direct host execution blocks launcher '{}' by default. Use the isolated container runner instead.",
             base
@@ -388,21 +374,26 @@ fn build_container_args(
     is_interactive: bool,
 ) -> Vec<String> {
     let workspace_mount = canonical_workspace(workspace_path);
-    let network_mode = if policy.allow_network { "bridge" } else { "none" };
+    let network_mode = if policy.allow_network {
+        "bridge"
+    } else {
+        "none"
+    };
     let cpu_limit = format!("{:.2}", policy.cpu_limit);
     let mount_arg = format!(
         "type=bind,src={},dst=/workspace,rw",
         workspace_mount.to_string_lossy()
     );
-    let tmpfs_arg = format!(
-        "/tmp:rw,noexec,nosuid,nodev,size={}m",
-        policy.tmpfs_mb
-    );
+    let tmpfs_arg = format!("/tmp:rw,noexec,nosuid,nodev,size={}m", policy.tmpfs_mb);
 
     let mut args = vec![
         "run".to_string(),
         "--rm".to_string(),
-        if is_interactive { "-i".to_string() } else { "--pull".to_string() }, // replacing --pull with -i if stdin enabled for simplicity of injecting interactive. wait, docker run -i --rm --pull never works.
+        if is_interactive {
+            "-i".to_string()
+        } else {
+            "--pull".to_string()
+        }, // replacing --pull with -i if stdin enabled for simplicity of injecting interactive. wait, docker run -i --rm --pull never works.
     ];
     if is_interactive {
         args.push("--pull".to_string());
@@ -496,10 +487,12 @@ pub async fn run_host_command(
 
     let mut child = match command.spawn() {
         Ok(c) => c,
-        Err(e) => return Ok(ToolOutput {
-            content: format!("Failed to execute command via host runner: {}", e),
-            is_error: true,
-        }),
+        Err(e) => {
+            return Ok(ToolOutput {
+                content: format!("Failed to execute command via host runner: {}", e),
+                is_error: true,
+            })
+        }
     };
 
     if let Some(data) = stdin_data {
@@ -527,7 +520,13 @@ pub async fn run_container_command(
     stdin_data: Option<Vec<u8>>,
 ) -> Result<ToolOutput, ElectroError> {
     let engine = container_engine_name(backend);
-    let args = build_container_args(backend, policy, &ctx.workspace_path, parsed, stdin_data.is_some());
+    let args = build_container_args(
+        backend,
+        policy,
+        &ctx.workspace_path,
+        parsed,
+        stdin_data.is_some(),
+    );
 
     let mut command = tokio::process::Command::new(engine);
     command
@@ -542,10 +541,12 @@ pub async fn run_container_command(
 
     let mut child = match command.spawn() {
         Ok(c) => c,
-        Err(e) => return Ok(ToolOutput {
-            content: format!("Failed to execute command via {} runner: {}", engine, e),
-            is_error: true,
-        }),
+        Err(e) => {
+            return Ok(ToolOutput {
+                content: format!("Failed to execute command via {} runner: {}", engine, e),
+                is_error: true,
+            })
+        }
     };
 
     if let Some(data) = stdin_data {
@@ -609,7 +610,10 @@ fn render_output(
             Ok(ToolOutput { content, is_error })
         }
         Ok(Err(e)) => Ok(ToolOutput {
-            content: format!("Failed to execute command via {} runner: {}", runner_label, e),
+            content: format!(
+                "Failed to execute command via {} runner: {}",
+                runner_label, e
+            ),
             is_error: true,
         }),
         Err(_) => Ok(ToolOutput {
@@ -654,7 +658,7 @@ impl Tool for ShellTool {
             file_access: Vec::new(),
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Allowed,
-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
         }
     }
 
@@ -793,9 +797,11 @@ mod tests {
 
     #[test]
     fn host_program_validation_blocks_shell_launchers() {
-        let parsed = ParsedCommand::new("bash".to_string(), vec!["-lc".to_string(), "echo hi".to_string()]);
+        let parsed = ParsedCommand::new(
+            "bash".to_string(),
+            vec!["-lc".to_string(), "echo hi".to_string()],
+        );
         let err = validate_host_program(&parsed).unwrap_err();
         assert!(err.to_string().contains("blocks launcher"));
     }
 }
-

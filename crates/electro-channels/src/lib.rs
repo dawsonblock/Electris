@@ -28,10 +28,10 @@ pub use discord::DiscordChannel;
 #[cfg(feature = "slack")]
 pub use slack::SlackChannel;
 
-use std::path::PathBuf;
 use electro_core::types::config::ChannelConfig;
 use electro_core::types::error::ElectroError;
 use electro_core::Channel;
+use std::path::PathBuf;
 
 /// Factory function to create a channel by name.
 ///

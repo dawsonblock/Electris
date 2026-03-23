@@ -126,7 +126,7 @@ Generate: crypto::random(32 bytes) → 256-bit OTK
     ↓
 Store: HashMap<chat_id, SetupToken { otk, created_at }>
     ↓
-Send link: "https://nagisanzenin.github.io/setup#{hex(otk)}"
+Send link: "https://electro-labs.github.io/setup#{hex(otk)}"
     ↓
 ┌─── waiting (max 10 min) ───┐
 │                             │
@@ -221,11 +221,11 @@ git checkout --orphan gh-pages
 mkdir setup && cp setup.html setup/index.html
 git add . && git commit -m "OTK setup page"
 git push origin gh-pages
-# → https://nagisanzenin.github.io/electro/setup
+# → https://electro-labs.github.io/electro/setup
 
 # Option B: Dedicated repo
-# Create nagisanzenin/electro-setup, push index.html
-# → https://nagisanzenin.github.io/electro-setup/
+# Create electro-labs/electro-setup, push index.html
+# → https://electro-labs.github.io/electro-setup/
 ```
 
 ### Scale
@@ -310,7 +310,7 @@ Adding a new messaging channel to ELECTRO requires **zero changes** to the key s
 
 ## Future Considerations
 
-- **Custom domain**: Replace `nagisanzenin.github.io` with `setup.electro.dev` when the project warrants it
+- **Custom domain**: Replace `electro-labs.github.io` with `setup.electro.dev` when the project warrants it
 - **Telegram Mini Apps**: Native in-app WebView for seamless UX (Telegram-specific enhancement, not a replacement)
 - **Key rotation alerts**: Notify users when keys approach expiry (for providers that support this)
 - **Multi-key confirmation**: Show diff of provider changes before hot-reload ("You're adding OpenAI. Continue?")

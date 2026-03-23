@@ -143,7 +143,9 @@ pub fn detect_api_key(text: &str) -> Option<DetectedCredential> {
         if p != "http" && p != "https" {
             match p.as_str() {
                 "anthropic" | "openai" | "gemini" | "grok" | "xai" | "openrouter" | "minimax"
-                | "zai" | "zhipu" | "ollama" if key.len() >= 8 && !is_placeholder_key(key) => {
+                | "zai" | "zhipu" | "ollama"
+                    if key.len() >= 8 && !is_placeholder_key(key) =>
+                {
                     return Some(DetectedCredential {
                         provider: match p.as_str() {
                             "anthropic" => "anthropic",

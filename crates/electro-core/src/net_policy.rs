@@ -8,9 +8,7 @@ pub enum NetworkPolicy {
     Blocked,
     /// Egress is restricted exclusively to public web addresses (no RFC1918/localhost).
     /// If an allowlist is provided, the target must also end in one of the permitted domains.
-    PublicWeb {
-        allowlist: Option<Vec<String>>,
-    },
+    PublicWeb { allowlist: Option<Vec<String>> },
     /// Anything is allowed (typically reserved for highly trusted internal components).
     Unrestricted,
 }

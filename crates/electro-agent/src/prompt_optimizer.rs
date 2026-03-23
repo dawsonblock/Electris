@@ -471,8 +471,8 @@ pub fn build_tiered_system_prompt(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::PathBuf;
     use electro_test_utils::MockTool;
+    use std::path::PathBuf;
 
     fn workspace() -> PathBuf {
         PathBuf::from("/tmp/electro-test")

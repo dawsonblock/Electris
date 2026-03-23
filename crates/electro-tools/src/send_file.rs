@@ -4,12 +4,10 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use electro_core::policy::{CapabilityPolicy, FileAccessPolicy};
 use electro_core::types::error::ElectroError;
 use electro_core::types::file::{FileData, OutboundFile};
-use electro_core::{
-    Channel, Tool, ToolContext, ToolInput, ToolOutput};
-use electro_core::policy::{CapabilityPolicy, FileAccessPolicy,
-};
+use electro_core::{Channel, Tool, ToolContext, ToolInput, ToolOutput};
 
 /// Maximum file size to send (50 MB — Telegram's upload limit).
 const MAX_SEND_SIZE: usize = 50 * 1024 * 1024;
@@ -62,7 +60,7 @@ impl Tool for SendFileTool {
             file_access: vec![FileAccessPolicy::Read(".".into())],
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,
-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
         }
     }
 

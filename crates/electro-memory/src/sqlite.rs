@@ -1,12 +1,12 @@
 //! SQLite-backed memory implementation.
 
 use async_trait::async_trait;
-use sqlx::sqlite::{SqlitePool, SqlitePoolOptions};
-use std::time::Duration;
 use electro_core::error::ElectroError;
 use electro_core::{
     LambdaMemoryEntry, LambdaMemoryType, Memory, MemoryEntry, MemoryEntryType, SearchOpts,
 };
+use sqlx::sqlite::{SqlitePool, SqlitePoolOptions};
+use std::time::Duration;
 use tokio::time::{sleep, timeout};
 use tracing::{debug, info, warn};
 
@@ -19,7 +19,6 @@ fn db_timeout_error() -> ElectroError {
         DB_TIMEOUT.as_secs()
     ))
 }
-
 
 fn current_unix_secs() -> u64 {
     match std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH) {
@@ -54,7 +53,9 @@ impl SqliteMemory {
     pub async fn new(database_url: &str) -> Result<Self, ElectroError> {
         let pool = timeout(
             DB_TIMEOUT,
-            SqlitePoolOptions::new().max_connections(5).connect(database_url),
+            SqlitePoolOptions::new()
+                .max_connections(5)
+                .connect(database_url),
         )
         .await
         .map_err(|_| db_timeout_error())?
@@ -86,10 +87,12 @@ impl SqliteMemory {
             .map_err(|e| ElectroError::Memory(format!("Failed to create tables: {e}")))?;
 
             // Index for session lookups.
-            sqlx::query("CREATE INDEX IF NOT EXISTS idx_memory_session ON memory_entries(session_id)")
-                .execute(&self.pool)
-                .await
-                .map_err(|e| ElectroError::Memory(format!("Failed to create index: {e}")))?;
+            sqlx::query(
+                "CREATE INDEX IF NOT EXISTS idx_memory_session ON memory_entries(session_id)",
+            )
+            .execute(&self.pool)
+            .await
+            .map_err(|e| ElectroError::Memory(format!("Failed to create index: {e}")))?;
 
             // ── λ-Memory tables ───────────────────────────────────────────
             sqlx::query(
@@ -114,10 +117,12 @@ impl SqliteMemory {
             .await
             .map_err(|e| ElectroError::Memory(format!("Failed to create lambda_memories: {e}")))?;
 
-            sqlx::query("CREATE INDEX IF NOT EXISTS idx_lm_importance ON lambda_memories(importance)")
-                .execute(&self.pool)
-                .await
-                .map_err(|e| ElectroError::Memory(format!("Failed to create lambda index: {e}")))?;
+            sqlx::query(
+                "CREATE INDEX IF NOT EXISTS idx_lm_importance ON lambda_memories(importance)",
+            )
+            .execute(&self.pool)
+            .await
+            .map_err(|e| ElectroError::Memory(format!("Failed to create lambda index: {e}")))?;
 
             sqlx::query(
                 "CREATE INDEX IF NOT EXISTS idx_lm_last_accessed ON lambda_memories(last_accessed)",
@@ -126,10 +131,12 @@ impl SqliteMemory {
             .await
             .map_err(|e| ElectroError::Memory(format!("Failed to create lambda index: {e}")))?;
 
-            sqlx::query("CREATE INDEX IF NOT EXISTS idx_lm_explicit ON lambda_memories(explicit_save)")
-                .execute(&self.pool)
-                .await
-                .map_err(|e| ElectroError::Memory(format!("Failed to create lambda index: {e}")))?;
+            sqlx::query(
+                "CREATE INDEX IF NOT EXISTS idx_lm_explicit ON lambda_memories(explicit_save)",
+            )
+            .execute(&self.pool)
+            .await
+            .map_err(|e| ElectroError::Memory(format!("Failed to create lambda index: {e}")))?;
 
             // FTS5 virtual table for BM25 search on summary/essence/tags.
             // content='' makes it an external content table (we manage sync ourselves).
@@ -218,7 +225,11 @@ impl Memory for SqliteMemory {
         Ok(())
     }
 
-    async fn search(&self, query: &str, opts: SearchOpts) -> Result<Vec<MemoryEntry>, ElectroError> {
+    async fn search(
+        &self,
+        query: &str,
+        opts: SearchOpts,
+    ) -> Result<Vec<MemoryEntry>, ElectroError> {
         // Split multi-word queries into individual word matches (AND logic).
         // Each word is matched against both content AND id fields.
         // This handles cases like "cat name" matching "cat's name" in content.
@@ -259,9 +270,7 @@ impl Memory for SqliteMemory {
 
         let rows: Vec<MemoryRow> = timeout(DB_TIMEOUT, q.fetch_all(&self.pool))
             .await
-            .map_err(|_| {
-                db_timeout_error()
-            })?
+            .map_err(|_| db_timeout_error())?
             .map_err(|e| ElectroError::Memory(format!("Search failed: {e}")))?;
 
         rows.into_iter().map(row_to_entry).collect()

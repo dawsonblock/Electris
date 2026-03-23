@@ -7,10 +7,9 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use electro_core::policy::CapabilityPolicy;
 use electro_core::types::error::ElectroError;
 use electro_core::{SetupLinkGenerator, Tool, ToolContext, ToolInput, ToolOutput};
-use electro_core::policy::CapabilityPolicy;
-
 
 pub struct KeyManageTool {
     link_generator: Option<Arc<dyn SetupLinkGenerator>>,
@@ -58,7 +57,7 @@ impl Tool for KeyManageTool {
             file_access: Vec::new(),
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,
-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
         }
     }
 
@@ -230,8 +229,14 @@ mod tests {
         assert_eq!(tool.name(), "key_manage");
         assert!(tool.description().contains("API key"));
         let decl = tool.declarations();
-        assert_eq!(decl.shell_access, electro_core::policy::ShellPolicy::Blocked);
+        assert_eq!(
+            decl.shell_access,
+            electro_core::policy::ShellPolicy::Blocked
+        );
         assert!(decl.file_access.is_empty());
-        assert!(matches!(decl.network_access, electro_core::net_policy::NetworkPolicy::Blocked));
+        assert!(matches!(
+            decl.network_access,
+            electro_core::net_policy::NetworkPolicy::Blocked
+        ));
     }
 }

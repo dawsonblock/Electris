@@ -1,0 +1,445 @@
+   Compiling electro v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2)
+warning: unused imports: `HashMap` and `HashSet`
+ --> src/main.rs:1:24
+  |
+1 | ...::{HashMap, HashSet};
+  |       ^^^^^^^  ^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused imports: `AtomicBool` and `Ordering`
+ --> src/main.rs:3:25
+  |
+3 | ...::{AtomicBool, Ordering};
+  |       ^^^^^^^^^^  ^^^^^^^^
+
+warning: unused import: `async_trait::async_trait`
+ --> src/main.rs:7:5
+  |
+7 | use async_trait::async_trait;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `credentials_path` and `load_credentials_file`
+  --> src/main.rs:12:5
+   |
+12 |     credentials_path, detect...
+   |     ^^^^^^^^^^^^^^^^
+13 |     load_credentials_file, l...
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `available_models_for_provider` and `is_vision_model`
+  --> src/main.rs:16:5
+   |
+16 |     available_models_for_provider, default_model, is_vision_model,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                 ^^^^^^^^^^^^^^^
+
+warning: unused import: `tokio::sync::Mutex`
+  --> src/main.rs:20:5
+   |
+20 | use tokio::sync::Mutex;
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `load_active_provider_keys`
+ --> src/cli.rs:3:43
+  |
+3 | ...y, load_active_provider_keys, l...
+  |       ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `default_model`
+ --> src/cli.rs:6:36
+  |
+6 | ...r, default_model, i...
+  |       ^^^^^^^^^^^^^
+
+warning: unused import: `electro_core::types::model_registry::default_model`
+ --> src/onboarding.rs:6:5
+  |
+6 | use el...ault_model;
+  |     ^^...^^^^^^^^^^
+
+warning: unused import: `std::panic::AssertUnwindSafe`
+ --> src/server_mode.rs:2:5
+  |
+2 | use std::panic::AssertUnwindSafe;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `async_trait::async_trait`
+ --> src/server_mode.rs:7:5
+  |
+7 | use async_trait::async_trait;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::admin::is_admin_user`
+  --> src/server_mode.rs:12:5
+   |
+12 | use crate::admin::is_admin_user;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `censor_secrets`
+  --> src/server_mode.rs:13:24
+   |
+13 | ...::{censor_secrets, S...
+   |       ^^^^^^^^^^^^^^
+
+warning: unused imports: `format_user_error`, `handle_model_command`, `list_configured_providers`, and `remove_provider`
+  --> src/server_mode.rs:14:18
+   |
+14 | ...::{format_user_error, handle_model_command, list_configured_providers, remove_provider};
+   |       ^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^
+
+warning: unused imports: `is_process_alive`, `pid_file_path`, `read_pid_file`, and `write_pid_file`
+  --> src/server_mode.rs:15:21
+   |
+15 | ...::{is_process_alive, pid_file_path, read_pid_file, remove_pid_file, write_pid_file};
+   |       ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^^^^                   ^^^^^^^^^^^^^^
+
+warning: unused imports: `ONBOARDING_REFERENCE`, `decrypt_otk_blob`, `onboarding_message_with_link`, `send_with_retry`, and `validate_provider_key`
+  --> src/server_mode.rs:16:46
+   |
+16 | ...t, decrypt_otk_blob, onboarding_message_with_link, send_with_retry, validate_provider_key, ONBOARDING_REFERENCE};
+   |       ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `pid_file_path`
+  --> src/main.rs:34:32
+   |
+34 | ...e, pid_file_path, r...
+   |       ^^^^^^^^^^^^^
+
+warning: unused import: `send_with_retry`
+  --> src/main.rs:35:87
+   |
+35 | ...k, send_with_retry, v...
+   |       ^^^^^^^^^^^^^^^
+
+warning: variable does not need to be mutable
+   --> src/server_mode.rs:396:18
+    |
+396 | ...x, mut msg_rx) =
+    |       ----^^^^^^
+    |       |
+    |       help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `futures::FutureExt`
+ --> src/server_mode.rs:8:5
+  |
+8 | use futures::FutureExt;
+  |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `base64::Engine`
+ --> src/main.rs:8:5
+  |
+8 | use base64::Engine as _;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused variable: `pid`
+  --> src/daemon.rs:79:14
+   |
+79 | ...me(pid) => {
+   |       ^^^ help: if this is intentional, prefix it with an underscore: `_pid`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `config`
+   --> src/server_mode.rs:567:29
+    |
+567 | ...ed(config: &...
+    |       ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: unused variable: `config`
+   --> src/server_mode.rs:592:27
+    |
+592 | ...ig(config: &...
+    |       ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: variable does not need to be mutable
+    --> src/server_mode.rs:1015:13
+     |
+1015 | ...et mut persistent_history: V...
+     |       ----^^^^^^^^^^^^^^^^^^
+     |       |
+     |       help: remove this `mut`
+
+warning: variable does not need to be mutable
+    --> src/server_mode.rs:1048:24
+     |
+1048 | ...me(mut msg) =...
+     |       ----^^^
+     |       |
+     |       help: remove this `mut`
+
+warning: unused variable: `persistent_history`
+    --> src/server_mode.rs:1015:13
+     |
+1015 | ...et mut persistent_history: V...
+     |       ^^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_persistent_history`
+
+warning: unused variable: `panic_chat_id`
+    --> src/server_mode.rs:1050:17
+     |
+1050 | ...et panic_chat_id = ...
+     |       ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_panic_chat_id`
+
+warning: unused variable: `panic_msg_id`
+    --> src/server_mode.rs:1051:17
+     |
+1051 | ...et panic_msg_id = ...
+     |       ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_panic_msg_id`
+
+warning: unused variable: `max_turns`
+   --> src/server_mode.rs:950:5
+    |
+950 |     max_turns: u...
+    |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_turns`
+
+warning: unused variable: `max_ctx`
+   --> src/server_mode.rs:951:5
+    |
+951 |     max_ctx: us...
+    |     ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_ctx`
+
+warning: unused variable: `max_rounds`
+   --> src/server_mode.rs:952:5
+    |
+952 |     max_rounds: u...
+    |     ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_rounds`
+
+warning: unused variable: `max_task_duration`
+   --> src/server_mode.rs:953:5
+    |
+953 |     max_task_duration: u64,
+    |     ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_task_duration`
+
+warning: unused variable: `max_spend`
+   --> src/server_mode.rs:954:5
+    |
+954 |     max_spend: f64,
+    |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_spend`
+
+warning: unused variable: `v2_opt`
+   --> src/server_mode.rs:955:5
+    |
+955 |     v2_opt: bool,
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_v2_opt`
+
+warning: unused variable: `pp_opt`
+   --> src/server_mode.rs:956:5
+    |
+956 |     pp_opt: bool,
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_pp_opt`
+
+warning: unused variable: `base_url`
+   --> src/server_mode.rs:957:5
+    |
+957 |     base_url: &...
+    |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_base_url`
+
+warning: unused variable: `is_busy_clone`
+   --> src/server_mode.rs:982:9
+    |
+982 | ...et is_busy_clone = ...
+    |       ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_is_busy_clone`
+
+warning: unused variable: `current_task_clone`
+   --> src/server_mode.rs:983:9
+    |
+983 | ...et current_task_clone = ...
+    |       ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_current_task_clone`
+
+warning: unused variable: `self_tx`
+   --> src/server_mode.rs:984:9
+    |
+984 | ...et self_tx = ...
+    |       ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_self_tx`
+
+warning: unused variable: `agent_state`
+   --> src/server_mode.rs:986:9
+    |
+986 | ...et agent_state = ...
+    |       ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_agent_state`
+
+warning: unused variable: `tools_template`
+   --> src/server_mode.rs:988:9
+    |
+988 | ...et tools_template = ...
+    |       ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_tools_template`
+
+warning: unused variable: `custom_registry`
+   --> src/server_mode.rs:989:9
+    |
+989 | ...et custom_registry = ...
+    |       ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_custom_registry`
+
+warning: unused variable: `mcp_mgr`
+   --> src/server_mode.rs:991:9
+    |
+991 | ...et mcp_mgr = ...
+    |       ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_mcp_mgr`
+
+warning: unused variable: `sender`
+   --> src/server_mode.rs:992:9
+    |
+992 | ...et sender = ...
+    |       ^^^^^^ help: if this is intentional, prefix it with an underscore: `_sender`
+
+warning: unused variable: `workspace_path`
+   --> src/server_mode.rs:993:9
+    |
+993 | ...et workspace_path = ...
+    |       ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_workspace_path`
+
+warning: unused variable: `interrupt_clone`
+   --> src/server_mode.rs:994:9
+    |
+994 | ...et interrupt_clone = ...
+    |       ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_interrupt_clone`
+
+warning: unused variable: `is_heartbeat_clone`
+   --> src/server_mode.rs:995:9
+    |
+995 | ...et is_heartbeat_clone = ...
+    |       ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_is_heartbeat_clone`
+
+warning: unused variable: `cancel_token_clone`
+   --> src/server_mode.rs:996:9
+    |
+996 | ...et cancel_token_clone = ...
+    |       ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cancel_token_clone`
+
+warning: unused variable: `pending_for_worker`
+   --> src/server_mode.rs:997:9
+    |
+997 | ...et pending_for_worker = ...
+    |       ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pending_for_worker`
+
+warning: unused variable: `shared_mode`
+   --> src/server_mode.rs:998:9
+    |
+998 | ...et shared_mode = ...
+    |       ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_shared_mode`
+
+warning: unused variable: `shared_memory_strategy`
+   --> src/server_mode.rs:999:9
+    |
+999 | ...et shared_memory_strategy = ...
+    |       ^^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_shared_memory_strategy`
+
+warning: unused variable: `setup_tokens_worker`
+    --> src/server_mode.rs:1000:9
+     |
+1000 | ...et setup_tokens_worker = ...
+     |       ^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_setup_tokens_worker`
+
+warning: unused variable: `pending_raw_keys_worker`
+    --> src/server_mode.rs:1001:9
+     |
+1001 | ...et pending_raw_keys_worker = ...
+     |       ^^^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pending_raw_keys_worker`
+
+warning: unused variable: `login_sessions_worker`
+    --> src/server_mode.rs:1003:9
+     |
+1003 | ...et login_sessions_worker = ...
+     |       ^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_login_sessions_worker`
+
+warning: unused variable: `vault_for_login`
+    --> src/server_mode.rs:1005:9
+     |
+1005 | ...et vault_for_login = ...
+     |       ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_vault_for_login`
+
+warning: unused variable: `browser_ref_worker`
+    --> src/server_mode.rs:1007:9
+     |
+1007 | ...et browser_ref_worker = ...
+     |       ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_browser_ref_worker`
+
+warning: unused variable: `usage_store_worker`
+    --> src/server_mode.rs:1008:9
+     |
+1008 | ...et usage_store_worker = ...
+     |       ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_usage_store_worker`
+
+warning: unused variable: `hive_worker`
+    --> src/server_mode.rs:1009:9
+     |
+1009 | ...et hive_worker = ...
+     |       ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_hive_worker`
+
+warning: unused variable: `config_path`
+   --> src/main.rs:319:5
+    |
+319 |     config_path: O...
+    |     ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_config_path`
+
+warning: unused variable: `cli_browser_ref`
+   --> src/main.rs:408:30
+    |
+408 | ...e, cli_browser_ref) =...
+    |       ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cli_browser_ref`
+
+warning: unused variable: `mcp_manager`
+   --> src/main.rs:442:9
+    |
+442 | ...et mcp_manager: A...
+    |       ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_mcp_manager`
+
+warning: function `is_admin_user` is never used
+ --> src/admin.rs:4:8
+  |
+4 | ...fn is_admin_user(us...
+  |       ^^^^^^^^^^^^^
+  |
+  = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `pid_file_path` is never used
+  --> src/admin.rs:23:8
+   |
+23 | ...fn pid_file_path() ...
+   |       ^^^^^^^^^^^^^
+
+warning: function `write_pid_file` is never used
+  --> src/admin.rs:28:8
+   |
+28 | ...fn write_pid_file() {
+   |       ^^^^^^^^^^^^^^
+
+warning: function `remove_pid_file` is never used
+  --> src/admin.rs:35:8
+   |
+35 | ...fn remove_pid_file() {
+   |       ^^^^^^^^^^^^^^^
+
+warning: function `read_pid_file` is never used
+  --> src/admin.rs:42:8
+   |
+42 | ...fn read_pid_file() ...
+   |       ^^^^^^^^^^^^^
+
+warning: function `is_process_alive` is never used
+  --> src/admin.rs:49:8
+   |
+49 | ...fn is_process_alive(pi...
+   |       ^^^^^^^^^^^^^^^^
+
+warning: function `stop_daemon` is never used
+  --> src/daemon.rs:44:8
+   |
+44 | ...fn stop_daemon() ...
+   |       ^^^^^^^^^^^
+
+warning: function `format_capture_age` is never used
+  --> src/onboarding.rs:62:8
+   |
+62 | ...fn format_capture_age(ca...
+   |       ^^^^^^^^^^^^^^^^^^
+
+warning: function `send_with_retry` is never used
+   --> src/onboarding.rs:353:14
+    |
+353 | ...fn send_with_retry(
+    |       ^^^^^^^^^^^^^^^
+
+warning: `electro` (bin "electro") generated 71 warnings (run `cargo fix --bin "electro" -p electro` to apply 60 suggestions)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.40s

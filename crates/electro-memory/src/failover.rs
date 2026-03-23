@@ -7,11 +7,11 @@
 //! cached entries back to the primary.
 
 use async_trait::async_trait;
+use electro_core::error::ElectroError;
+use electro_core::{Memory, MemoryEntry, SearchOpts};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use electro_core::error::ElectroError;
-use electro_core::{Memory, MemoryEntry, SearchOpts};
 use tokio::sync::RwLock;
 use tracing::{debug, error, info, warn};
 
@@ -322,7 +322,11 @@ impl Memory for ResilientMemory {
         }
     }
 
-    async fn search(&self, query: &str, opts: SearchOpts) -> Result<Vec<MemoryEntry>, ElectroError> {
+    async fn search(
+        &self,
+        query: &str,
+        opts: SearchOpts,
+    ) -> Result<Vec<MemoryEntry>, ElectroError> {
         match self.primary.search(query, opts.clone()).await {
             Ok(mut results) => {
                 self.record_success().await;
@@ -497,8 +501,8 @@ impl Memory for ResilientMemory {
 mod tests {
     use super::*;
     use chrono::Utc;
-    use std::sync::atomic::{AtomicBool, Ordering};
     use electro_core::MemoryEntryType;
+    use std::sync::atomic::{AtomicBool, Ordering};
 
     // -- Test helpers -------------------------------------------------------
 
@@ -606,7 +610,7 @@ mod tests {
                 .filter(|e| e.session_id.as_deref() == Some(session_id))
                 .cloned()
                 .collect();
-            history.sort_by(|a, b| a.timestamp.cmp(&b.timestamp));
+            history.sort_by_key(|a| a.timestamp);
             history.truncate(limit);
             Ok(history)
         }

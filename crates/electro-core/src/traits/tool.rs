@@ -1,5 +1,5 @@
-use crate::types::error::ElectroError;
 use crate::policy::CapabilityPolicy;
+use crate::types::error::ElectroError;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
@@ -50,8 +50,11 @@ pub trait Tool: Send + Sync {
     fn declarations(&self) -> CapabilityPolicy;
 
     /// Execute the tool with given input
-    async fn execute(&self, input: ToolInput, ctx: &ToolContext)
-        -> Result<ToolOutput, ElectroError>;
+    async fn execute(
+        &self,
+        input: ToolInput,
+        ctx: &ToolContext,
+    ) -> Result<ToolOutput, ElectroError>;
 
     /// Consume image data produced by the last execution.
     /// Called by the runtime after execute() to inject vision data into the

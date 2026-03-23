@@ -2,8 +2,8 @@
 //! initialize handshake, tool discovery, tool invocation, ping.
 
 use crate::transport::Transport;
-use std::sync::Arc;
 use electro_core::types::error::ElectroError;
+use std::sync::Arc;
 use tracing::{debug, info};
 
 /// Information about a single tool exposed by an MCP server.

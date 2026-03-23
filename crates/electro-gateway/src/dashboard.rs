@@ -426,10 +426,10 @@ mod tests {
     use axum::Router;
     use tower::ServiceExt;
 
-    use serde_json::Value;
     use electro_agent::AgentRuntime;
     use electro_core::types::config::GatewayConfig;
     use electro_test_utils::{MockChannel, MockMemory, MockProvider};
+    use serde_json::Value;
 
     use crate::session::SessionManager;
 

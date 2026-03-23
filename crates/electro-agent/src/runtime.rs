@@ -591,7 +591,9 @@ impl AgentRuntime {
                         info!(
                             "V2: Fallback classified as Complex + hive enabled → routing to swarm"
                         );
-                        return Err(ElectroError::HiveRoute(msg.text.clone().unwrap_or_default()));
+                        return Err(ElectroError::HiveRoute(
+                            msg.text.clone().unwrap_or_default(),
+                        ));
                     }
 
                     let profile = complexity.execution_profile();
@@ -1698,7 +1700,9 @@ async fn author_blueprint(
 
     // LLM decided this task isn't worth a blueprint
     if text.trim().eq_ignore_ascii_case("skip") {
-        return Err(ElectroError::Provider("LLM declined blueprint: SKIP".into()));
+        return Err(ElectroError::Provider(
+            "LLM declined blueprint: SKIP".into(),
+        ));
     }
 
     let mut bp = crate::blueprint::parse_blueprint(&text)

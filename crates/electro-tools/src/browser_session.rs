@@ -21,7 +21,10 @@
 //! 3. `handle_input()` — user sends number (click) or text (type) or "done"
 //! 4. `capture_session()` — extract cookies + storage, encrypt, store in vault
 
-use crate::browser_runtime::{browser_isolation_mode, browser_uses_remote, connect_or_launch_browser, ensure_browser_runtime_policy};
+use crate::browser_runtime::{
+    browser_isolation_mode, browser_uses_remote, connect_or_launch_browser,
+    ensure_browser_runtime_policy,
+};
 use crate::network_guard::{
     enforce_host_allowlist, ensure_resolved_host_is_public, load_domain_allowlist_from_env,
     validate_public_url,
@@ -38,9 +41,9 @@ use chromiumoxide::cdp::browser_protocol::network::{
 };
 use chromiumoxide::cdp::browser_protocol::page::CaptureScreenshotFormat;
 use chromiumoxide::page::Page;
-use serde::{Deserialize, Serialize};
 use electro_core::types::error::ElectroError;
 use electro_core::Vault;
+use serde::{Deserialize, Serialize};
 use zeroize::Zeroizing;
 
 // ── Constants ────────────────────────────────────────────────────────
@@ -176,14 +179,27 @@ impl InteractiveBrowseSession {
             .map(|u| u.to_string())
             .unwrap_or_default();
         if !current_url.is_empty() {
-            let final_url = validate_public_url(&current_url)
-                .map_err(|msg| ElectroError::Tool(format!("Interactive browser session ended on blocked URL: {}", msg)))?;
+            let final_url = validate_public_url(&current_url).map_err(|msg| {
+                ElectroError::Tool(format!(
+                    "Interactive browser session ended on blocked URL: {}",
+                    msg
+                ))
+            })?;
             ensure_resolved_host_is_public(&final_url)
                 .await
-                .map_err(|msg| ElectroError::Tool(format!("Interactive browser session final URL resolution blocked: {}", msg)))?;
+                .map_err(|msg| {
+                    ElectroError::Tool(format!(
+                        "Interactive browser session final URL resolution blocked: {}",
+                        msg
+                    ))
+                })?;
             if let Some(final_host) = final_url.host_str() {
-                enforce_host_allowlist(final_host, &allowlist, "interactive browser session final host")
-                    .map_err(ElectroError::Tool)?;
+                enforce_host_allowlist(
+                    final_host,
+                    &allowlist,
+                    "interactive browser session final host",
+                )
+                .map_err(ElectroError::Tool)?;
             }
         }
 
@@ -251,8 +267,10 @@ impl InteractiveBrowseSession {
         }
 
         if !remote_browser {
-            let inherit_browser_session = std::env::var("ELECTRO_INHERIT_BROWSER_SESSION").unwrap_or_default() == "1";
-            let force_clean_browser = std::env::var("ELECTRO_CLEAN_BROWSER").unwrap_or_default() == "1";
+            let inherit_browser_session =
+                std::env::var("ELECTRO_INHERIT_BROWSER_SESSION").unwrap_or_default() == "1";
+            let force_clean_browser =
+                std::env::var("ELECTRO_CLEAN_BROWSER").unwrap_or_default() == "1";
 
             let work_profile = dirs::data_dir()
                 .unwrap_or_else(|| std::path::PathBuf::from("."))
@@ -274,8 +292,8 @@ impl InteractiveBrowseSession {
             .build()
             .map_err(|e| ElectroError::Tool(format!("Browser config: {}", e)))?;
 
-        let (browser, mut handler) = connect_or_launch_browser(config, "interactive browser session")
-            .await?;
+        let (browser, mut handler) =
+            connect_or_launch_browser(config, "interactive browser session").await?;
 
         // CDP handler — continue on WS errors (chromiumoxide 0.7 compat)
         tokio::spawn(async move { while handler.next().await.is_some() {} });
@@ -741,8 +759,9 @@ impl InteractiveBrowseSession {
             service: self.service.clone(),
         };
 
-        let json = serde_json::to_vec(&state)
-            .map_err(|e| ElectroError::Tool(format!("Session state serialization failed: {}", e)))?;
+        let json = serde_json::to_vec(&state).map_err(|e| {
+            ElectroError::Tool(format!("Session state serialization failed: {}", e))
+        })?;
 
         let vault_key = format!("web_session:{}", self.service);
         vault.store_secret(&vault_key, &json).await?;

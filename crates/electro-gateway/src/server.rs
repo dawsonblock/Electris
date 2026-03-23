@@ -98,7 +98,10 @@ impl SkyGate {
 
     /// Start the server using the provided listener.
     pub async fn serve(&self, listener: TcpListener) -> Result<(), ElectroError> {
-        let addr = listener.local_addr().map(|a| a.to_string()).unwrap_or_default();
+        let addr = listener
+            .local_addr()
+            .map(|a| a.to_string())
+            .unwrap_or_default();
         info!(addr = %addr, "Starting SkyGate server");
 
         let router = self.build_router();

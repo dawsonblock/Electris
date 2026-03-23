@@ -45,9 +45,9 @@ pub use shell::ShellTool;
 pub use usage_audit::UsageAuditTool;
 pub use web_fetch::WebFetchTool;
 
-use std::sync::Arc;
 use electro_core::types::config::ToolsConfig;
 use electro_core::{Channel, Memory, SetupLinkGenerator, Tool, UsageStore, Vault};
+use std::sync::Arc;
 
 /// Create tools based on the configuration flags.
 /// Pass an optional channel for file transfer tools, an optional
@@ -257,11 +257,9 @@ pub async fn browser_session_login(
             electro_core::types::error::ElectroError::Tool(format!("Browser config failed: {}", e))
         })?;
 
-    let (browser, mut handler) = crate::browser_runtime::connect_or_launch_browser(
-        config,
-        "interactive browser session",
-    )
-    .await?;
+    let (browser, mut handler) =
+        crate::browser_runtime::connect_or_launch_browser(config, "interactive browser session")
+            .await?;
 
     // Spawn handler in background — continue on WS errors (chromiumoxide 0.7
     // can't deserialize some CDP messages from newer Chrome, but the connection
