@@ -105,7 +105,13 @@ pub async fn readiness_handler(
         agent: agent_ready,
     };
 
-    (StatusCode::OK, Json(resp))
+    let status_code = if agent_ready {
+        StatusCode::OK
+    } else {
+        StatusCode::SERVICE_UNAVAILABLE
+    };
+
+    (status_code, Json(resp))
 }
 
 #[cfg(test)]
