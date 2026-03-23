@@ -40,6 +40,11 @@ pub struct ReadinessResponse {
     pub agent: bool,
 }
 
+/// Handler for GET /health/live
+pub async fn live_handler() -> &'static str {
+    "ok"
+}
+
 /// Handler for GET /health
 pub async fn health_handler() -> impl IntoResponse {
     let uptime = START_TIME.get().map(|t| t.elapsed().as_secs()).unwrap_or(0);

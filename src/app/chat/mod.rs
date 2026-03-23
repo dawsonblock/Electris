@@ -9,10 +9,12 @@ use crate::app::{check_hive_enabled, init_core_stack, init_tools};
 use crate::bootstrap::SecretCensorChannel;
 use anyhow::Result;
 use electro_core::paths;
+use electro_core::traits::Observable;
 use electro_core::types::config::{ElectroConfig, MemoryStrategy};
 use electro_core::types::message::InboundMessage;
 use electro_core::Channel;
-use electro_runtime::RuntimeHandle;
+use electro_tools::policy::{set_runtime_policy, ToolPolicy};
+use electro_runtime::{OutboundEvent, RuntimeConfig, RuntimeHandle, ToolPolicyConfig};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -26,6 +28,14 @@ pub async fn run_chat_mode(
 
     let hive_enabled = check_hive_enabled().await;
     let core = init_core_stack(&config).await?;
+    let observable: Option<Arc<dyn Observable>> =
+        match electro_observable::create_observable(&config.observability) {
+            Ok(observable) => Some(Arc::from(observable)),
+            Err(error) => {
+                tracing::warn!(error = %error, "failed to initialize observability");
+                None
+            }
+        };
 
     let workspace = paths::workspace_dir();
     std::fs::create_dir_all(&workspace).ok();
@@ -55,11 +65,59 @@ pub async fn run_chat_mode(
     );
 
     let (queue_tx, msg_rx) = tokio::sync::mpsc::channel::<InboundMessage>(32);
-    let runtime = RuntimeHandle::new(
+    let remote_workers = std::env::var("ELECTRO_REMOTE_WORKERS")
+        .ok()
+        .map(|raw| {
+            raw.split(',')
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .map(ToString::to_string)
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+
+    set_runtime_policy(ToolPolicy {
+        allow_shell: config.tools.shell,
+        allow_network: config.tools.http,
+        allow_filesystem: config.tools.file || config.tools.git,
+        writable_roots: vec![workspace.clone()],
+    });
+
+    let runtime = RuntimeHandle::new_with_config_and_observable(
         queue_tx,
         shared_mode.clone(),
         shared_memory_strategy.clone(),
+        RuntimeConfig {
+            max_concurrency: 8,
+            worker_timeout: config.agent.max_task_duration_secs,
+            max_queue: 1024,
+            max_active_per_chat: 1,
+            remote_threshold_chars: 500,
+            remote_workers,
+            remote_auth_token: std::env::var("ELECTRO_REMOTE_AUTH_TOKEN").ok(),
+            remote_retries: 3,
+            tool_policy: ToolPolicyConfig {
+                allow_shell: config.tools.shell,
+                allow_network: config.tools.http,
+                allow_filesystem: config.tools.file || config.tools.git,
+                writable_roots: vec![workspace.display().to_string()],
+            },
+        },
+        observable,
     );
+
+    // Spawn event subscriber for CLI output
+    let mut rx = runtime.subscribe_outbound_events();
+    tokio::spawn(async move {
+        while let Ok(ev) = rx.recv().await {
+            match ev {
+                OutboundEvent::Token { content, .. } => print!("{}", content),
+                OutboundEvent::Completed { content, .. } => println!("{}", content),
+                OutboundEvent::Failed { error, .. } => eprintln!("{}", error),
+                _ => {}
+            }
+        }
+    });
 
     if let Some((provider_name, api_key, model)) = resolve_credentials(&config) {
         if !electro_core::config::credentials::is_placeholder_key(&api_key) {

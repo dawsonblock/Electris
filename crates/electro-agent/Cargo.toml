@@ -8,6 +8,7 @@ description = "Agent runtime for ELECTRO"
 
 [dependencies]
 electro-core.workspace = true
+electro-tools.workspace = true
 electro-vault.workspace = true
 tokio.workspace = true
 futures.workspace = true

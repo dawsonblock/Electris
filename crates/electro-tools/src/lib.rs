@@ -20,6 +20,7 @@ mod lambda_recall;
 mod memory_manage;
 mod mode_switch;
 mod network_guard;
+pub mod policy;
 pub mod prowl_blueprints;
 mod send_file;
 mod send_message;

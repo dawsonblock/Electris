@@ -49,9 +49,6 @@ async fn main() -> Result<()> {
         tracing::info!(mode = %cli.mode, "ELECTRO starting");
     }
 
-    // ── Observability ──
-    let _observable = electro_observable::create_observable(&config.observability).ok();
-
     match cli.command {
         Commands::Stop => daemon::stop_daemon_cli()?,
         Commands::Start {

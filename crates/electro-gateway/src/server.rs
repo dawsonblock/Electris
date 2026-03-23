@@ -3,6 +3,9 @@
 
 use std::sync::Arc;
 
+use axum::extract::State;
+use axum::response::sse::Event;
+use axum::response::Sse;
 use axum::routing::get;
 use axum::Router;
 use electro_agent::AgentRuntime;
@@ -10,13 +13,45 @@ use electro_core::types::config::GatewayConfig;
 use electro_core::types::error::ElectroError;
 use electro_core::Channel;
 use electro_runtime::RuntimeHandle;
+use futures::stream;
+use futures::stream::BoxStream;
+use futures::StreamExt;
+use std::convert::Infallible;
 use tokio::net::TcpListener;
 use tracing::info;
 
 use crate::dashboard::{dashboard_config, dashboard_health, dashboard_page, dashboard_tasks};
-use crate::health::{health_handler, readiness_handler, status_handler};
+use crate::health::{health_handler, live_handler, readiness_handler, status_handler};
 use crate::identity::{oauth_callback_handler, OAuthIdentityManager};
 use crate::session::SessionManager;
+
+async fn stream_handler(
+    State(state): State<Arc<AppState>>,
+) -> Sse<BoxStream<'static, Result<Event, Infallible>>> {
+    let stream: BoxStream<'static, Result<Event, Infallible>> = if let Some(runtime) = state.runtime.clone() {
+        let rx = runtime.subscribe_outbound_events();
+        stream::unfold(rx, |mut receiver| async move {
+            loop {
+                match receiver.recv().await {
+                    Ok(event) => {
+                        let payload = match serde_json::to_string(&event) {
+                            Ok(payload) => payload,
+                            Err(_) => continue,
+                        };
+                        return Some((Ok(Event::default().data(payload)), receiver));
+                    }
+                    Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => continue,
+                    Err(tokio::sync::broadcast::error::RecvError::Closed) => return None,
+                }
+            }
+        })
+        .boxed()
+    } else {
+        stream::empty().boxed()
+    };
+
+    Sse::new(stream)
+}
 
 /// Shared application state accessible from all handlers.
 pub struct AppState {
@@ -96,7 +131,9 @@ impl SkyGate {
     fn build_router(&self) -> Router {
         let mut router = Router::new()
             .route("/health", get(health_handler))
+            .route("/health/live", get(live_handler))
             .route("/health/ready", get(readiness_handler))
+            .route("/stream", get(stream_handler))
             .route("/status", get(status_handler))
             .route("/dashboard", get(dashboard_page))
             .route("/dashboard/api/health", get(dashboard_health))

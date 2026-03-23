@@ -7,6 +7,7 @@
 
 use std::collections::HashSet;
 use std::sync::Arc;
+use std::time::Duration;
 use url::Url;
 
 use electro_core::audit::CapabilityDecisionRecord;
@@ -17,6 +18,8 @@ use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
 use futures::stream::{FuturesUnordered, StreamExt};
 use tokio::sync::Semaphore;
 use tracing::{debug, info, warn};
+
+use electro_tools::policy::{enforce as enforce_tool_policy, validate_path, ToolPolicy};
 
 // ── Parallel execution types ────────────────────────────────────────────
 
@@ -367,6 +370,13 @@ pub async fn execute_tool(
     tools: &[Arc<dyn Tool>],
     session: &SessionContext,
 ) -> Result<ToolOutput, ElectroError> {
+    if let Err(e) = enforce_tool_policy(&session.tool_policy, tool_name) {
+        return Err(ElectroError::SandboxViolation(format!(
+            "Tool policy rejected '{}': {}",
+            tool_name, e
+        )));
+    }
+
     // Find the matching tool
     let tool = tools
         .iter()
@@ -414,16 +424,20 @@ pub async fn execute_tool(
 
     info!(tool = tool_name, session = %session.session_id, "Executing tool");
 
-    match tool.execute(input, &ctx).await {
-        Ok(output) => {
+    match tokio::time::timeout(Duration::from_secs(session.tool_timeout_secs), tool.execute(input, &ctx)).await {
+        Ok(Ok(output)) => {
             if output.is_error {
                 warn!(tool = tool_name, "Tool returned error: {}", output.content);
             }
             Ok(output)
         }
-        Err(e) => {
+        Ok(Err(e)) => {
             warn!(tool = tool_name, error = %e, "Tool execution failed");
             Err(e)
+        }
+        Err(_) => {
+            warn!(tool = tool_name, timeout_secs = session.tool_timeout_secs, "Tool execution timed out");
+            Err(ElectroError::Tool(format!("Tool execution timed out after {}s", session.tool_timeout_secs)))
         }
     }
 }
@@ -468,6 +482,13 @@ fn validate_arguments(
                         )))
                     }
                 };
+
+                if let Err(e) = validate_path(&abs_req, &session.tool_policy.writable_roots) {
+                    return Err(ElectroError::SandboxViolation(format!(
+                        "Path validation failed: {}",
+                        e
+                    )));
+                }
 
                 // Authoritative policy test: are we allowed to access files at all?
                 if policy.file_access.is_empty() {
@@ -918,6 +939,8 @@ mod tests {
             user_id: "u".to_string(),
             history: Vec::new(),
             workspace_path: workspace,
+            tool_timeout_secs: 60,
+            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace.clone()),
         };
 
         let result = validate_sandbox(&tool, &session);
@@ -944,6 +967,8 @@ mod tests {
             user_id: "u".to_string(),
             history: Vec::new(),
             workspace_path: workspace,
+            tool_timeout_secs: 60,
+            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace.clone()),
         };
 
         let result = validate_sandbox(&tool, &session);
@@ -974,6 +999,8 @@ mod tests {
             user_id: "u".to_string(),
             history: Vec::new(),
             workspace_path: workspace,
+            tool_timeout_secs: 60,
+            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace.clone()),
         };
 
         let result = validate_sandbox(&tool, &session);
@@ -992,6 +1019,8 @@ mod tests {
             user_id: "u".to_string(),
             history: Vec::new(),
             workspace_path: tmp.path().to_path_buf(),
+            tool_timeout_secs: 60,
+            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(tmp.path().to_path_buf()),
         };
 
         let result = validate_sandbox(&tool, &session);
@@ -1021,6 +1050,8 @@ mod tests {
             user_id: "u".to_string(),
             history: Vec::new(),
             workspace_path: workspace,
+            tool_timeout_secs: 60,
+            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace.clone()),
         };
 
         let result = validate_sandbox(&tool, &session);
@@ -1047,6 +1078,8 @@ mod tests {
             user_id: "u".to_string(),
             history: Vec::new(),
             workspace_path: workspace,
+            tool_timeout_secs: 60,
+            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace.clone()),
         };
 
         let result = validate_sandbox(&tool, &session);
@@ -1074,6 +1107,8 @@ mod tests {
             user_id: "u".to_string(),
             history: Vec::new(),
             workspace_path: workspace,
+            tool_timeout_secs: 60,
+            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace.clone()),
         };
 
         let result = validate_sandbox(&tool, &session);
@@ -1104,6 +1139,8 @@ mod tests {
             user_id: "u".to_string(),
             history: Vec::new(),
             workspace_path: workspace,
+            tool_timeout_secs: 60,
+            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace.clone()),
         };
 
         let result = validate_sandbox(&tool, &session);
@@ -1133,6 +1170,8 @@ mod tests {
             user_id: "u".to_string(),
             history: Vec::new(),
             workspace_path: workspace,
+            tool_timeout_secs: 60,
+            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace.clone()),
         };
 
         let result = validate_sandbox(&tool, &session);

@@ -135,6 +135,10 @@ description = "Cloud-native Rust AI agent runtime"
 name = "electro"
 path = "src/main.rs"
 
+[[bin]]
+name = "worker-node"
+path = "src/bin/worker-node.rs"
+
 [dependencies]
 electro-core.workspace = true
 electro-gateway.workspace = true
@@ -155,6 +159,7 @@ electro-tui = { workspace = true, optional = true }
 electro-hive.workspace = true
 tokio.workspace = true
 clap.workspace = true
+axum.workspace = true
 dirs.workspace = true
 aes-gcm.workspace = true
 hex.workspace = true

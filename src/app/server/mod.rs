@@ -5,16 +5,19 @@ use crate::app::{create_agent, create_provider, init_core_stack, init_tools, loa
 use crate::bootstrap::SecretCensorChannel;
 use crate::daemon::remove_pid_file;
 use anyhow::Result;
+use electro_core::traits::Observable;
 use electro_core::types::config::{ElectroConfig, ElectroMode, MemoryStrategy};
 use electro_core::types::message::InboundMessage;
 use electro_core::Channel;
-use electro_runtime::RuntimeHandle;
+use electro_tools::policy::{set_runtime_policy, ToolPolicy};
+use electro_runtime::{RuntimeConfig, RuntimeHandle, ToolPolicyConfig};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
 pub mod commands;
 pub mod dispatcher;
+pub mod scheduler;
 pub mod slot;
 pub mod worker;
 
@@ -38,6 +41,14 @@ pub async fn start_server(
 
     // ── Core Stack ──
     let core = init_core_stack(config).await?;
+    let observable: Option<Arc<dyn Observable>> =
+        match electro_observable::create_observable(&config.observability) {
+            Ok(observable) => Some(Arc::from(observable)),
+            Err(error) => {
+                tracing::warn!(error = %error, "failed to initialize observability");
+                None
+            }
+        };
 
     // ── Channel bootstrapping ──
     let mut channels: Vec<Arc<dyn Channel>> = Vec::new();
@@ -127,10 +138,45 @@ pub async fn start_server(
     let shared_mode = Arc::new(tokio::sync::RwLock::new(config.mode));
     let shared_memory_strategy = Arc::new(tokio::sync::RwLock::new(MemoryStrategy::Lambda));
     let (queue_tx, msg_rx) = tokio::sync::mpsc::channel::<InboundMessage>(32);
-    let runtime = RuntimeHandle::new(
+    let remote_workers = std::env::var("ELECTRO_REMOTE_WORKERS")
+        .ok()
+        .map(|raw| {
+            raw.split(',')
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .map(ToString::to_string)
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+
+    set_runtime_policy(ToolPolicy {
+        allow_shell: config.tools.shell,
+        allow_network: config.tools.http,
+        allow_filesystem: config.tools.file || config.tools.git,
+        writable_roots: vec![electro_core::paths::workspace_dir()],
+    });
+
+    let runtime = RuntimeHandle::new_with_config_and_observable(
         queue_tx,
         shared_mode.clone(),
         shared_memory_strategy.clone(),
+        RuntimeConfig {
+            max_concurrency: 8,
+            worker_timeout: config.agent.max_task_duration_secs,
+            max_queue: 1024,
+            max_active_per_chat: 1,
+            remote_threshold_chars: 500,
+            remote_workers,
+            remote_auth_token: std::env::var("ELECTRO_REMOTE_AUTH_TOKEN").ok(),
+            remote_retries: 3,
+            tool_policy: ToolPolicyConfig {
+                allow_shell: config.tools.shell,
+                allow_network: config.tools.http,
+                allow_filesystem: config.tools.file || config.tools.git,
+                writable_roots: vec![electro_core::paths::workspace_dir().display().to_string()],
+            },
+        },
+        observable,
     );
 
     // ── Tools ──

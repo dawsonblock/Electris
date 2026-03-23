@@ -11,6 +11,7 @@ browser = ["dep:chromiumoxide", "dep:futures", "dep:base64", "dep:htmd"]
 
 [dependencies]
 electro-core.workspace = true
+anyhow.workspace = true
 tokio.workspace = true
 serde.workspace = true
 serde_json.workspace = true

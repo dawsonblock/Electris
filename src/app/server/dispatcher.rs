@@ -1,4 +1,5 @@
 use crate::app::onboarding::build_system_prompt;
+use crate::app::server::scheduler::Scheduler;
 use crate::app::server::dispatcher::classify::{classify_inbound, InboundKind};
 use crate::app::server::dispatcher::router::{
     queue_pending_message, redispatch_pending, request_stop,
@@ -19,6 +20,20 @@ use tokio::sync::Mutex;
 pub mod classify;
 pub mod router;
 pub mod state;
+
+fn scheduler_wake_message() -> InboundMessage {
+    InboundMessage {
+        id: "scheduler-wake".to_string(),
+        channel: "__scheduler__".to_string(),
+        chat_id: "__scheduler__".to_string(),
+        user_id: "__scheduler__".to_string(),
+        username: None,
+        text: None,
+        attachments: Vec::new(),
+        reply_to: None,
+        timestamp: chrono::Utc::now(),
+    }
+}
 
 #[allow(clippy::too_many_arguments)]
 pub async fn run_message_dispatcher(
@@ -67,9 +82,15 @@ pub async fn run_message_dispatcher(
         let queue_tx_redispatch = runtime.queue_tx.clone();
         let chat_slots: Arc<Mutex<HashMap<String, DispatchEntry>>> =
             Arc::new(Mutex::new(HashMap::new()));
+        let scheduler = Arc::new(Mutex::new(Scheduler::new(
+            runtime.runtime_config.max_queue,
+            runtime.runtime_config.max_active_per_chat,
+        )));
 
         let housekeeping_slots = chat_slots.clone();
         let housekeeping_queue = runtime.queue_tx.clone();
+        let housekeeping_scheduler = scheduler.clone();
+        let housekeeping_runtime = runtime.clone();
         tokio::spawn(async move {
             loop {
                 tokio::time::sleep(Duration::from_millis(250)).await;
@@ -81,6 +102,7 @@ pub async fn run_message_dispatcher(
                     for (chat_id, entry) in slots.iter_mut() {
                         let state = entry.slot.state.read().await.clone();
                         if matches!(state, WorkerState::Idle | WorkerState::Failed) {
+                            housekeeping_scheduler.lock().await.mark_complete(chat_id);
                             if let Some(next) = entry.pending.pop_front() {
                                 buffered.push(next);
                             } else if entry.slot.last_active.lock().await.elapsed()
@@ -97,6 +119,15 @@ pub async fn run_message_dispatcher(
                     }
                 }
 
+                let queue_depth = housekeeping_scheduler.lock().await.len() as f64;
+                housekeeping_runtime
+                    .record_metric("electro.runtime.queue.depth", queue_depth, &[])
+                    .await;
+
+                if queue_depth > 0.0 {
+                    buffered.push(scheduler_wake_message());
+                }
+
                 for inbound in buffered {
                     if housekeeping_queue.send(inbound).await.is_err() {
                         break;
@@ -107,91 +138,145 @@ pub async fn run_message_dispatcher(
 
         tokio::spawn(async move {
             while let Some(inbound) = msg_rx.recv().await {
-                let chat_id = inbound.chat_id.clone();
-                let inbound_kind = classify_inbound(&inbound);
-
-                let mut slots = chat_slots.lock().await;
-                let entry = ensure_worker(
-                    &mut slots,
-                    &chat_id,
-                    &sender,
-                    &runtime_clone,
-                    &memory_clone,
-                    &tools_clone,
-                    &custom_registry_clone,
-                    #[cfg(feature = "mcp")]
-                    &mcp_manager_clone,
-                    &config_clone,
-                    &pending_clone,
-                    &setup_tokens_clone,
-                    &pending_raw_keys_clone,
-                    #[cfg(feature = "browser")]
-                    &login_sessions_clone,
-                    &usage_store_clone,
-                    &hive_clone,
-                    &ws_path,
-                    tenant_isolation_enabled,
-                    personality_locked,
-                    tenant_mgr_clone.clone(),
-                    #[cfg(feature = "browser")]
-                    &browser_ref_clone,
-                    &vault,
-                );
-
-                let state = entry.slot.state.read().await.clone();
-                let is_running = matches!(
-                    state,
-                    WorkerState::Running { .. } | WorkerState::Cancelling { .. }
-                );
-                if !matches!(inbound_kind, InboundKind::SystemEvent)
-                    && entry.slot.is_heartbeat.load(Ordering::Relaxed)
-                {
-                    entry.slot.interrupt.store(true, Ordering::Relaxed);
-                    entry.slot.cancel_token.lock().await.cancel();
-                }
-
-                match inbound_kind {
-                    InboundKind::StopCommand => {
-                        let stop_entry = StopRequest {
-                            interrupt: entry.slot.interrupt.clone(),
-                            cancel_token: entry.slot.cancel_token.clone(),
-                            state: entry.slot.state.clone(),
-                        };
-                        drop(slots);
-                        request_stop(stop_entry, &sender, &inbound).await;
+                let is_scheduler_wake = inbound.channel == "__scheduler__";
+                let queue_depth = if is_scheduler_wake {
+                    scheduler.lock().await.len() as f64
+                } else {
+                    let mut scheduler_guard = scheduler.lock().await;
+                    if scheduler_guard.push(inbound.clone()).is_err() {
+                        drop(scheduler_guard);
+                        runtime_clone
+                            .increment_counter("electro.runtime.overload_rejections", &[])
+                            .await;
+                        let _ = runtime_clone.emit_outbound_event(electro_runtime::OutboundEvent::Failed {
+                            request_id: inbound.id.clone(),
+                            error: "overloaded".to_string(),
+                        });
+                        let _ = sender
+                            .send_message(electro_core::types::message::OutboundMessage {
+                                chat_id: inbound.chat_id.clone(),
+                                text: "System overloaded. Please retry shortly.".to_string(),
+                                reply_to: Some(inbound.id.clone()),
+                                parse_mode: None,
+                            })
+                            .await;
                         continue;
                     }
-                    InboundKind::SystemEvent => {}
-                    InboundKind::UserMessage | InboundKind::AdminCommand(_) if is_running => {
-                        if let InboundKind::UserMessage = inbound_kind {
-                            maybe_intercept_busy_message(&sender, &runtime_clone, entry, &inbound);
-                        }
-                        queue_pending_message(entry, inbound, &pending_clone);
-                        continue;
-                    }
-                    InboundKind::UserMessage | InboundKind::AdminCommand(_) => {}
-                }
 
-                *entry.slot.last_active.lock().await = Instant::now();
-                tracing::info!(
-                    chat_id = %inbound.chat_id,
-                    request_id = %inbound.id,
-                    kind = ?inbound_kind,
-                    "assigned inbound message to worker"
-                );
-                let tx = entry.slot.tx.clone();
-                let inbound_backup = inbound.clone();
-                drop(slots);
-                if tx.send(inbound).await.is_err() {
+                    scheduler_guard.len() as f64
+                };
+                runtime_clone
+                    .record_metric("electro.runtime.queue.depth", queue_depth, &[])
+                    .await;
+
+                loop {
+                    let maybe_inbound = {
+                        let mut scheduler_guard = scheduler.lock().await;
+                        scheduler_guard.next()
+                    };
+
+                    let Some(inbound) = maybe_inbound else {
+                        break;
+                    };
+
+                    let chat_id = inbound.chat_id.clone();
+                    let inbound_kind = classify_inbound(&inbound);
+
                     let mut slots = chat_slots.lock().await;
-                    slots.remove(&chat_id);
-                    let _ = queue_tx_redispatch.send(inbound_backup).await;
-                    continue;
-                }
+                    let entry = ensure_worker(
+                        &mut slots,
+                        &chat_id,
+                        &sender,
+                        &runtime_clone,
+                        &memory_clone,
+                        &tools_clone,
+                        &custom_registry_clone,
+                        #[cfg(feature = "mcp")]
+                        &mcp_manager_clone,
+                        &config_clone,
+                        &pending_clone,
+                        &setup_tokens_clone,
+                        &pending_raw_keys_clone,
+                        #[cfg(feature = "browser")]
+                        &login_sessions_clone,
+                        &usage_store_clone,
+                        &hive_clone,
+                        &ws_path,
+                        tenant_isolation_enabled,
+                        personality_locked,
+                        tenant_mgr_clone.clone(),
+                        #[cfg(feature = "browser")]
+                        &browser_ref_clone,
+                        &vault,
+                    );
 
-                let mut slots = chat_slots.lock().await;
-                if let Some(entry) = slots.get_mut(&chat_id) {
-                    redispatch_pending(entry, &queue_tx_redispatch).await;
+                    let state = entry.slot.state.read().await.clone();
+                    let is_running = matches!(
+                        state,
+                        WorkerState::Running { .. } | WorkerState::Cancelling { .. }
+                    );
+                    if !matches!(inbound_kind, InboundKind::SystemEvent)
+                        && entry.slot.is_heartbeat.load(Ordering::Relaxed)
+                    {
+                        entry.slot.interrupt.store(true, Ordering::Relaxed);
+                        entry.slot.cancel_token.lock().await.cancel();
+                    }
+
+                    match inbound_kind {
+                        InboundKind::StopCommand => {
+                            let stop_entry = StopRequest {
+                                interrupt: entry.slot.interrupt.clone(),
+                                cancel_token: entry.slot.cancel_token.clone(),
+                                state: entry.slot.state.clone(),
+                            };
+                            drop(slots);
+                            request_stop(stop_entry, &sender, &inbound).await;
+                            continue;
+                        }
+                        InboundKind::SystemEvent => {}
+                        InboundKind::UserMessage | InboundKind::AdminCommand(_) if is_running => {
+                            if let InboundKind::UserMessage = inbound_kind {
+                                maybe_intercept_busy_message(&sender, &runtime_clone, entry, &inbound);
+                            }
+                            queue_pending_message(entry, inbound, &pending_clone);
+                            continue;
+                        }
+                        InboundKind::UserMessage | InboundKind::AdminCommand(_) => {}
+                    }
+
+                    *entry.slot.last_active.lock().await = Instant::now();
+                    tracing::info!(
+                        chat_id = %inbound.chat_id,
+                        request_id = %inbound.id,
+                        kind = ?inbound_kind,
+                        "assigned inbound message to worker"
+                    );
+                    let tx = entry.slot.tx.clone();
+                    let inbound_backup = inbound.clone();
+                    drop(slots);
+                    if tx.send(inbound).await.is_err() {
+                        let mut slots = chat_slots.lock().await;
+                        slots.remove(&chat_id);
+                        let _ = queue_tx_redispatch.send(inbound_backup).await;
+                        continue;
+                    }
+                    let queue_depth_after_dispatch = {
+                        let mut scheduler_guard = scheduler.lock().await;
+                        scheduler_guard.mark_dispatched(&chat_id);
+                        scheduler_guard.len() as f64
+                    };
+                    runtime_clone
+                        .record_metric(
+                            "electro.runtime.queue.depth",
+                            queue_depth_after_dispatch,
+                            &[],
+                        )
+                        .await;
+
+                    let mut slots = chat_slots.lock().await;
+                    if let Some(entry) = slots.get_mut(&chat_id) {
+                        redispatch_pending(entry, &queue_tx_redispatch).await;
+                    }
                 }
             }
         });
