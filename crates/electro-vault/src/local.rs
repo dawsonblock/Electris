@@ -676,4 +676,28 @@ mod tests {
             .to_string()
             .contains("must not be empty"));
     }
+
+    #[tokio::test]
+    async fn test_cleanup_after_failed_write() {
+        let tmp = tempfile::tempdir().unwrap();
+        let vault = LocalVault::with_dir(tmp.path().to_path_buf())
+            .await
+            .unwrap();
+
+        // Simulate a failure during flush/rename by making the vault path a directory.
+        let vault_path = tmp.path().join("vault.enc");
+        tokio::fs::create_dir(&vault_path).await.unwrap();
+
+        let result = vault.store_secret("fail_key", b"fail_val").await;
+        assert!(result.is_err());
+
+        // Ensure no .tmp files are left.
+        let mut entries = tokio::fs::read_dir(tmp.path()).await.unwrap();
+        while let Some(entry) = entries.next_entry().await.unwrap() {
+            let name = entry.file_name();
+            let name_str = name.to_string_lossy();
+            assert!(!name_str.contains(".tmp-"), "Should not have left .tmp file: {}", name_str);
+        }
+    }
 }
+

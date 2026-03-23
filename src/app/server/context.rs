@@ -33,9 +33,8 @@ pub struct WorkerServices {
     pub pending_messages: electro_tools::PendingMessages,
     pub pending_raw_keys: Arc<Mutex<HashSet<String>>>,
     #[cfg(feature = "browser")]
-    pub login_sessions: Arc<
-        Mutex<HashMap<String, electro_tools::browser_session::InteractiveBrowseSession>>,
-    >,
+    pub login_sessions:
+        Arc<Mutex<HashMap<String, electro_tools::browser_session::InteractiveBrowseSession>>>,
     #[cfg(feature = "browser")]
     pub browser_tool_ref: Option<Arc<electro_tools::BrowserTool>>,
 }

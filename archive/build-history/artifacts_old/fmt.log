@@ -1,0 +1,1283 @@
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/task_decomposition.rs:1459:
+ 
+     #[test]
+     fn graph_rejects_duplicate_ids() {
+[31m-        let tasks = vec![
+(B[m[31m-            SubTask::new("1", "Task A"),
+(B[m[31m-            SubTask::new("1", "Task B"),
+(B[m[31m-        ];
+(B[m[32m+        let tasks = vec![SubTask::new("1", "Task A"), SubTask::new("1", "Task B")];
+(B[m         let result = TaskGraph::new("duplicate", tasks);
+         assert!(result.is_err());
+         assert!(result.unwrap_err().to_string().contains("Duplicate"));
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-codex-oauth/src/callback_server.rs:47:
+             async move {
+                 let mut guard = match tx.lock() {
+                     Ok(g) => g,
+[31m-                    Err(_) => return Html(error_page("Internal Error", "Authentication state is corrupted")),
+(B[m[32m+                    Err(_) => {
+(B[m[32m+                        return Html(error_page(
+(B[m[32m+                            "Internal Error",
+(B[m[32m+                            "Authentication state is corrupted",
+(B[m[32m+                        ))
+(B[m[32m+                    }
+(B[m                 };
+                 if let Some(sender) = guard.take() {
+                     if let Some(error) = params.error {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/browser.rs:1142:
+ 
+     if let Err(e) = std::fs::write(&tmp_path, contents) {
+         let _ = std::fs::remove_file(&tmp_path);
+[31m-        return Err(ElectroError::Tool(format!("Failed to write session temp file: {}", e)));
+(B[m[32m+        return Err(ElectroError::Tool(format!(
+(B[m[32m+            "Failed to write session temp file: {}",
+(B[m[32m+            e
+(B[m[32m+        )));
+(B[m     }
+ 
+     #[cfg(unix)]
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-vault/src/local.rs:656:
+ 
+         let result = vault.store_secret("   ", b"secret").await;
+         assert!(result.is_err());
+[31m-        assert!(result.unwrap_err().to_string().contains("must not be empty"));
+(B[m[32m+        assert!(result
+(B[m[32m+            .unwrap_err()
+(B[m[32m+            .to_string()
+(B[m[32m+            .contains("must not be empty"));
+(B[m     }
+ 
+     #[tokio::test]
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-vault/src/local.rs:668:
+ 
+         let result = vault.get_secret("").await;
+         assert!(result.is_err());
+[31m-        assert!(result.unwrap_err().to_string().contains("must not be empty"));
+(B[m[32m+        assert!(result
+(B[m[32m+            .unwrap_err()
+(B[m[32m+            .to_string()
+(B[m[32m+            .contains("must not be empty"));
+(B[m     }
+ }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/agent.rs:1:
+ use anyhow::Result;
+ use electro_agent::AgentRuntime;
+[31m-use electro_core::types::config::{ElectroConfig, ProviderConfig, ElectroMode};
+(B[m[32m+use electro_core::types::config::{ElectroConfig, ElectroMode, ProviderConfig};
+(B[m use electro_core::{Memory, Provider, Tool};
+ use std::sync::Arc;
+ use tokio::sync::RwLock;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/chat/mod.rs:1:
+[31m-use std::sync::Arc;
+(B[m[32m+use crate::app::cli::{handle_model_command, list_configured_providers, remove_provider};
+(B[m[32m+use crate::app::onboarding::{
+(B[m[32m+    build_system_prompt, decrypt_otk_blob, onboarding_message_with_link, validate_provider_key,
+(B[m[32m+    ONBOARDING_REFERENCE,
+(B[m[32m+};
+(B[m[32m+use crate::app::{check_hive_enabled, create_agent, create_provider, init_core_stack, init_tools};
+(B[m[32m+use crate::bootstrap::SecretCensorChannel;
+(B[m use anyhow::Result;
+[31m-use crate::app::{init_core_stack, create_agent, create_provider, init_tools, check_hive_enabled};
+(B[m[32m+use electro_core::config::credentials::{
+(B[m[32m+    detect_api_key, is_placeholder_key, load_active_provider_keys, load_saved_credentials,
+(B[m[32m+    save_credentials,
+(B[m[32m+};
+(B[m use electro_core::paths;
+ use electro_core::types::config::{ElectroConfig, MemoryStrategy};
+[31m-use electro_core::types::model_registry::{default_model};
+(B[m[31m-use electro_core::config::credentials::{load_saved_credentials, load_active_provider_keys, save_credentials, detect_api_key, is_placeholder_key};
+(B[m[31m-use crate::app::onboarding::{build_system_prompt, decrypt_otk_blob, onboarding_message_with_link, ONBOARDING_REFERENCE, validate_provider_key};
+(B[m[31m-use crate::app::cli::{list_configured_providers, remove_provider, handle_model_command};
+(B[m[31m-use electro_core::Channel;
+(B[m[31m-use crate::bootstrap::{SecretCensorChannel};
+(B[m[32m+use electro_core::types::model_registry::default_model;
+(B[m use electro_core::types::session::SessionContext;
+[32m+use electro_core::Channel;
+(B[m[32m+use std::sync::Arc;
+(B[m 
+ pub async fn run_chat_mode(
+     config: ElectroConfig,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/chat/mod.rs:57:
+     let mut agent_opt = None;
+     if let Some((pname, key, model)) = credentials {
+         if !is_placeholder_key(&key) {
+[31m-             let provider_config = build_provider_config(&config, &pname, &key, &model);
+(B[m[31m-             match create_provider(&provider_config, &pname, &model).await {
+(B[m[31m-                 Ok(provider) => {
+(B[m[31m-                     agent_opt = Some(create_agent(
+(B[m[31m-                         &config,
+(B[m[31m-                         provider,
+(B[m[31m-                         core.memory.clone(),
+(B[m[31m-                         tools.clone(),
+(B[m[31m-                         model.clone(),
+(B[m[31m-                         Some(build_system_prompt()),
+(B[m[31m-                         hive_enabled,
+(B[m[31m-                         shared_mode.clone(),
+(B[m[31m-                         shared_memory_strategy.clone(),
+(B[m[31m-                     ).await);
+(B[m[31m-                     println!("Connected to {} (model: {})", pname, model);
+(B[m[31m-                 }
+(B[m[31m-                 Err(e) => eprintln!("Failed to create provider: {}", e),
+(B[m[31m-             }
+(B[m[32m+            let provider_config = build_provider_config(&config, &pname, &key, &model);
+(B[m[32m+            match create_provider(&provider_config, &pname, &model).await {
+(B[m[32m+                Ok(provider) => {
+(B[m[32m+                    agent_opt = Some(
+(B[m[32m+                        create_agent(
+(B[m[32m+                            &config,
+(B[m[32m+                            provider,
+(B[m[32m+                            core.memory.clone(),
+(B[m[32m+                            tools.clone(),
+(B[m[32m+                            model.clone(),
+(B[m[32m+                            Some(build_system_prompt()),
+(B[m[32m+                            hive_enabled,
+(B[m[32m+                            shared_mode.clone(),
+(B[m[32m+                            shared_memory_strategy.clone(),
+(B[m[32m+                        )
+(B[m[32m+                        .await,
+(B[m[32m+                    );
+(B[m[32m+                    println!("Connected to {} (model: {})", pname, model);
+(B[m[32m+                }
+(B[m[32m+                Err(e) => eprintln!("Failed to create provider: {}", e),
+(B[m[32m+            }
+(B[m         }
+     }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/chat/mod.rs:81:
+     if agent_opt.is_none() {
+         println!("No API key configured — running in onboarding mode.");
+         let otk = core.setup_tokens.generate("cli").await;
+[31m-        let link = format!("https://dawsonblock.github.io/Electro/setup#{}", hex::encode(otk));
+(B[m[32m+        let link = format!(
+(B[m[32m+            "https://dawsonblock.github.io/Electro/setup#{}",
+(B[m[32m+            hex::encode(otk)
+(B[m[32m+        );
+(B[m         println!("\n{}", onboarding_message_with_link(&link));
+         println!("\n{}", ONBOARDING_REFERENCE);
+     }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/chat/mod.rs:89:
+ 
+     // ── Message Loop ──
+     let mut rx = cli_rx.expect("CLI channel receiver unavailable");
+[31m-    
+(B[m[32m+
+(B[m     // Restore history
+     let mut history = restore_history(core.memory.clone()).await;
+     if !history.is_empty() {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/chat/mod.rs:96:
+[31m-        println!("  Restored {} messages from previous session.", history.len());
+(B[m[32m+        println!(
+(B[m[32m+            "  Restored {} messages from previous session.",
+(B[m[32m+            history.len()
+(B[m[32m+        );
+(B[m     }
+ 
+     while let Some(msg) = rx.recv().await {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/chat/mod.rs:111:
+ 
+         // Handle Chat Commands
+         if handle_chat_command(
+[31m-            &lower, 
+(B[m[31m-            text, 
+(B[m[31m-            &core, 
+(B[m[31m-            &mut agent_opt, 
+(B[m[31m-            &config, 
+(B[m[31m-            &tools, 
+(B[m[32m+            &lower,
+(B[m[32m+            text,
+(B[m[32m+            &core,
+(B[m[32m+            &mut agent_opt,
+(B[m[32m+            &config,
+(B[m[32m+            &tools,
+(B[m             &hive_enabled,
+             &shared_mode,
+[31m-            &shared_memory_strategy
+(B[m[31m-        ).await? {
+(B[m[32m+            &shared_memory_strategy,
+(B[m[32m+        )
+(B[m[32m+        .await?
+(B[m[32m+        {
+(B[m             continue;
+         }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/chat/mod.rs:127:
+         // Handle Encrypted Blobs
+         if text.trim().starts_with("enc:v1:") {
+[31m-            if let Some(agent) = handle_encrypted_blob(text, &core, &config, &tools, &hive_enabled, &shared_mode, &shared_memory_strategy).await? {
+(B[m[32m+            if let Some(agent) = handle_encrypted_blob(
+(B[m[32m+                text,
+(B[m[32m+                &core,
+(B[m[32m+                &config,
+(B[m[32m+                &tools,
+(B[m[32m+                &hive_enabled,
+(B[m[32m+                &shared_mode,
+(B[m[32m+                &shared_memory_strategy,
+(B[m[32m+            )
+(B[m[32m+            .await?
+(B[m[32m+            {
+(B[m                 agent_opt = Some(agent);
+             }
+             continue;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/chat/mod.rs:134:
+ 
+         // Normal Agent Interaction
+         if let Some(ref mut agent) = agent_opt {
+[31m-             let mut session_ctx = SessionContext {
+(B[m[31m-                 session_id: "cli".to_string(),
+(B[m[31m-                 channel: "cli".to_string(),
+(B[m[31m-                 chat_id: msg.chat_id.clone(),
+(B[m[31m-                 user_id: msg.user_id.clone(),
+(B[m[31m-                 history: history.clone(),
+(B[m[31m-                 workspace_path: workspace.clone(),
+(B[m[31m-             };
+(B[m[32m+            let mut session_ctx = SessionContext {
+(B[m[32m+                session_id: "cli".to_string(),
+(B[m[32m+                channel: "cli".to_string(),
+(B[m[32m+                chat_id: msg.chat_id.clone(),
+(B[m[32m+                user_id: msg.user_id.clone(),
+(B[m[32m+                history: history.clone(),
+(B[m[32m+                workspace_path: workspace.clone(),
+(B[m[32m+            };
+(B[m 
+[31m-             let (status_tx, mut status_rx) = tokio::sync::watch::channel(electro_agent::AgentTaskStatus::default());
+(B[m[31m-             
+(B[m[31m-             // Monitor status updates in background
+(B[m[31m-             let status_handle = tokio::spawn(async move {
+(B[m[31m-                 use std::io::Write;
+(B[m[31m-                 let mut last_phase = None;
+(B[m[31m-                 while status_rx.changed().await.is_ok() {
+(B[m[31m-                     let status = status_rx.borrow().clone();
+(B[m[31m-                     if Some(status.phase.clone()) != last_phase {
+(B[m[31m-                         match &status.phase {
+(B[m[31m-                             electro_agent::AgentTaskPhase::Preparing => print!("\r[Preparing] "),
+(B[m[31m-                             electro_agent::AgentTaskPhase::Classifying => print!("\r[Classifying] "),
+(B[m[31m-                             electro_agent::AgentTaskPhase::CallingProvider { round } => print!("\r[Round {}: Calling LLM] ", round),
+(B[m[31m-                             electro_agent::AgentTaskPhase::ExecutingTool { round, tool_name, .. } => print!("\r[Round {}: Tool {}] ", round, tool_name),
+(B[m[31m-                             electro_agent::AgentTaskPhase::Finishing => print!("\r[Finishing] "),
+(B[m[31m-                             electro_agent::AgentTaskPhase::Done => print!("\r[Done] "),
+(B[m[31m-                             electro_agent::AgentTaskPhase::Interrupted { .. } => print!("\r[Interrupted] "),
+(B[m[31m-                         }
+(B[m[31m-                         std::io::stdout().flush().ok();
+(B[m[31m-                         last_phase = Some(status.phase.clone());
+(B[m[31m-                     }
+(B[m[31m-                 }
+(B[m[31m-             });
+(B[m[32m+            let (status_tx, mut status_rx) =
+(B[m[32m+                tokio::sync::watch::channel(electro_agent::AgentTaskStatus::default());
+(B[m 
+[31m-             match agent.process_message(&msg, &mut session_ctx, None, None, None, Some(status_tx), None).await {
+(B[m[31m-                 Ok((reply, usage)) => {
+(B[m[31m-                     status_handle.abort();
+(B[m[31m-                     println!("\r{}", reply.text);
+(B[m[31m-                     println!("\nUsage: {} calls, {} tokens, ${:.4}", usage.api_calls, usage.combined_tokens(), usage.total_cost_usd);
+(B[m[31m-                     
+(B[m[31m-                     // Update history and sync back
+(B[m[31m-                     history = session_ctx.history;
+(B[m[31m-                     
+(B[m[31m-                     // Save to memory
+(B[m[31m-                     let history_json = serde_json::to_string(&history)?;
+(B[m[31m-                     core.memory.store(electro_core::MemoryEntry {
+(B[m[31m-                         id: "chat_history:cli".to_string(),
+(B[m[31m-                         content: history_json,
+(B[m[31m-                         metadata: serde_json::json!({}),
+(B[m[31m-                         timestamp: chrono::Utc::now(),
+(B[m[31m-                         session_id: Some("cli".to_string()),
+(B[m[31m-                         entry_type: electro_core::MemoryEntryType::Conversation,
+(B[m[31m-                     }).await.ok();
+(B[m[31m-                 }
+(B[m[31m-                 Err(e) => {
+(B[m[31m-                     status_handle.abort();
+(B[m[31m-                     eprintln!("\nError: {}", e);
+(B[m[31m-                 }
+(B[m[31m-             }
+(B[m[32m+            // Monitor status updates in background
+(B[m[32m+            let status_handle = tokio::spawn(async move {
+(B[m[32m+                use std::io::Write;
+(B[m[32m+                let mut last_phase = None;
+(B[m[32m+                while status_rx.changed().await.is_ok() {
+(B[m[32m+                    let status = status_rx.borrow().clone();
+(B[m[32m+                    if Some(status.phase.clone()) != last_phase {
+(B[m[32m+                        match &status.phase {
+(B[m[32m+                            electro_agent::AgentTaskPhase::Preparing => print!("\r[Preparing] "),
+(B[m[32m+                            electro_agent::AgentTaskPhase::Classifying => {
+(B[m[32m+                                print!("\r[Classifying] ")
+(B[m[32m+                            }
+(B[m[32m+                            electro_agent::AgentTaskPhase::CallingProvider { round } => {
+(B[m[32m+                                print!("\r[Round {}: Calling LLM] ", round)
+(B[m[32m+                            }
+(B[m[32m+                            electro_agent::AgentTaskPhase::ExecutingTool {
+(B[m[32m+                                round,
+(B[m[32m+                                tool_name,
+(B[m[32m+                                ..
+(B[m[32m+                            } => print!("\r[Round {}: Tool {}] ", round, tool_name),
+(B[m[32m+                            electro_agent::AgentTaskPhase::Finishing => print!("\r[Finishing] "),
+(B[m[32m+                            electro_agent::AgentTaskPhase::Done => print!("\r[Done] "),
+(B[m[32m+                            electro_agent::AgentTaskPhase::Interrupted { .. } => {
+(B[m[32m+                                print!("\r[Interrupted] ")
+(B[m[32m+                            }
+(B[m[32m+                        }
+(B[m[32m+                        std::io::stdout().flush().ok();
+(B[m[32m+                        last_phase = Some(status.phase.clone());
+(B[m[32m+                    }
+(B[m[32m+                }
+(B[m[32m+            });
+(B[m[32m+
+(B[m[32m+            match agent
+(B[m[32m+                .process_message(
+(B[m[32m+                    &msg,
+(B[m[32m+                    &mut session_ctx,
+(B[m[32m+                    None,
+(B[m[32m+                    None,
+(B[m[32m+                    None,
+(B[m[32m+                    Some(status_tx),
+(B[m[32m+                    None,
+(B[m[32m+                )
+(B[m[32m+                .await
+(B[m[32m+            {
+(B[m[32m+                Ok((reply, usage)) => {
+(B[m[32m+                    status_handle.abort();
+(B[m[32m+                    println!("\r{}", reply.text);
+(B[m[32m+                    println!(
+(B[m[32m+                        "\nUsage: {} calls, {} tokens, ${:.4}",
+(B[m[32m+                        usage.api_calls,
+(B[m[32m+                        usage.combined_tokens(),
+(B[m[32m+                        usage.total_cost_usd
+(B[m[32m+                    );
+(B[m[32m+
+(B[m[32m+                    // Update history and sync back
+(B[m[32m+                    history = session_ctx.history;
+(B[m[32m+
+(B[m[32m+                    // Save to memory
+(B[m[32m+                    let history_json = serde_json::to_string(&history)?;
+(B[m[32m+                    core.memory
+(B[m[32m+                        .store(electro_core::MemoryEntry {
+(B[m[32m+                            id: "chat_history:cli".to_string(),
+(B[m[32m+                            content: history_json,
+(B[m[32m+                            metadata: serde_json::json!({}),
+(B[m[32m+                            timestamp: chrono::Utc::now(),
+(B[m[32m+                            session_id: Some("cli".to_string()),
+(B[m[32m+                            entry_type: electro_core::MemoryEntryType::Conversation,
+(B[m[32m+                        })
+(B[m[32m+                        .await
+(B[m[32m+                        .ok();
+(B[m[32m+                }
+(B[m[32m+                Err(e) => {
+(B[m[32m+                    status_handle.abort();
+(B[m[32m+                    eprintln!("\nError: {}", e);
+(B[m[32m+                }
+(B[m[32m+            }
+(B[m         } else {
+             println!("Agent offline. Use /help to see commands or add an API key.");
+         }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/chat/mod.rs:205:
+ fn resolve_credentials(config: &ElectroConfig) -> Option<(String, String, String)> {
+     if let Some(ref key) = config.provider.api_key {
+         if !key.is_empty() && !key.starts_with("${") {
+[31m-            let name = config.provider.name.clone().unwrap_or_else(|| "anthropic".to_string());
+(B[m[31m-            let model = config.provider.model.clone().unwrap_or_else(|| default_model(&name).to_string());
+(B[m[32m+            let name = config
+(B[m[32m+                .provider
+(B[m[32m+                .name
+(B[m[32m+                .clone()
+(B[m[32m+                .unwrap_or_else(|| "anthropic".to_string());
+(B[m[32m+            let model = config
+(B[m[32m+                .provider
+(B[m[32m+                .model
+(B[m[32m+                .clone()
+(B[m[32m+                .unwrap_or_else(|| default_model(&name).to_string());
+(B[m             return Some((name, key.clone(), model));
+         }
+     }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/chat/mod.rs:213:
+     load_saved_credentials()
+ }
+ 
+[31m-fn build_provider_config(config: &ElectroConfig, pname: &str, key: &str, model: &str) -> electro_core::types::config::ProviderConfig {
+(B[m[32m+fn build_provider_config(
+(B[m[32m+    config: &ElectroConfig,
+(B[m[32m+    pname: &str,
+(B[m[32m+    key: &str,
+(B[m[32m+    model: &str,
+(B[m[32m+) -> electro_core::types::config::ProviderConfig {
+(B[m     let (all_keys, saved_base_url) = load_active_provider_keys()
+         .map(|(_, keys, _, burl)| {
+[31m-            let valid: Vec<String> = keys.into_iter().filter(|k| !is_placeholder_key(k)).collect();
+(B[m[32m+            let valid: Vec<String> = keys
+(B[m[32m+                .into_iter()
+(B[m[32m+                .filter(|k| !is_placeholder_key(k))
+(B[m[32m+                .collect();
+(B[m             (valid, burl)
+         })
+         .unwrap_or_else(|| (vec![key.to_string()], None));
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/chat/mod.rs:223:
+[31m-    
+(B[m[32m+
+(B[m     let effective_base_url = saved_base_url.or_else(|| config.provider.base_url.clone());
+[31m-    
+(B[m[32m+
+(B[m     electro_core::types::config::ProviderConfig {
+         name: Some(pname.to_string()),
+         api_key: Some(key.to_string()),
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/chat/mod.rs:233:
+     }
+ }
+ 
+[31m-async fn restore_history(memory: Arc<dyn electro_core::Memory>) -> Vec<electro_core::types::message::ChatMessage> {
+(B[m[32m+async fn restore_history(
+(B[m[32m+    memory: Arc<dyn electro_core::Memory>,
+(B[m[32m+) -> Vec<electro_core::types::message::ChatMessage> {
+(B[m     match memory.get("chat_history:cli").await {
+         Ok(Some(entry)) => serde_json::from_str(&entry.content).unwrap_or_default(),
+         _ => Vec::new(),
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/chat/mod.rs:253:
+ ) -> Result<bool> {
+     if lower == "/addkey" {
+         let otk = core.setup_tokens.generate("cli").await;
+[31m-        let link = format!("https://dawsonblock.github.io/Electro/setup#{}", hex::encode(otk));
+(B[m[32m+        let link = format!(
+(B[m[32m+            "https://dawsonblock.github.io/Electro/setup#{}",
+(B[m[32m+            hex::encode(otk)
+(B[m[32m+        );
+(B[m         println!("\nSecure key setup: {}\n", link);
+         return Ok(true);
+     }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/chat/mod.rs:264:
+     if lower.starts_with("/removekey") {
+         let provider = text["/removekey".len()..].trim();
+         println!("\n{}\n", remove_provider(provider));
+[31m-        return Ok(true); 
+(B[m[32m+        return Ok(true);
+(B[m     }
+     if lower == "/usage" {
+         // ... usage logic ...
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/chat/mod.rs:271:
+         return Ok(true);
+     }
+     if lower == "/model" || lower.starts_with("/model ") {
+[31m-        let args = if lower == "/model" { "" } else { text["/model".len()..].trim() };
+(B[m[32m+        let args = if lower == "/model" {
+(B[m[32m+            ""
+(B[m[32m+        } else {
+(B[m[32m+            text["/model".len()..].trim()
+(B[m[32m+        };
+(B[m         println!("\n{}\n", handle_model_command(args));
+         return Ok(true);
+     }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/chat/mod.rs:290:
+     let blob = &text.trim()["enc:v1:".len()..];
+     if let Ok(key_text) = decrypt_otk_blob(blob, &core.setup_tokens, "cli").await {
+         if let Some(cred) = detect_api_key(&key_text) {
+[31m-             let model = default_model(cred.provider).to_string();
+(B[m[31m-             let provider_config = build_provider_config(config, cred.provider, &cred.api_key, &model);
+(B[m[31m-             if let Ok(provider) = validate_provider_key(&provider_config).await {
+(B[m[31m-                 save_credentials(cred.provider, &cred.api_key, &model, cred.base_url.as_deref()).await.ok();
+(B[m[31m-                 return Ok(Some(create_agent(
+(B[m[31m-                     config,
+(B[m[31m-                     provider,
+(B[m[31m-                     core.memory.clone(),
+(B[m[31m-                     tools.to_vec(),
+(B[m[31m-                     model,
+(B[m[31m-                     Some(build_system_prompt()),
+(B[m[31m-                     *_hive_enabled,
+(B[m[31m-                     shared_mode.clone(),
+(B[m[31m-                     shared_memory_strategy.clone(),
+(B[m[31m-                 ).await));
+(B[m[31m-             }
+(B[m[32m+            let model = default_model(cred.provider).to_string();
+(B[m[32m+            let provider_config =
+(B[m[32m+                build_provider_config(config, cred.provider, &cred.api_key, &model);
+(B[m[32m+            if let Ok(provider) = validate_provider_key(&provider_config).await {
+(B[m[32m+                save_credentials(
+(B[m[32m+                    cred.provider,
+(B[m[32m+                    &cred.api_key,
+(B[m[32m+                    &model,
+(B[m[32m+                    cred.base_url.as_deref(),
+(B[m[32m+                )
+(B[m[32m+                .await
+(B[m[32m+                .ok();
+(B[m[32m+                return Ok(Some(
+(B[m[32m+                    create_agent(
+(B[m[32m+                        config,
+(B[m[32m+                        provider,
+(B[m[32m+                        core.memory.clone(),
+(B[m[32m+                        tools.to_vec(),
+(B[m[32m+                        model,
+(B[m[32m+                        Some(build_system_prompt()),
+(B[m[32m+                        *_hive_enabled,
+(B[m[32m+                        shared_mode.clone(),
+(B[m[32m+                        shared_memory_strategy.clone(),
+(B[m[32m+                    )
+(B[m[32m+                    .await,
+(B[m[32m+                ));
+(B[m[32m+            }
+(B[m         }
+     }
+     Ok(None)
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/cli.rs:1:
+[32m+use crate::cli::{Commands, ConfigCommands, SkillCommands};
+(B[m use electro_core::config::credentials::{
+     credentials_path, is_placeholder_key, load_active_provider_keys, load_credentials_file,
+ };
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/cli.rs:4:
+[31m-use electro_core::types::model_registry::{
+(B[m[31m-    available_models_for_provider, is_vision_model,
+(B[m[31m-};
+(B[m[31m-use crate::cli::{Commands, SkillCommands, ConfigCommands};
+(B[m[32m+use electro_core::types::model_registry::{available_models_for_provider, is_vision_model};
+(B[m 
+ pub fn format_user_error(e: &electro_core::types::error::ElectroError) -> String {
+     use electro_core::types::error::ElectroError;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/cli.rs:11:
+     match e {
+         ElectroError::Provider(msg) => {
+             if msg.contains("400") || msg.contains("Bad Request") || msg.contains("validation") {
+[31m-                "The AI provider rejected the request. Try switching models with /model.".to_string()
+(B[m[32m+                "The AI provider rejected the request. Try switching models with /model."
+(B[m[32m+                    .to_string()
+(B[m             } else if msg.contains("500") || msg.contains("502") || msg.contains("503") {
+                 "The AI provider is experiencing issues.".to_string()
+             } else if msg.contains("timeout") || msg.contains("timed out") {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/cli.rs:48:
+             has_providers = true;
+             for p in &creds.providers {
+                 let key_count = p.keys.iter().filter(|k| !is_placeholder_key(k)).count();
+[31m-                let active = if p.name == creds.active { " (active)" } else { "" };
+(B[m[31m-                let proxy = if let Some(ref url) = p.base_url { format!(" via {}", url) } else { String::new() };
+(B[m[31m-                lines.push(format!("  {} — model: {}, {} key(s){}{}", p.name, p.model, key_count, proxy, active));
+(B[m[32m+                let active = if p.name == creds.active {
+(B[m[32m+                    " (active)"
+(B[m[32m+                } else {
+(B[m[32m+                    ""
+(B[m[32m+                };
+(B[m[32m+                let proxy = if let Some(ref url) = p.base_url {
+(B[m[32m+                    format!(" via {}", url)
+(B[m[32m+                } else {
+(B[m[32m+                    String::new()
+(B[m[32m+                };
+(B[m[32m+                lines.push(format!(
+(B[m[32m+                    "  {} — model: {}, {} key(s){}{}",
+(B[m[32m+                    p.name, p.model, key_count, proxy, active
+(B[m[32m+                ));
+(B[m             }
+         }
+     }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/cli.rs:83:
+         return format!("Provider '{}' not found.", provider_name);
+     }
+     if creds.active == provider_name {
+[31m-        creds.active = creds.providers.first().map(|p| p.name.clone()).unwrap_or_default();
+(B[m[32m+        creds.active = creds
+(B[m[32m+            .providers
+(B[m[32m+            .first()
+(B[m[32m+            .map(|p| p.name.clone())
+(B[m[32m+            .unwrap_or_default();
+(B[m     }
+     let path = credentials_path();
+     if let Ok(content) = toml::to_string_pretty(&creds) {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/cli.rs:92:
+     if creds.providers.is_empty() {
+         format!("Removed {}. No providers remaining.", provider_name)
+     } else {
+[31m-        format!("Removed {}. Active provider: {}", provider_name, creds.active)
+(B[m[32m+        format!(
+(B[m[32m+            "Removed {}. Active provider: {}",
+(B[m[32m+            provider_name, creds.active
+(B[m[32m+        )
+(B[m     }
+ }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/init.rs:1:
+[31m-use std::sync::Arc;
+(B[m use anyhow::Result;
+ use electro_core::paths;
+ use electro_core::types::config::ElectroConfig;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/init.rs:5:
+ use electro_core::{Memory, UsageStore, Vault};
+[32m+use std::sync::Arc;
+(B[m 
+ pub struct CoreStack {
+     pub memory: Arc<dyn Memory>,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/init.rs:51:
+ 
+ pub async fn check_hive_enabled() -> bool {
+     // Try to find config file
+[31m-    let config_content =
+(B[m[31m-        std::fs::read_to_string(paths::electro_home().join("config.toml"))
+(B[m[31m-            .ok()
+(B[m[31m-            .or_else(|| std::fs::read_to_string("electro.toml").ok());
+(B[m[32m+    let config_content = std::fs::read_to_string(paths::electro_home().join("config.toml"))
+(B[m[32m+        .ok()
+(B[m[32m+        .or_else(|| std::fs::read_to_string("electro.toml").ok());
+(B[m 
+     if let Some(content) = config_content {
+         #[derive(serde::Deserialize, Default)]
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/init.rs:76:
+ }
+ 
+ pub async fn load_hive_config() -> electro_hive::HiveConfig {
+[31m-    let config_content =
+(B[m[31m-        std::fs::read_to_string(paths::electro_home().join("config.toml"))
+(B[m[31m-            .ok()
+(B[m[31m-            .or_else(|| std::fs::read_to_string("electro.toml").ok());
+(B[m[32m+    let config_content = std::fs::read_to_string(paths::electro_home().join("config.toml"))
+(B[m[32m+        .ok()
+(B[m[32m+        .or_else(|| std::fs::read_to_string("electro.toml").ok());
+(B[m 
+     if let Some(content) = config_content {
+         #[derive(serde::Deserialize, Default)]
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/logging.rs:1:
+[31m-use std::panic::AssertUnwindSafe;
+(B[m use electro_core::paths;
+[32m+use std::panic::AssertUnwindSafe;
+(B[m use tracing_subscriber::prelude::*;
+ 
+ pub fn init_logging(is_tui: bool) {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/mod.rs:1:
+ pub mod agent;
+[32m+pub mod chat;
+(B[m[32m+pub mod cli;
+(B[m pub mod init;
+ pub mod logging;
+[32m+pub mod onboarding;
+(B[m pub mod security;
+[31m-pub mod tools;
+(B[m[31m-pub mod chat;
+(B[m pub mod server;
+[31m-pub mod onboarding;
+(B[m[31m-pub mod cli;
+(B[m[32m+pub mod tools;
+(B[m 
+ pub use agent::{create_agent, create_provider};
+[31m-pub use init::{init_core_stack, CoreStack, check_hive_enabled, load_hive_config};
+(B[m[32m+pub use init::{check_hive_enabled, init_core_stack, load_hive_config, CoreStack};
+(B[m pub use logging::{init_logging, init_panic_hook};
+ pub use security::enforce_security_policy;
+ pub use tools::init_tools;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/onboarding.rs:85:
+     use aes_gcm::aead::{Aead, KeyInit};
+     use aes_gcm::{Aes256Gcm, Key, Nonce};
+ 
+[31m-    let otk = store.consume(chat_id).await.ok_or_else(|| "No pending setup link".to_string())?;
+(B[m[31m-    let blob = base64::engine::general_purpose::STANDARD.decode(blob_b64.trim()).map_err(|e| format!("Invalid base64: {}", e))?;
+(B[m[31m-    if blob.len() < 29 { return Err("Encrypted blob too short.".to_string()); }
+(B[m[32m+    let otk = store
+(B[m[32m+        .consume(chat_id)
+(B[m[32m+        .await
+(B[m[32m+        .ok_or_else(|| "No pending setup link".to_string())?;
+(B[m[32m+    let blob = base64::engine::general_purpose::STANDARD
+(B[m[32m+        .decode(blob_b64.trim())
+(B[m[32m+        .map_err(|e| format!("Invalid base64: {}", e))?;
+(B[m[32m+    if blob.len() < 29 {
+(B[m[32m+        return Err("Encrypted blob too short.".to_string());
+(B[m[32m+    }
+(B[m     let (iv_bytes, ciphertext) = blob.split_at(12);
+     let key = Key::<Aes256Gcm>::from_slice(&otk);
+     let cipher = Aes256Gcm::new(key);
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/onboarding.rs:94:
+     let nonce = Nonce::from_slice(iv_bytes);
+[31m-    let plaintext = cipher.decrypt(nonce, ciphertext).map_err(|_| "Decryption failed".to_string())?;
+(B[m[32m+    let plaintext = cipher
+(B[m[32m+        .decrypt(nonce, ciphertext)
+(B[m[32m+        .map_err(|_| "Decryption failed".to_string())?;
+(B[m     String::from_utf8(plaintext).map_err(|_| "Decrypted data is not valid UTF-8.".to_string())
+ }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/commands.rs:1:
+[31m-use std::sync::Arc;
+(B[m[32m+use crate::app::cli::{handle_model_command, list_configured_providers, remove_provider};
+(B[m[32m+use crate::app::onboarding::decrypt_otk_blob;
+(B[m[32m+use electro_agent::AgentRuntime;
+(B[m[32m+use electro_core::types::config::{ElectroMode, MemoryStrategy};
+(B[m[32m+use electro_core::types::message::{ChatMessage, InboundMessage, OutboundMessage};
+(B[m[32m+use electro_core::{Channel, Memory, Provider, Tool, Vault};
+(B[m use std::collections::{HashMap, HashSet};
+[32m+use std::sync::Arc;
+(B[m use tokio::sync::Mutex;
+[31m-use electro_core::{Channel, Memory, Tool, Provider, Vault};
+(B[m[31m-use electro_core::types::message::{InboundMessage, OutboundMessage, ChatMessage};
+(B[m[31m-use electro_core::types::config::{MemoryStrategy, ElectroMode};
+(B[m[31m-use electro_agent::AgentRuntime;
+(B[m[31m-use crate::app::cli::{handle_model_command, remove_provider, list_configured_providers};
+(B[m[31m-use crate::app::onboarding::{decrypt_otk_blob};
+(B[m 
+ #[allow(clippy::too_many_arguments)]
+ pub async fn handle_slash_command(
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/commands.rs:28:
+     personality_locked: bool,
+ ) -> bool {
+     let text = msg.text.as_deref().unwrap_or_default().trim();
+[31m-    if !text.starts_with('/') && !text.starts_with("enc:v1:") { return false; }
+(B[m[32m+    if !text.starts_with('/') && !text.starts_with("enc:v1:") {
+(B[m[32m+        return false;
+(B[m[32m+    }
+(B[m 
+     let chat_id = msg.chat_id.clone();
+     let msg_id = msg.id.clone();
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/commands.rs:39:
+         match decrypt_otk_blob(blob_b64, setup_tokens, &chat_id).await {
+             Ok(key_text) => {
+                 // Key detection and validation logic...
+[31m-                let _ = sender.send_message(OutboundMessage {
+(B[m[31m-                    chat_id,
+(B[m[31m-                    text: "Key received and validated.".to_string(),
+(B[m[31m-                    reply_to: Some(msg_id),
+(B[m[31m-                    parse_mode: None,
+(B[m[31m-                }).await;
+(B[m[32m+                let _ = sender
+(B[m[32m+                    .send_message(OutboundMessage {
+(B[m[32m+                        chat_id,
+(B[m[32m+                        text: "Key received and validated.".to_string(),
+(B[m[32m+                        reply_to: Some(msg_id),
+(B[m[32m+                        parse_mode: None,
+(B[m[32m+                    })
+(B[m[32m+                    .await;
+(B[m             }
+             Err(e) => {
+[31m-                let _ = sender.send_message(OutboundMessage {
+(B[m[31m-                    chat_id,
+(B[m[31m-                    text: format!("Error: {}", e),
+(B[m[31m-                    reply_to: Some(msg_id),
+(B[m[31m-                    parse_mode: None,
+(B[m[31m-                }).await;
+(B[m[32m+                let _ = sender
+(B[m[32m+                    .send_message(OutboundMessage {
+(B[m[32m+                        chat_id,
+(B[m[32m+                        text: format!("Error: {}", e),
+(B[m[32m+                        reply_to: Some(msg_id),
+(B[m[32m+                        parse_mode: None,
+(B[m[32m+                    })
+(B[m[32m+                    .await;
+(B[m             }
+         }
+         return true;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/commands.rs:65:
+     match cmd.as_str() {
+         "/help" => {
+             let help = "Available commands:\n/help - Show this help\n/model - Switch model\n/keys - List configured keys\n/addkey - Add a new API key\n/removekey - Remove an API key\n/stop - Stop active task\n/reset - Reset current chat history";
+[31m-            let _ = sender.send_message(OutboundMessage {
+(B[m[31m-                chat_id,
+(B[m[31m-                text: help.to_string(),
+(B[m[31m-                reply_to: Some(msg_id),
+(B[m[31m-                parse_mode: None,
+(B[m[31m-            }).await;
+(B[m[32m+            let _ = sender
+(B[m[32m+                .send_message(OutboundMessage {
+(B[m[32m+                    chat_id,
+(B[m[32m+                    text: help.to_string(),
+(B[m[32m+                    reply_to: Some(msg_id),
+(B[m[32m+                    parse_mode: None,
+(B[m[32m+                })
+(B[m[32m+                .await;
+(B[m             true
+         }
+         "/model" => {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/commands.rs:77:
+             let resp = handle_model_command(&args);
+[31m-            let _ = sender.send_message(OutboundMessage {
+(B[m[31m-                chat_id,
+(B[m[31m-                text: resp,
+(B[m[31m-                reply_to: Some(msg_id),
+(B[m[31m-                parse_mode: None,
+(B[m[31m-            }).await;
+(B[m[32m+            let _ = sender
+(B[m[32m+                .send_message(OutboundMessage {
+(B[m[32m+                    chat_id,
+(B[m[32m+                    text: resp,
+(B[m[32m+                    reply_to: Some(msg_id),
+(B[m[32m+                    parse_mode: None,
+(B[m[32m+                })
+(B[m[32m+                .await;
+(B[m             true
+         }
+         "/keys" => {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/commands.rs:87:
+             let resp = list_configured_providers();
+[31m-            let _ = sender.send_message(OutboundMessage {
+(B[m[31m-                chat_id,
+(B[m[31m-                text: resp,
+(B[m[31m-                reply_to: Some(msg_id),
+(B[m[31m-                parse_mode: None,
+(B[m[31m-            }).await;
+(B[m[32m+            let _ = sender
+(B[m[32m+                .send_message(OutboundMessage {
+(B[m[32m+                    chat_id,
+(B[m[32m+                    text: resp,
+(B[m[32m+                    reply_to: Some(msg_id),
+(B[m[32m+                    parse_mode: None,
+(B[m[32m+                })
+(B[m[32m+                .await;
+(B[m             true
+         }
+         "/removekey" => {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/commands.rs:97:
+             let resp = remove_provider(&args);
+[31m-            let _ = sender.send_message(OutboundMessage {
+(B[m[31m-                chat_id,
+(B[m[31m-                text: resp,
+(B[m[31m-                reply_to: Some(msg_id),
+(B[m[31m-                parse_mode: None,
+(B[m[31m-            }).await;
+(B[m[32m+            let _ = sender
+(B[m[32m+                .send_message(OutboundMessage {
+(B[m[32m+                    chat_id,
+(B[m[32m+                    text: resp,
+(B[m[32m+                    reply_to: Some(msg_id),
+(B[m[32m+                    parse_mode: None,
+(B[m[32m+                })
+(B[m[32m+                .await;
+(B[m             true
+         }
+         "/reset" => {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/commands.rs:107:
+             let history_key = format!("chat_history:{}", chat_id);
+             let _ = memory.delete(&history_key).await;
+[31m-            let _ = sender.send_message(OutboundMessage {
+(B[m[31m-                chat_id,
+(B[m[31m-                text: "Chat history reset.".to_string(),
+(B[m[31m-                reply_to: Some(msg_id),
+(B[m[31m-                parse_mode: None,
+(B[m[31m-            }).await;
+(B[m[32m+            let _ = sender
+(B[m[32m+                .send_message(OutboundMessage {
+(B[m[32m+                    chat_id,
+(B[m[32m+                    text: "Chat history reset.".to_string(),
+(B[m[32m+                    reply_to: Some(msg_id),
+(B[m[32m+                    parse_mode: None,
+(B[m[32m+                })
+(B[m[32m+                .await;
+(B[m             true
+         }
+         "/stop" => {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/commands.rs:118:
+             // Handled by dispatcher interruption logic, but we can confirm
+[31m-            let _ = sender.send_message(OutboundMessage {
+(B[m[31m-                chat_id,
+(B[m[31m-                text: "Task stopped.".to_string(),
+(B[m[31m-                reply_to: Some(msg_id),
+(B[m[31m-                parse_mode: None,
+(B[m[31m-            }).await;
+(B[m[32m+            let _ = sender
+(B[m[32m+                .send_message(OutboundMessage {
+(B[m[32m+                    chat_id,
+(B[m[32m+                    text: "Task stopped.".to_string(),
+(B[m[32m+                    reply_to: Some(msg_id),
+(B[m[32m+                    parse_mode: None,
+(B[m[32m+                })
+(B[m[32m+                .await;
+(B[m             true
+         }
+         _ => false,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/dispatcher.rs:1:
+[32m+use crate::app::onboarding::build_system_prompt;
+(B[m[32m+use crate::app::server::slot::ChatSlot;
+(B[m[32m+use crate::bootstrap::SecretCensorChannel;
+(B[m[32m+use electro_agent::AgentRuntime;
+(B[m[32m+use electro_core::types::config::{ElectroConfig, MemoryStrategy};
+(B[m[32m+use electro_core::types::message::{
+(B[m[32m+    ChatMessage, CompletionRequest, InboundMessage, MessageContent, Role,
+(B[m[32m+};
+(B[m[32m+use electro_core::{Channel, Memory, Tool, UsageStore, Vault};
+(B[m use std::collections::{HashMap, HashSet};
+[31m-use std::sync::Arc;
+(B[m use std::sync::atomic::Ordering;
+[32m+use std::sync::Arc;
+(B[m use tokio::sync::Mutex;
+ use tokio_util::sync::CancellationToken;
+[31m-use electro_core::{Channel, Memory, Tool, UsageStore, Vault};
+(B[m[31m-use electro_core::types::config::{ElectroConfig, MemoryStrategy};
+(B[m[31m-use electro_core::types::message::{InboundMessage, ChatMessage, Role, MessageContent, CompletionRequest};
+(B[m[31m-use electro_agent::AgentRuntime;
+(B[m[31m-use crate::app::server::slot::ChatSlot;
+(B[m[31m-use crate::bootstrap::SecretCensorChannel;
+(B[m[31m-use crate::app::onboarding::{build_system_prompt};
+(B[m 
+ pub async fn run_message_dispatcher(
+     mut msg_rx: tokio::sync::mpsc::Receiver<InboundMessage>,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/dispatcher.rs:44:
+         let custom_registry_clone = custom_tool_registry.clone();
+         #[cfg(feature = "mcp")]
+         let mcp_manager_clone = mcp_manager.clone();
+[31m-        
+(B[m[32m+
+(B[m         let config_clone = config.clone();
+         let ws_path = workspace_path.clone();
+         let pending_clone = pending_messages.clone();
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/dispatcher.rs:76:
+                             slot.cancel_token.cancel();
+                         }
+ 
+[31m-                        let is_slash_stop = inbound.text.as_deref()
+(B[m[32m+                        let is_slash_stop = inbound
+(B[m[32m+                            .text
+(B[m[32m+                            .as_deref()
+(B[m                             .map(|t| t.trim().eq_ignore_ascii_case("/stop"))
+                             .unwrap_or(false);
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/dispatcher.rs:89:
+                         if slot.is_busy.load(Ordering::Relaxed) {
+                             if let Some(text) = inbound.text.as_deref() {
+                                 if let Ok(mut pq) = pending_clone.lock() {
+[31m-                                    pq.entry(chat_id.clone()).or_default().push(text.to_string());
+(B[m[32m+                                    pq.entry(chat_id.clone())
+(B[m[32m+                                        .or_default()
+(B[m[32m+                                        .push(text.to_string());
+(B[m                                 }
+                             }
+[31m-                            
+(B[m[32m+
+(B[m                             // LLM interceptor logic...
+                             let icpt_sender = sender.clone();
+                             let icpt_chat_id = chat_id.clone();
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/dispatcher.rs:103:
+                             let icpt_task = slot.current_task.clone();
+                             let icpt_agent_state = agent_state_clone.clone();
+                             tokio::spawn(async move {
+[31m-                                let task_desc = icpt_task.lock().map(|t| t.clone()).unwrap_or_default();
+(B[m[32m+                                let task_desc =
+(B[m[32m+                                    icpt_task.lock().map(|t| t.clone()).unwrap_or_default();
+(B[m                                 let agent_guard = icpt_agent_state.read().await;
+                                 if let Some(agent) = agent_guard.as_ref() {
+                                     let provider = agent.provider_arc();
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/dispatcher.rs:130:
+                                         text = text.replace("[CANCEL]", "").trim().to_string();
+ 
+                                         if !text.is_empty() {
+[31m-                                            let _ = icpt_sender.send_message(electro_core::types::message::OutboundMessage {
+(B[m[31m-                                                chat_id: icpt_chat_id,
+(B[m[31m-                                                text,
+(B[m[31m-                                                reply_to: Some(icpt_msg_id),
+(B[m[31m-                                                parse_mode: None,
+(B[m[31m-                                            }).await;
+(B[m[32m+                                            let _ = icpt_sender
+(B[m[32m+                                                .send_message(
+(B[m[32m+                                                    electro_core::types::message::OutboundMessage {
+(B[m[32m+                                                        chat_id: icpt_chat_id,
+(B[m[32m+                                                        text,
+(B[m[32m+                                                        reply_to: Some(icpt_msg_id),
+(B[m[32m+                                                        parse_mode: None,
+(B[m[32m+                                                    },
+(B[m[32m+                                                )
+(B[m[32m+                                                .await;
+(B[m                                         }
+ 
+                                         if should_cancel {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/dispatcher.rs:165:
+                         &memory_clone,
+                         &tools_clone,
+                         &custom_registry_clone,
+[31m-                        #[cfg(feature = "mcp")] &mcp_manager_clone,
+(B[m[32m+                        #[cfg(feature = "mcp")]
+(B[m[32m+                        &mcp_manager_clone,
+(B[m                         config_clone.agent.max_turns,
+                         config_clone.agent.max_context_tokens,
+                         config_clone.agent.max_tool_rounds,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/dispatcher.rs:178:
+                         &pending_clone,
+                         &setup_tokens_clone,
+                         &pending_raw_keys_clone,
+[31m-                        #[cfg(feature = "browser")] &login_sessions_clone,
+(B[m[32m+                        #[cfg(feature = "browser")]
+(B[m[32m+                        &login_sessions_clone,
+(B[m                         &usage_store_clone,
+                         &hive_clone,
+                         shared_mode.clone(),
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/dispatcher.rs:185:
+                         shared_memory_strategy.clone(),
+                         personality_locked,
+[31m-                        #[cfg(feature = "browser")] &browser_tool_ref,
+(B[m[32m+                        #[cfg(feature = "browser")]
+(B[m[32m+                        &browser_tool_ref,
+(B[m                         &vault,
+                     )
+                 });
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/mod.rs:1:
+[31m-use std::collections::{HashMap, HashSet};
+(B[m[31m-use std::sync::Arc;
+(B[m[32m+use crate::app::onboarding::build_system_prompt;
+(B[m[32m+use crate::app::server::dispatcher::run_message_dispatcher;
+(B[m[32m+use crate::app::{
+(B[m[32m+    check_hive_enabled, create_agent, create_provider, init_core_stack, init_tools,
+(B[m[32m+    load_hive_config,
+(B[m[32m+};
+(B[m[32m+use crate::bootstrap::SecretCensorChannel;
+(B[m[32m+use crate::daemon::remove_pid_file;
+(B[m use anyhow::Result;
+[31m-use tokio::sync::Mutex;
+(B[m[31m-use electro_core::Channel;
+(B[m use electro_core::types::config::{ElectroConfig, ElectroMode, MemoryStrategy};
+ use electro_core::types::message::InboundMessage;
+[31m-use crate::app::{init_core_stack, create_agent, create_provider, init_tools, check_hive_enabled, load_hive_config};
+(B[m[31m-use crate::app::onboarding::{build_system_prompt};
+(B[m[31m-use crate::bootstrap::{SecretCensorChannel};
+(B[m[31m-use crate::app::server::dispatcher::run_message_dispatcher;
+(B[m[31m-use crate::daemon::remove_pid_file;
+(B[m[32m+use electro_core::Channel;
+(B[m[32m+use std::collections::{HashMap, HashSet};
+(B[m[32m+use std::sync::Arc;
+(B[m[32m+use tokio::sync::Mutex;
+(B[m 
+[31m-pub mod slot;
+(B[m[32m+pub mod commands;
+(B[m pub mod dispatcher;
+[32m+pub mod slot;
+(B[m pub mod worker;
+[31m-pub mod commands;
+(B[m 
+ pub async fn start_server(
+     config: &mut ElectroConfig,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/mod.rs:67:
+         if tg_config.enabled {
+             if let Ok(mut tg) = electro_channels::TelegramChannel::new(tg_config) {
+                 if tg.start().await.is_ok() {
+[31m-                    if let Some(rx) = tg.take_receiver() { channel_receivers.push(rx); }
+(B[m[32m+                    if let Some(rx) = tg.take_receiver() {
+(B[m[32m+                        channel_receivers.push(rx);
+(B[m[32m+                    }
+(B[m                     let arc: Arc<dyn Channel> = Arc::new(tg);
+[31m-                    if primary_channel.is_none() { primary_channel = Some(arc.clone()); }
+(B[m[32m+                    if primary_channel.is_none() {
+(B[m[32m+                        primary_channel = Some(arc.clone());
+(B[m[32m+                    }
+(B[m                     channels.push(arc);
+                 }
+             }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/mod.rs:82:
+         if dc_config.enabled {
+             if let Ok(mut dc) = electro_channels::DiscordChannel::new(dc_config) {
+                 if dc.start().await.is_ok() {
+[31m-                    if let Some(rx) = dc.take_receiver() { channel_receivers.push(rx); }
+(B[m[32m+                    if let Some(rx) = dc.take_receiver() {
+(B[m[32m+                        channel_receivers.push(rx);
+(B[m[32m+                    }
+(B[m                     let arc: Arc<dyn Channel> = Arc::new(dc);
+[31m-                    if primary_channel.is_none() { primary_channel = Some(arc.clone()); }
+(B[m[32m+                    if primary_channel.is_none() {
+(B[m[32m+                        primary_channel = Some(arc.clone());
+(B[m[32m+                    }
+(B[m                     channels.push(arc);
+                 }
+             }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/mod.rs:96:
+         if sl_config.enabled {
+             if let Ok(mut sl) = electro_channels::SlackChannel::new(sl_config) {
+                 if sl.start().await.is_ok() {
+[31m-                    if let Some(rx) = sl.take_receiver() { channel_receivers.push(rx); }
+(B[m[32m+                    if let Some(rx) = sl.take_receiver() {
+(B[m[32m+                        channel_receivers.push(rx);
+(B[m[32m+                    }
+(B[m                     let arc: Arc<dyn Channel> = Arc::new(sl);
+[31m-                    if primary_channel.is_none() { primary_channel = Some(arc.clone()); }
+(B[m[32m+                    if primary_channel.is_none() {
+(B[m[32m+                        primary_channel = Some(arc.clone());
+(B[m[32m+                    }
+(B[m                     channels.push(arc);
+                 }
+             }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/mod.rs:107:
+ 
+     // ── Tools ──
+     let pending_messages = Arc::new(std::sync::Mutex::new(HashMap::new()));
+[31m-    let censored_channel: Option<Arc<dyn Channel>> = primary_channel.clone()
+(B[m[32m+    let censored_channel: Option<Arc<dyn Channel>> = primary_channel
+(B[m[32m+        .clone()
+(B[m         .map(|ch| Arc::new(SecretCensorChannel { inner: ch }) as Arc<dyn Channel>);
+[31m-    
+(B[m[32m+
+(B[m     let shared_mode = Arc::new(tokio::sync::RwLock::new(config.mode));
+     let shared_memory_strategy = Arc::new(tokio::sync::RwLock::new(MemoryStrategy::Lambda));
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/mod.rs:120:
+         Some(core.memory.clone()),
+         Some(Arc::new(core.setup_tokens.clone()) as Arc<dyn electro_core::SetupLinkGenerator>),
+         Some(core.usage_store.clone()),
+[31m-        if personality_locked { None } else { Some(shared_mode.clone()) },
+(B[m[32m+        if personality_locked {
+(B[m[32m+            None
+(B[m[32m+        } else {
+(B[m[32m+            Some(shared_mode.clone())
+(B[m[32m+        },
+(B[m         core.vault.clone(),
+     );
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/mod.rs:144:
+         let tx = msg_tx.clone();
+         task_handles.push(tokio::spawn(async move {
+             while let Some(msg) = ch_rx.recv().await {
+[31m-                if tx.send(msg).await.is_err() { break; }
+(B[m[32m+                if tx.send(msg).await.is_err() {
+(B[m[32m+                    break;
+(B[m[32m+                }
+(B[m             }
+         }));
+     }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/mod.rs:156:
+         let runner = electro_automation::HeartbeatRunner::new(
+             config.heartbeat.clone(),
+             workspace_path.clone(),
+[31m-            config.heartbeat.report_to.clone().unwrap_or_else(|| "heartbeat".to_string()),
+(B[m[32m+            config
+(B[m[32m+                .heartbeat
+(B[m[32m+                .report_to
+(B[m[32m+                .clone()
+(B[m[32m+                .unwrap_or_else(|| "heartbeat".to_string()),
+(B[m         );
+         let hb_tx = msg_tx.clone();
+[31m-        task_handles.push(tokio::spawn(async move { runner.run(hb_tx).await; }));
+(B[m[32m+        task_handles.push(tokio::spawn(async move {
+(B[m[32m+            runner.run(hb_tx).await;
+(B[m[32m+        }));
+(B[m     }
+ 
+     // ── Hive ──
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/mod.rs:166:
+     let hive_config = load_hive_config().await;
+     let hive_instance = if hive_config.enabled {
+[31m-        let hive_url = format!("sqlite:{}?mode=rwc", electro_core::paths::hive_db_file().display());
+(B[m[31m-        electro_hive::Hive::new(&hive_config, &hive_url).await.ok().map(Arc::new)
+(B[m[32m+        let hive_url = format!(
+(B[m[32m+            "sqlite:{}?mode=rwc",
+(B[m[32m+            electro_core::paths::hive_db_file().display()
+(B[m[32m+        );
+(B[m[32m+        electro_hive::Hive::new(&hive_config, &hive_url)
+(B[m[32m+            .await
+(B[m[32m+            .ok()
+(B[m[32m+            .map(Arc::new)
+(B[m     } else {
+         None
+     };
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/mod.rs:183:
+         core.memory.clone(),
+         tools,
+         custom_tool_registry,
+[31m-        #[cfg(feature = "mcp")] mcp_manager,
+(B[m[32m+        #[cfg(feature = "mcp")]
+(B[m[32m+        mcp_manager,
+(B[m         config.clone(),
+         pending_messages,
+         core.setup_tokens,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/mod.rs:190:
+         Arc::new(Mutex::new(HashSet::new())), // pending_raw_keys
+[31m-        #[cfg(feature = "browser")] Arc::new(Mutex::new(HashMap::new())), // login_sessions
+(B[m[32m+        #[cfg(feature = "browser")]
+(B[m[32m+        Arc::new(Mutex::new(HashMap::new())), // login_sessions
+(B[m         core.usage_store.clone(),
+         hive_instance,
+         shared_mode,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/mod.rs:196:
+         workspace_path,
+         personality_locked,
+         tenant_manager,
+[31m-        #[cfg(feature = "browser")] browser_tool_ref,
+(B[m[32m+        #[cfg(feature = "browser")]
+(B[m[32m+        browser_tool_ref,
+(B[m         core.vault.clone(),
+[31m-    ).await;
+(B[m[32m+    )
+(B[m[32m+    .await;
+(B[m 
+     // ── Gateway Server ──
+     println!("ELECTRO gateway starting...");
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/mod.rs:205:
+     if let Some(agent) = agent_state.read().await.clone() {
+[31m-        let gateway = Arc::new(electro_gateway::server::SkyGate::new(channels, agent, config.gateway.clone()));
+(B[m[32m+        let gateway = Arc::new(electro_gateway::server::SkyGate::new(
+(B[m[32m+            channels,
+(B[m[32m+            agent,
+(B[m[32m+            config.gateway.clone(),
+(B[m[32m+        ));
+(B[m         let listener = gateway.bind().await?;
+[31m-        println!("  Gateway: http://{}:{}", config.gateway.host, config.gateway.port);
+(B[m[32m+        println!(
+(B[m[32m+            "  Gateway: http://{}:{}",
+(B[m[32m+            config.gateway.host, config.gateway.port
+(B[m[32m+        );
+(B[m         let gw_clone = gateway.clone();
+[31m-        task_handles.push(tokio::spawn(async move { let _ = gw_clone.serve(listener).await; }));
+(B[m[32m+        task_handles.push(tokio::spawn(async move {
+(B[m[32m+            let _ = gw_clone.serve(listener).await;
+(B[m[32m+        }));
+(B[m     } else {
+         println!("  Gateway: disabled (waiting for credentials)");
+     }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/mod.rs:215:
+     tokio::signal::ctrl_c().await?;
+     println!("\nELECTRO shutting down gracefully...");
+     drop(msg_tx);
+[31m-    let _ = tokio::time::timeout(std::time::Duration::from_secs(5), futures::future::join_all(task_handles)).await;
+(B[m[32m+    let _ = tokio::time::timeout(
+(B[m[32m+        std::time::Duration::from_secs(5),
+(B[m[32m+        futures::future::join_all(task_handles),
+(B[m[32m+    )
+(B[m[32m+    .await;
+(B[m     remove_pid_file();
+     Ok(())
+ }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/slot.rs:1:
+[31m-use std::sync::Arc;
+(B[m[32m+use electro_core::types::message::InboundMessage;
+(B[m use std::sync::atomic::AtomicBool;
+[32m+use std::sync::Arc;
+(B[m use tokio::sync::mpsc::Sender;
+ use tokio_util::sync::CancellationToken;
+[31m-use electro_core::types::message::InboundMessage;
+(B[m 
+ /// Tracks the active task state for a single chat.
+ pub struct ChatSlot {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/worker.rs:1:
+[31m-use std::sync::Arc;
+(B[m[31m-use std::sync::atomic::{AtomicBool, Ordering};
+(B[m[32m+use crate::app::server::commands::handle_slash_command;
+(B[m[32m+use crate::app::server::slot::ChatSlot;
+(B[m[32m+use electro_agent::AgentRuntime;
+(B[m[32m+use electro_core::types::config::MemoryStrategy;
+(B[m[32m+use electro_core::types::message::{
+(B[m[32m+    ChatMessage, InboundMessage, MessageContent, OutboundMessage, Role,
+(B[m[32m+};
+(B[m[32m+use electro_core::{Channel, Memory, Tool, UsageStore, Vault};
+(B[m use std::collections::{HashMap, HashSet};
+[32m+use std::sync::atomic::{AtomicBool, Ordering};
+(B[m[32m+use std::sync::Arc;
+(B[m use tokio::sync::Mutex;
+[31m-use electro_core::{Channel, Memory, Tool, UsageStore, Vault};
+(B[m[31m-use electro_core::types::config::{MemoryStrategy};
+(B[m[31m-use electro_core::types::message::{InboundMessage, ChatMessage, Role, MessageContent, OutboundMessage};
+(B[m[31m-use electro_agent::AgentRuntime;
+(B[m[31m-use crate::app::server::slot::ChatSlot;
+(B[m[31m-use crate::app::server::commands::handle_slash_command;
+(B[m 
+ #[allow(clippy::too_many_arguments)]
+ pub fn create_chat_worker(
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/worker.rs:90:
+                 &tools_template,
+                 &setup_tokens,
+                 &pending_raw_keys,
+[31m-                #[cfg(feature = "browser")] &login_sessions,
+(B[m[31m-                #[cfg(feature = "browser")] &browser_ref,
+(B[m[32m+                #[cfg(feature = "browser")]
+(B[m[32m+                &login_sessions,
+(B[m[32m+                #[cfg(feature = "browser")]
+(B[m[32m+                &browser_ref,
+(B[m                 &vault,
+                 &shared_mode,
+                 &shared_memory_strategy,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/server/worker.rs:98:
+                 personality_locked,
+[31m-            ).await {
+(B[m[32m+            )
+(B[m[32m+            .await
+(B[m[32m+            {
+(B[m                 continue;
+             }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/app/tools.rs:1:
+[31m-use std::sync::Arc;
+(B[m[31m-use electro_core::{Channel, Memory, Tool, UsageStore, Vault, SetupLinkGenerator};
+(B[m[31m-use electro_tools::{BrowserTool, CustomToolRegistry, PendingMessages, SharedMode};
+(B[m use electro_core::types::config::ToolsConfig;
+[32m+use electro_core::{Channel, Memory, SetupLinkGenerator, Tool, UsageStore, Vault};
+(B[m[32m+use electro_tools::{BrowserTool, CustomToolRegistry, PendingMessages, SharedMode};
+(B[m[32m+use std::sync::Arc;
+(B[m 
+ pub fn init_tools(
+     config: &ToolsConfig,

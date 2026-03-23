@@ -231,12 +231,12 @@ Later sources override earlier ones. The config module in `electro-core/src/conf
 
 | What | Where | How |
 |------|-------|-----|
-| AI Provider | `crates/electro-providers/src/` | Implement `Provider` trait |
-| Messaging Channel | `crates/electro-channels/src/` | Implement `Channel` + `FileTransfer` traits |
-| Tool | `crates/electro-tools/src/` | Implement `Tool` trait |
-| Memory Backend | `crates/electro-memory/src/` | Implement `Memory` trait |
-| File Storage Backend | `crates/electro-filestore/src/` | Implement `FileStore` trait |
-| Tunnel Provider | (new crate or in gateway) | Implement `Tunnel` trait |
+| AI Provider | `crates/electro-providers/src/` | Implement `Provider` trait [IMPLEMENTED] |
+| Messaging Channel | `crates/electro-channels/src/` | Implement `Channel` + `FileTransfer` traits [IMPLEMENTED] |
+| Tool | `crates/electro-tools/src/` | Implement `Tool` trait [IMPLEMENTED] |
+| Memory Backend | `crates/electro-memory/src/` | Implement `Memory` trait [IMPLEMENTED] |
+| File Storage Backend | `crates/electro-filestore/src/` | Implement `FileStore` trait [IMPLEMENTED] |
+| Tunnel Provider | (new crate or in gateway) | Implement `Tunnel` trait [PLANNED] |
 
 See the step-by-step tutorials:
 - [Adding a Channel](adding-channel.md)

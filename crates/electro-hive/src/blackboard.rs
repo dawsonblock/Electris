@@ -770,4 +770,48 @@ mod tests {
         assert_eq!(results[0].result_summary.as_deref(), Some("first"));
         assert_eq!(results[1].result_summary.as_deref(), Some("second"));
     }
+
+    #[tokio::test]
+    async fn test_duplicate_task_id_fails() {
+        let bb = make_bb().await;
+        bb.create_order(&make_order("o1")).await.unwrap();
+
+        let tasks = vec![
+            make_task("t1", "o1", &[]),
+            make_task("t1", "o1", &[]), // Duplicate ID
+        ];
+        let result = bb.create_tasks(&tasks).await;
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("UNIQUE constraint failed"));
+    }
+
+    #[tokio::test]
+    async fn test_invalid_dependency_fails() {
+        let bb = make_bb().await;
+        bb.create_order(&make_order("o1")).await.unwrap();
+
+        let tasks = vec![
+            make_task("t1", "o1", &["nonexistent_dep"]),
+        ];
+        bb.create_tasks(&tasks).await.unwrap();
+
+        // Completing any task triggers resolve_dependencies
+        bb.create_tasks(&[make_task("t0", "o1", &[])]).await.unwrap();
+        bb.claim_task("t0", "w1").await.unwrap();
+        let result = bb.complete_task("t0", "done", 100).await;
+
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("resolve dep check"));
+    }
+
+    #[tokio::test]
+    async fn test_complete_nonexistent_task_fails() {
+        let bb = make_bb().await;
+        bb.create_order(&make_order("o1")).await.unwrap();
+
+        let result = bb.complete_task("ghost_task", "done", 100).await;
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("get order_id"));
+    }
 }
+

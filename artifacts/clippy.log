@@ -1,0 +1,31 @@
+    Checking electro-memory v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2/crates/electro-memory)
+    Checking electro-tui v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tui)
+    Checking electro v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2)
+error: unused import: `tokio::sync::Mutex`
+  --> src/app/server/mod.rs:11:5
+   |
+11 | use tokio::sync::Mutex;
+   |     ^^^^^^^^^^^^^^^^^^
+   |
+   = note: `-D unused-imports` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(unused_imports)]`
+
+error: this function has too many arguments (12/7)
+  --> src/app/server/context.rs:44:5
+   |
+44 | /     pub fn new(
+45 | |         core: &CoreStack,
+46 | |         config: &ElectroConfig,
+47 | |         tools: Vec<Arc<dyn Tool>>,
+...  |
+56 | |         #[cfg(feature = "browse...
+57 | |     ) -> Self {
+   | |_____________^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#too_many_arguments
+   = note: `-D clippy::too-many-arguments` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::too_many_arguments)]`
+
+error: could not compile `electro` (bin "electro" test) due to 2 previous errors
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `electro` (bin "electro") due to 2 previous errors

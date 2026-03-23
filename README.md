@@ -4,7 +4,7 @@
   <a href="https://discord.gg/3ux2c5xz"><img src="https://img.shields.io/badge/Discord-Community-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>&nbsp;
   <img src="https://img.shields.io/badge/License-MIT-A3E635?style=for-the-badge" alt="MIT">&nbsp;
   <img src="https://img.shields.io/badge/v3.2.0-Stable-06B6D4?style=for-the-badge" alt="Version">&nbsp;
-  <img src="https://img.shields.io/badge/Rust-1.83+-E34F26?style=for-the-badge&logo=rust&logoColor=white" alt="Rust">
+  <img src="https://img.shields.io/badge/Rust-1.83.0-E34F26?style=for-the-badge&logo=rust&logoColor=white" alt="Rust">
 </p>
 
 <h1 align="center">Electro</h1>
@@ -22,12 +22,12 @@ Electro is a cloud-native AI agent runtime written in Rust. It connects to messa
 
 ## Capabilities
 
-- **Multi-channel deployment**: Telegram, Discord, Slack, CLI, or interactive TUI
-- **6 AI providers**: Anthropic, OpenAI, Google Gemini, xAI Grok, OpenRouter, and ChatGPT via OAuth—no API key needed for Codex
-- **Built-in tools**: Shell, vision browser (screenshot → click), file ops, web fetch, git, MCP client
-- **λ-Memory**: Exponential decay memory with hash-based recall
-- **Blueprints**: Structured, replayable recipes that capture learned procedures
-- **Many Tems**: Stigmergic swarm intelligence for parallel task execution
+- **Multi-channel deployment**: Telegram, Discord, Slack, CLI, or interactive TUI [IMPLEMENTED]
+- **AI providers**: Anthropic, OpenAI, Google Gemini, xAI Grok, OpenRouter, and ChatGPT via OAuth [IMPLEMENTED]
+- **Built-in tools**: Shell, vision browser, file ops, web fetch, git, MCP client [IMPLEMENTED]
+- **λ-Memory**: Exponential decay memory with hash-based recall [IMPLEMENTED]
+- **Blueprints**: Structured, replayable recipes that capture learned procedures [IMPLEMENTED]
+- **Many Tems**: Stigmergic swarm intelligence for parallel task execution [EXPERIMENTAL]
 
 ## Quick Start
 
@@ -97,7 +97,7 @@ cargo fmt --all                                      # Format
 cargo build --release                                # Release binary
 ```
 
-Requires **Rust 1.83+** and Chrome/Chromium (for the browser tool).
+Requires **Rust 1.83.0** and Chrome/Chromium (for the browser tool).
 
 ---
 

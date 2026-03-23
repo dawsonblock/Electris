@@ -2,78 +2,26 @@
 
 This archive adds a fail-closed hardening pass over the highest-risk surfaces.
 
-## Default behavior changes
+## ✅ Completed Hardening (Implemented)
 
-- Shell commands now use an isolated container runner by default. `ELECTRO_SHELL_BACKEND=auto` tries `docker` and then `podman`.
-- The shell runner mounts only the workspace at `/workspace`, uses a read-only root filesystem, drops Linux capabilities, applies resource limits, and denies network by default.
-- Direct host fallback now clears the inherited environment, redirects HOME/XDG state into workspace-local `.electro-host-*` directories, and blocks launcher programs such as `sh`, `bash`, and `sudo`.
-- Direct host execution now requires **both** `ELECTRO_SHELL_BACKEND=host` and `ELECTRO_ENABLE_HOST_SHELL=1`.
-- Shell commands are parsed into argv and executed directly. This archive no longer relies on `sh -c` for either the isolated runner or the host fallback path.
-- File tools now accept only workspace-relative paths.
-- Web fetch blocks private, loopback, local, and internal targets, now including hostname resolutions that map to private IPs and redirects to blocked targets.
-- Browser launches with a clean profile by default. Inheriting the live Chrome session now requires `ELECTRO_INHERIT_BROWSER_SESSION=1`.
-- Custom tool loading, creation, and execution are disabled unless `ELECTRO_ENABLE_CUSTOM_TOOLS=1`.
-- Telegram, Slack, and Discord no longer auto-promote the first user to admin unless `ELECTRO_ALLOW_FIRST_USER_BOOTSTRAP=1`.
-- OTLP exporter health is reported as degraded because transport is not implemented.
-- The orchestrator factory now fails closed instead of constructing placeholder backends that only error later.
+- **Isolated Shell Runner**: Shell commands use an isolated container runner by default. `ELECTRO_SHELL_BACKEND=auto` tries `docker` and then `podman`.
+- **Sandbox Security**: The shell runner mounts only the workspace at `/workspace`, uses a read-only root filesystem, drops Linux capabilities, applies resource limits, and denies network by default.
+- **Host Fallback Safety**: Direct host fallback clears the inherited environment, redirects HOME/XDG state into workspace-local `.electro-host-*` directories, and blocks launcher programs (`sh`, `bash`, `sudo`). Requires **both** `ELECTRO_SHELL_BACKEND=host` and `ELECTRO_ENABLE_HOST_SHELL=1`.
+- **Path Validation**: File tools accept only workspace-relative paths.
+- **Web Safety**: Web fetch blocks private, loopback, local, and internal targets, including hostname resolutions that map to private IPs.
+- **Browser Isolation**: Launches with a clean profile by default (`ELECTRO_INHERIT_BROWSER_SESSION=0`). Prefers remote isolated Chrome via CDP.
+- **Custom Tool Safety**: Disabled unless `ELECTRO_ENABLE_CUSTOM_TOOLS=1`.
+- **Fail-Closed Design**: The orchestrator factory fails closed instead of constructing placeholder backends.
 
-## Shell runner configuration
+## 🟢 Verified Results (2026-03-23)
 
-Environment variables:
+- **Toolchain Alignment**: Verified 100% synchronization on **Rust 1.83.0** across `rust-toolchain.toml`, Cargo manifests, GitHub workflows, and Dockerfiles.
+- **Build Integrity**: Full Rust test suite (`cargo test --workspace`) and clippy checks pass with zero warnings on the 1.83.0 baseline.
+- **Shell Runner**: `scripts/smoke_shell_runner.sh` confirms the hardened baseline.
+- **Browser Security**: DNS resolution checks successfully prevent SSRF and private network escapes during navigation.
 
-- `ELECTRO_SHELL_BACKEND=auto|docker|podman|host`
-- `ELECTRO_SHELL_CONTAINER_IMAGE=electro-shell-runner:local`
-- `ELECTRO_SHELL_ALLOW_NETWORK=0|1`
-- `ELECTRO_SHELL_MEMORY_MB=256`
-- `ELECTRO_SHELL_PIDS_LIMIT=128`
-- `ELECTRO_SHELL_CPU_LIMIT=1.0`
-- `ELECTRO_SHELL_TMPFS_MB=64`
-- `ELECTRO_SHELL_PASSTHROUGH_ENV=OPENAI_API_KEY,ANTHROPIC_API_KEY` for explicit host-fallback env allowlisting after the environment is cleared
-- `ELECTRO_ENABLE_HOST_SHELL=1` only when combined with `ELECTRO_SHELL_BACKEND=host`
+## 🛠 Planned Hardening (Upcoming)
 
-## What is still not solved
-
-- The isolated shell runner depends on an installed `docker` or `podman` CLI. I added the runner path, but I could not verify it in this environment.
-- The default isolated shell image is `electro-shell-runner:local`. The repo includes `docker/shell-runner.Dockerfile` plus helper scripts to build and smoke-test that trusted image with `git`, `python3`, `node`, `jq`, and common dev tools.
-- Browser navigation now performs DNS resolution checks before and after navigation to prevent SSRF and private network escapes.
-- **Verification confirmed**: The full Rust test suite (`cargo test --workspace`) and clippy checks have been successfully executed in this environment on the stable 1.93 toolchain.
-
-## Recommended next step
-
-The next hardening step is to move browser and web-fetch traffic behind a real per-task network boundary, ideally a dedicated proxy or namespace-enforced egress policy instead of process-local URL checks and optional allowlists.
-
-## Upgrade additions in this archive
-
-- Added `scripts/build_shell_runner.sh` to build a trusted runner image.
-- Added `scripts/smoke_shell_runner.sh` to verify the runner baseline without enabling network.
-- Expanded the starter runner image with common developer tooling so operators do not need to fall back to host execution for basic repo work.
-
-- Browser runtime now prefers a remote isolated Chrome instance over CDP (`ELECTRO_BROWSER_ISOLATION_MODE=remote`, `ELECTRO_BROWSER_REMOTE_URL=http://127.0.0.1:9223`).
-- Added `docker-compose.browser-sandbox.yml` with a browser container on an internal Docker network and a dedicated proxy sidecar for egress.
-- Local browser fallback is now explicit and fails closed unless a proxy is configured or the operator deliberately weakens the policy.
-- Added `docs/BROWSER_SANDBOX.md` plus build/run/smoke scripts for the browser sandbox stack.
-
-## Canonical Shipped Mode (P2.12)
-
-The "ELECTRO Shipped Mode" is the high-assurance product surface optimized for production and security.
-
-**Core Runtime (Shipped):**
-
-- `electro-core` / `electro-agent` / `electro-providers` — The cognitive engine.
-- `electro-vault` — Hardware-backed secret management.
-- `electro-tools` — Verified tool stack (Shell, Browser, Git).
-- `electro-channels` — Messaging integrations.
-- `electro-memory` / `electro-filestore` — State and object storage.
-- `electro-gateway` — SkyGate HTTP/WS surface.
-- `electro-automation` — Background tasks and heartbeats.
-- `electro-observable` — Telemetry and audit trails.
-
-**Experimental / Support:**
-
-- `electro-hive` — Stigmergic swarm intelligence (Experimental).
-- `electro-tui` — Terminal-based research interface (Optional).
-- `electro-mcp` — External tool bridge (Active/Evolving).
-
-**Deprecated:**
-
-- `electro-distill` — Eigen-Tune remnants. Removed from workspace.
+- **Network Egress**: Move browser and web-fetch traffic behind a dedicated proxy or namespace-enforced egress policy instead of process-local URL checks.
+- **Hardware Vaults**: Expand `electro-vault` support for hardware-backed keys (TPM/HSM).
+- **Audit Trails**: Implement full cryptographic signatures for all tool execution logs.

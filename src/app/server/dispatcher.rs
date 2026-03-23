@@ -1,11 +1,11 @@
 use crate::app::onboarding::build_system_prompt;
-use crate::app::server::slot::ChatSlot;
 use crate::app::server::context::WorkerServices;
-use electro_core::Tenant;
+use crate::app::server::slot::ChatSlot;
 use electro_core::types::message::{
     ChatMessage, CompletionRequest, InboundMessage, MessageContent, Role,
 };
 use electro_core::Channel;
+use electro_core::Tenant;
 use std::collections::HashMap;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;

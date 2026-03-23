@@ -696,4 +696,48 @@ mod tests {
             assert!(!name_str.contains(".tmp-"));
         }
     }
+
+    #[tokio::test]
+    async fn test_cleanup_after_failed_write() {
+        let dir = tempdir().unwrap();
+        let store = LocalFileStore::new(dir.path()).await.unwrap();
+
+        // We want to simulate a failure during the move/rename.
+        // A simple way is to make the target path a directory.
+        let target = dir.path().join("fail_dir");
+        fs::create_dir(&target).await.unwrap();
+
+        let data = Bytes::from("will fail");
+        let result = store
+            .store("fail_dir", data, test_metadata("fail_dir"))
+            .await;
+
+        assert!(result.is_err());
+
+        // Ensure no .tmp files are left in the base directory.
+        let mut entries = fs::read_dir(dir.path()).await.unwrap();
+        while let Some(entry) = entries.next_entry().await.unwrap() {
+            let name = entry.file_name();
+            let name_str = name.to_string_lossy();
+            assert!(!name_str.contains(".tmp-"), "Should not have left .tmp file: {}", name_str);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_size_mismatch_warning() {
+        let dir = tempdir().unwrap();
+        let store = LocalFileStore::new(dir.path()).await.unwrap();
+
+        let data = Bytes::from("actual data");
+        let mut meta = test_metadata("mismatch.txt");
+        meta.size = Some(9999); // Expected size mismatch
+
+        // Store should still succeed.
+        let key = store.store("mismatch.txt", data, meta).await.unwrap();
+        assert_eq!(key, "mismatch.txt");
+
+        let retrieved = store.get("mismatch.txt").await.unwrap().unwrap();
+        assert_eq!(retrieved.as_ref(), b"actual data");
+    }
 }
+

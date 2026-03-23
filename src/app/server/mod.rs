@@ -226,13 +226,7 @@ pub async fn start_server(
     );
 
     // ── Message Dispatcher Loop ──
-    run_message_dispatcher(
-        msg_rx,
-        msg_tx.clone(),
-        primary_channel,
-        services,
-    )
-    .await;
+    run_message_dispatcher(msg_rx, msg_tx.clone(), primary_channel, services).await;
 
     // ── Gateway Server ──
     println!("ELECTRO gateway starting...");
