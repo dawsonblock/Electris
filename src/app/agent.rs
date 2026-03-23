@@ -96,12 +96,7 @@ pub fn build_provider_config(
                 None
             }
         })
-        .unwrap_or_else(|| {
-            (
-                vec![key.to_string()],
-                config.provider.base_url.clone(),
-            )
-        });
+        .unwrap_or_else(|| (vec![key.to_string()], config.provider.base_url.clone()));
     ProviderConfig {
         name: Some(pname.to_string()),
         api_key: Some(key.to_string()),

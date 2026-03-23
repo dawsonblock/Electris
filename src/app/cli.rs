@@ -1,17 +1,22 @@
+use crate::app::agent::{create_agent, create_provider};
+use crate::app::config_service;
+use crate::app::init::check_hive_enabled;
+use crate::app::onboarding::build_system_prompt;
+use crate::cli::{Commands, ConfigCommands, SkillCommands};
 use electro_core::config::credentials::{
-    credentials_path, is_placeholder_key, load_active_provider_keys, load_credentials_file,
+    credentials_path, is_placeholder_key, load_credentials_file,
 };
-use electro_core::types::model_registry::{
-    available_models_for_provider, is_vision_model,
-};
-use crate::cli::{Commands, SkillCommands, ConfigCommands};
+use electro_core::types::config::ElectroConfig;
+use electro_runtime::RuntimeHandle;
+use std::collections::HashMap;
 
 pub fn format_user_error(e: &electro_core::types::error::ElectroError) -> String {
     use electro_core::types::error::ElectroError;
     match e {
         ElectroError::Provider(msg) => {
             if msg.contains("400") || msg.contains("Bad Request") || msg.contains("validation") {
-                "The AI provider rejected the request. Try switching models with /model.".to_string()
+                "The AI provider rejected the request. Try switching models with /model."
+                    .to_string()
             } else if msg.contains("500") || msg.contains("502") || msg.contains("503") {
                 "The AI provider is experiencing issues.".to_string()
             } else if msg.contains("timeout") || msg.contains("timed out") {
@@ -48,9 +53,20 @@ pub fn list_configured_providers() -> String {
             has_providers = true;
             for p in &creds.providers {
                 let key_count = p.keys.iter().filter(|k| !is_placeholder_key(k)).count();
-                let active = if p.name == creds.active { " (active)" } else { "" };
-                let proxy = if let Some(ref url) = p.base_url { format!(" via {}", url) } else { String::new() };
-                lines.push(format!("  {} — model: {}, {} key(s){}{}", p.name, p.model, key_count, proxy, active));
+                let active = if p.name == creds.active {
+                    " (active)"
+                } else {
+                    ""
+                };
+                let proxy = if let Some(ref url) = p.base_url {
+                    format!(" via {}", url)
+                } else {
+                    String::new()
+                };
+                lines.push(format!(
+                    "  {} — model: {}, {} key(s){}{}",
+                    p.name, p.model, key_count, proxy, active
+                ));
             }
         }
     }
@@ -64,9 +80,114 @@ pub fn list_configured_providers() -> String {
     lines.join("\n")
 }
 
-pub fn handle_model_command(args: &str) -> String {
-    // ... complete implementation from original cli.rs ...
-    format!("Model command handled: {}", args) // placeholder for now, will fill in full
+pub async fn handle_model_command(
+    runtime: RuntimeHandle,
+    args: &[String],
+) -> anyhow::Result<String> {
+    let saved_active = load_credentials_file().and_then(|creds| {
+        creds
+            .providers
+            .into_iter()
+            .find(|provider| provider.name == creds.active)
+    });
+    let active_provider = runtime
+        .active_provider()
+        .await
+        .or_else(|| saved_active.as_ref().map(|provider| provider.name.clone()));
+    let active_model = runtime
+        .agent()
+        .await
+        .map(|agent| agent.model().to_string())
+        .or_else(|| saved_active.as_ref().map(|provider| provider.model.clone()));
+
+    if args.is_empty() {
+        return Ok(config_service::current_provider_summary(
+            active_provider.as_deref(),
+            active_model.as_deref(),
+        ));
+    }
+
+    match args[0].as_str() {
+        "list" => {
+            let models = config_service::list_available_models(
+                active_provider.as_deref(),
+                active_model.as_deref(),
+            );
+            if models.is_empty() {
+                Ok("no configured models available".to_string())
+            } else {
+                Ok(models.join("\n"))
+            }
+        }
+        "use" => {
+            if args.len() < 2 {
+                return Ok("usage: /model use <provider:model> [--persist]".to_string());
+            }
+
+            let persist = args.iter().skip(2).any(|arg| arg == "--persist");
+            let (provider_name, model) = config_service::parse_model_target(&args[1])?;
+            let selection = config_service::resolve_provider_selection(&provider_name, &model)?;
+            let current_agent = runtime
+                .agent()
+                .await
+                .ok_or_else(|| anyhow::anyhow!("no agent initialized"))?;
+
+            let provider = create_provider(
+                &electro_core::types::config::ProviderConfig {
+                    name: Some(selection.provider.clone()),
+                    api_key: selection.keys.first().cloned(),
+                    keys: selection.keys.clone(),
+                    model: Some(selection.model.clone()),
+                    base_url: selection.base_url.clone(),
+                    extra_headers: HashMap::new(),
+                },
+                &selection.provider,
+                &selection.model,
+            )
+            .await?;
+
+            let hive_enabled = check_hive_enabled().await;
+            let config = match electro_core::config::load_config(None) {
+                Ok(config) => config,
+                Err(error) => {
+                    tracing::warn!(%error, "Falling back to default config for /model switch");
+                    ElectroConfig::default()
+                }
+            };
+            let rebuilt_agent = create_agent(
+                &config,
+                provider,
+                current_agent.memory_arc(),
+                current_agent.tools().to_vec(),
+                selection.model.clone(),
+                Some(build_system_prompt()),
+                hive_enabled,
+                runtime.shared_mode.clone(),
+                runtime.shared_memory_strategy.clone(),
+            )
+            .await;
+
+            runtime.set_agent(rebuilt_agent).await;
+            runtime
+                .set_active_provider(selection.provider.clone())
+                .await;
+
+            if persist {
+                config_service::persist_model_selection(&selection.provider, &selection.model)
+                    .await?;
+                Ok(format!(
+                    "switched model to {}:{} and persisted it",
+                    selection.provider, selection.model
+                ))
+            } else {
+                Ok(format!(
+                    "switched model to {}:{} for this runtime session",
+                    selection.provider, selection.model
+                ))
+            }
+        }
+        _ => Ok("usage: /model [list|use <provider:model> [--persist]]".to_string()),
+    }
 }
 
 pub fn remove_provider(provider_name: &str) -> String {
@@ -83,7 +204,11 @@ pub fn remove_provider(provider_name: &str) -> String {
         return format!("Provider '{}' not found.", provider_name);
     }
     if creds.active == provider_name {
-        creds.active = creds.providers.first().map(|p| p.name.clone()).unwrap_or_default();
+        creds.active = creds
+            .providers
+            .first()
+            .map(|p| p.name.clone())
+            .unwrap_or_default();
     }
     let path = credentials_path();
     if let Ok(content) = toml::to_string_pretty(&creds) {
@@ -92,7 +217,10 @@ pub fn remove_provider(provider_name: &str) -> String {
     if creds.providers.is_empty() {
         format!("Removed {}. No providers remaining.", provider_name)
     } else {
-        format!("Removed {}. Active provider: {}", provider_name, creds.active)
+        format!(
+            "Removed {}. Active provider: {}",
+            provider_name, creds.active
+        )
     }
 }
 

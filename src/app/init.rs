@@ -1,8 +1,8 @@
-use std::sync::Arc;
 use anyhow::Result;
 use electro_core::paths;
 use electro_core::types::config::ElectroConfig;
 use electro_core::{Memory, UsageStore, Vault};
+use std::sync::Arc;
 
 pub struct CoreStack {
     pub memory: Arc<dyn Memory>,
@@ -51,10 +51,9 @@ pub async fn init_core_stack(config: &ElectroConfig) -> Result<CoreStack> {
 
 pub async fn check_hive_enabled() -> bool {
     // Try to find config file
-    let config_content =
-        std::fs::read_to_string(paths::electro_home().join("config.toml"))
-            .ok()
-            .or_else(|| std::fs::read_to_string("electro.toml").ok());
+    let config_content = std::fs::read_to_string(paths::electro_home().join("config.toml"))
+        .ok()
+        .or_else(|| std::fs::read_to_string("electro.toml").ok());
 
     if let Some(content) = config_content {
         #[derive(serde::Deserialize, Default)]
@@ -76,10 +75,9 @@ pub async fn check_hive_enabled() -> bool {
 }
 
 pub async fn load_hive_config() -> electro_hive::HiveConfig {
-    let config_content =
-        std::fs::read_to_string(paths::electro_home().join("config.toml"))
-            .ok()
-            .or_else(|| std::fs::read_to_string("electro.toml").ok());
+    let config_content = std::fs::read_to_string(paths::electro_home().join("config.toml"))
+        .ok()
+        .or_else(|| std::fs::read_to_string("electro.toml").ok());
 
     if let Some(content) = config_content {
         #[derive(serde::Deserialize, Default)]

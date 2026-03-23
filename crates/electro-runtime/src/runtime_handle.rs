@@ -11,6 +11,7 @@ pub struct RuntimeHandle {
     pub queue_tx: mpsc::Sender<InboundMessage>,
     pub shared_mode: Arc<RwLock<ElectroMode>>,
     pub shared_memory_strategy: Arc<RwLock<MemoryStrategy>>,
+    pub active_provider: Arc<RwLock<Option<String>>>,
 }
 
 impl RuntimeHandle {
@@ -24,6 +25,7 @@ impl RuntimeHandle {
             queue_tx,
             shared_mode,
             shared_memory_strategy,
+            active_provider: Arc::new(RwLock::new(None)),
         }
     }
 
@@ -37,6 +39,14 @@ impl RuntimeHandle {
 
     pub async fn set_agent_arc(&self, agent: Arc<AgentRuntime>) {
         *self.agent.write().await = Some(agent);
+    }
+
+    pub async fn active_provider(&self) -> Option<String> {
+        self.active_provider.read().await.clone()
+    }
+
+    pub async fn set_active_provider(&self, provider: impl Into<String>) {
+        *self.active_provider.write().await = Some(provider.into());
     }
 }
 
@@ -79,6 +89,7 @@ mod tests {
             .send(test_message("hello from runtime handle"))
             .await
             .expect("queue send should succeed");
+        cloned.set_active_provider("anthropic").await;
 
         let queued = queue_rx.recv().await.expect("message should be queued");
 
@@ -91,6 +102,7 @@ mod tests {
             *handle.shared_memory_strategy.read().await,
             MemoryStrategy::Echo
         ));
+        assert_eq!(handle.active_provider().await.as_deref(), Some("anthropic"));
         assert_eq!(queued.text.as_deref(), Some("hello from runtime handle"));
     }
 }
