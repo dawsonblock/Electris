@@ -1793,7 +1793,9 @@ dependencies = [
  "electro-memory",
  "electro-observable",
  "electro-providers",
+ "electro-runtime",
  "electro-skills",
+ "electro-test-utils",
  "electro-tools",
  "electro-tui",
  "electro-vault",
@@ -2042,6 +2044,16 @@ dependencies = [
  "tokio",
  "tracing",
  "uuid",
+]
+
+[[package]]
+name = "electro-runtime"
+version = "3.2.0"
+dependencies = [
+ "chrono",
+ "electro-agent",
+ "electro-core",
+ "tokio",
 ]
 
 [[package]]
