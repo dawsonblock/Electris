@@ -317,6 +317,13 @@ pub fn create_chat_worker(
                     *state_worker.write().await = WorkerState::Idle;
                 }
                 WorkerOutcome::Cancelled => {
+                    emit_outbound_event(
+                        &runtime,
+                        OutboundEvent::Failed {
+                            request_id: request_id.clone(),
+                            error: "request cancelled".to_string(),
+                        },
+                    );
                     tracing::info!(
                         chat_id = %msg.chat_id,
                         request_id = %request_id,
@@ -370,15 +377,62 @@ pub fn create_chat_worker(
 mod tests {
     use super::create_chat_worker;
     use crate::app::server::dispatcher::state::WorkerState;
+    use async_trait::async_trait;
     use electro_agent::AgentRuntime;
     use electro_core::types::config::{ElectroMode, MemoryStrategy};
-    use electro_core::{Channel, Memory, UsageStore};
+    use electro_core::types::error::ElectroError;
+    use electro_core::types::message::{CompletionRequest, CompletionResponse};
+    use electro_core::{Channel, Memory, Provider, UsageStore};
     use electro_runtime::{OutboundEvent, RuntimeHandle};
     use electro_test_utils::{make_inbound_msg, MockChannel, MockMemory, MockProvider};
     use std::collections::{HashMap, HashSet};
+    use std::sync::atomic::Ordering;
     use std::sync::Arc;
     use tokio::sync::{mpsc, Mutex, RwLock};
     use tokio::time::{timeout, Duration};
+
+    const TEST_PROVIDER_DELAY_MS: u64 = 250;
+    const TEST_POLL_INTERVAL_MS: u64 = 10;
+
+    struct DelayedFailingProvider;
+
+    #[async_trait]
+    impl Provider for DelayedFailingProvider {
+        fn name(&self) -> &str {
+            "delayed-failing"
+        }
+
+        async fn complete(
+            &self,
+            _request: CompletionRequest,
+        ) -> Result<CompletionResponse, ElectroError> {
+            tokio::time::sleep(Duration::from_millis(TEST_PROVIDER_DELAY_MS)).await;
+            Err(ElectroError::Provider(
+                "cancelled during provider call".to_string(),
+            ))
+        }
+
+        async fn stream(
+            &self,
+            _request: CompletionRequest,
+        ) -> Result<
+            futures::stream::BoxStream<
+                '_,
+                Result<electro_core::types::message::StreamChunk, ElectroError>,
+            >,
+            ElectroError,
+        > {
+            Err(ElectroError::Provider("stream not supported".to_string()))
+        }
+
+        async fn health_check(&self) -> Result<bool, ElectroError> {
+            Ok(true)
+        }
+
+        async fn list_models(&self) -> Result<Vec<String>, ElectroError> {
+            Ok(vec!["mock-model".to_string()])
+        }
+    }
 
     #[tokio::test]
     async fn worker_processes_messages_through_runtime_handle() {
@@ -558,5 +612,106 @@ mod tests {
                 content: "worker reply".to_string(),
             }
         );
+    }
+
+    #[tokio::test]
+    async fn worker_emits_terminal_failed_event_for_cancelled_requests() {
+        let sender = Arc::new(MockChannel::new("test"));
+        let sender_trait: Arc<dyn Channel> = sender.clone();
+        let memory = Arc::new(MockMemory::new());
+        let provider = Arc::new(DelayedFailingProvider);
+        let agent = AgentRuntime::new(
+            provider,
+            memory.clone(),
+            Vec::new(),
+            "mock-model".to_string(),
+            None,
+        )
+        .with_v2_optimizations(false);
+        let (queue_tx, _queue_rx) = mpsc::channel(1);
+        let runtime = RuntimeHandle::new(
+            queue_tx,
+            Arc::new(RwLock::new(ElectroMode::Play)),
+            Arc::new(RwLock::new(MemoryStrategy::Lambda)),
+        );
+        runtime.set_agent(agent).await;
+
+        let usage_store: Arc<dyn UsageStore> = Arc::new(
+            electro_memory::SqliteUsageStore::new("sqlite::memory:")
+                .await
+                .expect("usage store should initialize"),
+        );
+        let slot = create_chat_worker(
+            "test-chat",
+            &sender_trait,
+            &runtime,
+            &(memory.clone() as Arc<dyn Memory>),
+            &[],
+            &Arc::new(electro_tools::CustomToolRegistry::new()),
+            #[cfg(feature = "mcp")]
+            &Arc::new(electro_mcp::McpManager::new()),
+            8,
+            4096,
+            8,
+            30,
+            10.0,
+            false,
+            false,
+            &None,
+            &std::env::temp_dir(),
+            &Arc::new(std::sync::Mutex::new(HashMap::new())),
+            &electro_gateway::SetupTokenStore::new(),
+            &Arc::new(Mutex::new(HashSet::new())),
+            #[cfg(feature = "browser")]
+            &Arc::new(Mutex::new(HashMap::new())),
+            &usage_store,
+            &None,
+            false,
+            #[cfg(feature = "browser")]
+            &None,
+            &None,
+        );
+        let mut events = runtime.subscribe_outbound_events();
+
+        let msg = make_inbound_msg("cancel me");
+        let request_id = msg.id.clone();
+        slot.tx.send(msg).await.expect("message should be accepted");
+
+        let started = timeout(Duration::from_secs(2), events.recv())
+            .await
+            .expect("started event should arrive")
+            .expect("started event should be readable");
+        assert!(matches!(
+            started,
+            OutboundEvent::Started { request_id } if !request_id.is_empty()
+        ));
+
+        timeout(Duration::from_secs(2), async {
+            loop {
+                if matches!(&*slot.state.read().await, WorkerState::Running { .. }) {
+                    break;
+                }
+                tokio::time::sleep(Duration::from_millis(TEST_POLL_INTERVAL_MS)).await;
+            }
+        })
+        .await
+        .expect("worker should enter running state");
+
+        slot.interrupt.store(true, Ordering::Relaxed);
+        slot.cancel_token.lock().await.cancel();
+
+        let cancelled = timeout(Duration::from_secs(2), events.recv())
+            .await
+            .expect("cancel event should arrive")
+            .expect("cancel event should be readable");
+
+        assert_eq!(
+            cancelled,
+            OutboundEvent::Failed {
+                request_id,
+                error: "request cancelled".to_string(),
+            }
+        );
+        assert!(matches!(&*slot.state.read().await, WorkerState::Idle));
     }
 }
