@@ -265,24 +265,20 @@ pub async fn start_server(
 
     // ── Gateway Server ──
     println!("ELECTRO gateway starting...");
-    if let Some(agent) = runtime.agent().await {
-        let gateway = Arc::new(electro_gateway::server::SkyGate::new(
-            channels,
-            agent,
-            config.gateway.clone(),
-        ));
-        let listener = gateway.bind().await?;
-        println!(
-            "  Gateway: http://{}:{}",
-            config.gateway.host, config.gateway.port
-        );
-        let gw_clone = gateway.clone();
-        task_handles.push(tokio::spawn(async move {
-            let _ = gw_clone.serve(listener).await;
-        }));
-    } else {
-        println!("  Gateway: disabled (waiting for credentials)");
-    }
+    let gateway = Arc::new(electro_gateway::server::SkyGate::new(
+        channels,
+        runtime.clone(),
+        config.gateway.clone(),
+    ));
+    let listener = gateway.bind().await?;
+    println!(
+        "  Gateway: http://{}:{}",
+        config.gateway.host, config.gateway.port
+    );
+    let gw_clone = gateway.clone();
+    task_handles.push(tokio::spawn(async move {
+        let _ = gw_clone.serve(listener).await;
+    }));
 
     tokio::signal::ctrl_c().await?;
     println!("\nELECTRO shutting down gracefully...");

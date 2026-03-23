@@ -1,8 +1,10 @@
 //! Health endpoint handler — returns JSON health/status information.
 
+use std::sync::Arc;
 use std::sync::OnceLock;
 use std::time::Instant;
 
+use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
@@ -32,6 +34,12 @@ pub struct StatusResponse {
     pub memory_backend: String,
 }
 
+#[derive(Serialize)]
+pub struct ReadinessResponse {
+    pub status: &'static str,
+    pub agent: bool,
+}
+
 /// Handler for GET /health
 pub async fn health_handler() -> impl IntoResponse {
     let uptime = START_TIME.get().map(|t| t.elapsed().as_secs()).unwrap_or(0);
@@ -46,7 +54,7 @@ pub async fn health_handler() -> impl IntoResponse {
 /// Handler for GET /status — provides detailed status including provider/channels/tools.
 /// This version uses the shared AppState.
 pub async fn status_handler(
-    axum::extract::State(state): axum::extract::State<std::sync::Arc<crate::server::AppState>>,
+    State(state): State<Arc<crate::server::AppState>>,
 ) -> impl IntoResponse {
     let channel_names: Vec<String> = state
         .channels
@@ -54,21 +62,49 @@ pub async fn status_handler(
         .map(|c| c.name().to_string())
         .collect();
 
-    let tool_names: Vec<String> = state
-        .agent
-        .tools()
-        .iter()
-        .map(|t| t.name().to_string())
-        .collect();
+    let agent = state.agent().await;
+    let tool_names: Vec<String> = agent
+        .as_ref()
+        .map(|agent| {
+            agent
+                .tools()
+                .iter()
+                .map(|tool| tool.name().to_string())
+                .collect()
+        })
+        .unwrap_or_default();
 
     let resp = StatusResponse {
-        status: "ok",
+        status: if agent.is_some() { "ok" } else { "degraded" },
         version: env!("CARGO_PKG_VERSION"),
-        provider: state.agent.provider().name().to_string(),
+        provider: if let Some(agent) = agent.as_ref() {
+            agent.provider().name().to_string()
+        } else {
+            state
+                .active_provider_name()
+                .await
+                .unwrap_or_else(|| "unconfigured".to_string())
+        },
         channels: channel_names,
         tools: tool_names,
-        memory_backend: state.agent.memory().backend_name().to_string(),
+        memory_backend: agent
+            .as_ref()
+            .map(|agent| agent.memory().backend_name().to_string())
+            .unwrap_or_else(|| "unconfigured".to_string()),
     };
+    (StatusCode::OK, Json(resp))
+}
+
+/// Handler for GET /health/ready — reports runtime readiness without gating startup.
+pub async fn readiness_handler(
+    State(state): State<Arc<crate::server::AppState>>,
+) -> impl IntoResponse {
+    let agent_ready = state.agent().await.is_some();
+    let resp = ReadinessResponse {
+        status: if agent_ready { "ready" } else { "degraded" },
+        agent: agent_ready,
+    };
+
     (StatusCode::OK, Json(resp))
 }
 

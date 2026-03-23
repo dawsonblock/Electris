@@ -80,6 +80,54 @@ pub struct GatewayConfigSummary {
     pub tls: bool,
 }
 
+struct DashboardAgentSnapshot {
+    status: &'static str,
+    provider: String,
+    model: String,
+    memory_backend: String,
+    tools: Vec<String>,
+    config: AgentConfigSummary,
+}
+
+async fn dashboard_agent_snapshot(state: &AppState) -> DashboardAgentSnapshot {
+    if let Some(agent) = state.agent().await {
+        DashboardAgentSnapshot {
+            status: "ok",
+            provider: agent.provider().name().to_string(),
+            model: agent.model().to_string(),
+            memory_backend: agent.memory().backend_name().to_string(),
+            tools: agent
+                .tools()
+                .iter()
+                .map(|tool| tool.name().to_string())
+                .collect(),
+            config: AgentConfigSummary {
+                max_turns: agent.max_turns(),
+                max_context_tokens: agent.max_context_tokens(),
+                max_tool_rounds: agent.max_tool_rounds(),
+                max_task_duration_secs: agent.max_task_duration().as_secs(),
+            },
+        }
+    } else {
+        DashboardAgentSnapshot {
+            status: "degraded",
+            provider: state
+                .active_provider_name()
+                .await
+                .unwrap_or_else(|| "unconfigured".to_string()),
+            model: "unconfigured".to_string(),
+            memory_backend: "unconfigured".to_string(),
+            tools: Vec::new(),
+            config: AgentConfigSummary {
+                max_turns: 0,
+                max_context_tokens: 0,
+                max_tool_rounds: 0,
+                max_task_duration_secs: 0,
+            },
+        }
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Handlers
 // ---------------------------------------------------------------------------
@@ -87,9 +135,7 @@ pub struct GatewayConfigSummary {
 /// GET /dashboard — serves the HTML dashboard page with embedded HTMX.
 pub async fn dashboard_page(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     let version = env!("CARGO_PKG_VERSION");
-    let provider_name = state.agent.provider().name().to_string();
-    let memory_backend = state.agent.memory().backend_name().to_string();
-    let model = state.agent.model().to_string();
+    let snapshot = dashboard_agent_snapshot(&state).await;
 
     let channel_names: Vec<String> = state
         .channels
@@ -97,12 +143,7 @@ pub async fn dashboard_page(State(state): State<Arc<AppState>>) -> impl IntoResp
         .map(|c| c.name().to_string())
         .collect();
 
-    let tool_names: Vec<String> = state
-        .agent
-        .tools()
-        .iter()
-        .map(|t| t.name().to_string())
-        .collect();
+    let tool_names = snapshot.tools.clone();
 
     let channels_html: String = if channel_names.is_empty() {
         "<li class=\"item\">No channels configured</li>".to_string()
@@ -285,13 +326,13 @@ pub async fn dashboard_page(State(state): State<Arc<AppState>>) -> impl IntoResp
         version = html_escape(version),
         channels_html = channels_html,
         tools_html = tools_html,
-        provider_escaped = html_escape(&provider_name),
-        model_escaped = html_escape(&model),
-        memory_escaped = html_escape(&memory_backend),
-        max_turns = state.agent.max_turns(),
-        max_context_tokens = state.agent.max_context_tokens(),
-        max_tool_rounds = state.agent.max_tool_rounds(),
-        max_task_duration_secs = state.agent.max_task_duration().as_secs(),
+        provider_escaped = html_escape(&snapshot.provider),
+        model_escaped = html_escape(&snapshot.model),
+        memory_escaped = html_escape(&snapshot.memory_backend),
+        max_turns = snapshot.config.max_turns,
+        max_context_tokens = snapshot.config.max_context_tokens,
+        max_tool_rounds = snapshot.config.max_tool_rounds,
+        max_task_duration_secs = snapshot.config.max_task_duration_secs,
         gw_host = html_escape(&state.config.host),
         gw_port = state.config.port,
         gw_tls = if state.config.tls {
@@ -306,8 +347,7 @@ pub async fn dashboard_page(State(state): State<Arc<AppState>>) -> impl IntoResp
 
 /// GET /dashboard/api/health — JSON health data for HTMX polling.
 pub async fn dashboard_health(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    let provider_name = state.agent.provider().name().to_string();
-    let memory_backend = state.agent.memory().backend_name().to_string();
+    let snapshot = dashboard_agent_snapshot(&state).await;
 
     let channels: Vec<ChannelStatus> = state
         .channels
@@ -319,15 +359,23 @@ pub async fn dashboard_health(State(state): State<Arc<AppState>>) -> impl IntoRe
         .collect();
 
     let resp = DashboardHealthResponse {
-        status: "ok",
+        status: snapshot.status,
         version: env!("CARGO_PKG_VERSION"),
         provider: ProviderStatus {
-            name: provider_name,
-            status: "ok",
+            name: snapshot.provider,
+            status: if snapshot.status == "ok" {
+                "ok"
+            } else {
+                "offline"
+            },
         },
         memory: MemoryStatus {
-            backend: memory_backend,
-            status: "ok",
+            backend: snapshot.memory_backend,
+            status: if snapshot.status == "ok" {
+                "ok"
+            } else {
+                "offline"
+            },
         },
         channels,
     };
@@ -337,18 +385,22 @@ pub async fn dashboard_health(State(state): State<Arc<AppState>>) -> impl IntoRe
 
 /// GET /dashboard/api/tasks — JSON list of active tasks.
 pub async fn dashboard_tasks(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    let tasks = if let Some(tq) = state.agent.task_queue() {
-        match tq.load_incomplete().await {
-            Ok(entries) => entries
-                .into_iter()
-                .map(|t| TaskEntry {
-                    id: t.task_id,
-                    chat_id: t.chat_id,
-                    description: t.goal,
-                    status: format!("{:?}", t.status),
-                })
-                .collect(),
-            Err(_) => Vec::new(),
+    let tasks = if let Some(agent) = state.agent().await {
+        if let Some(tq) = agent.task_queue() {
+            match tq.load_incomplete().await {
+                Ok(entries) => entries
+                    .into_iter()
+                    .map(|t| TaskEntry {
+                        id: t.task_id,
+                        chat_id: t.chat_id,
+                        description: t.goal,
+                        status: format!("{:?}", t.status),
+                    })
+                    .collect(),
+                Err(_) => Vec::new(),
+            }
+        } else {
+            Vec::new()
         }
     } else {
         Vec::new()
@@ -360,16 +412,7 @@ pub async fn dashboard_tasks(State(state): State<Arc<AppState>>) -> impl IntoRes
 
 /// GET /dashboard/api/config — JSON config overview with secrets redacted.
 pub async fn dashboard_config(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    let provider_name = state.agent.provider().name().to_string();
-    let model = state.agent.model().to_string();
-    let memory_backend = state.agent.memory().backend_name().to_string();
-
-    let tool_names: Vec<String> = state
-        .agent
-        .tools()
-        .iter()
-        .map(|t| t.name().to_string())
-        .collect();
+    let snapshot = dashboard_agent_snapshot(&state).await;
 
     let channel_names: Vec<String> = state
         .channels
@@ -378,16 +421,11 @@ pub async fn dashboard_config(State(state): State<Arc<AppState>>) -> impl IntoRe
         .collect();
 
     let resp = DashboardConfigResponse {
-        provider: provider_name,
-        model,
-        memory_backend,
-        agent: AgentConfigSummary {
-            max_turns: state.agent.max_turns(),
-            max_context_tokens: state.agent.max_context_tokens(),
-            max_tool_rounds: state.agent.max_tool_rounds(),
-            max_task_duration_secs: state.agent.max_task_duration().as_secs(),
-        },
-        tools: tool_names,
+        provider: snapshot.provider,
+        model: snapshot.model,
+        memory_backend: snapshot.memory_backend,
+        agent: snapshot.config,
+        tools: snapshot.tools,
         channels: channel_names,
         gateway: GatewayConfigSummary {
             host: state.config.host.clone(),
@@ -448,7 +486,8 @@ mod tests {
         let channel: Arc<dyn electro_core::Channel> = Arc::new(MockChannel::new("telegram"));
         Arc::new(AppState {
             channels: vec![channel],
-            agent,
+            agent: Some(agent),
+            runtime: None,
             config: GatewayConfig {
                 host: "127.0.0.1".to_string(),
                 port: 8080,
@@ -646,7 +685,8 @@ mod tests {
         ));
         let state = Arc::new(AppState {
             channels: Vec::new(),
-            agent,
+            agent: Some(agent),
+            runtime: None,
             config: GatewayConfig::default(),
             sessions: SessionManager::new(),
             identity: None,

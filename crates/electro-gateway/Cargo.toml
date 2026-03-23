@@ -9,6 +9,7 @@ description = "HTTP/WebSocket gateway for ELECTRO"
 [dependencies]
 electro-core.workspace = true
 electro-agent.workspace = true
+electro-runtime.workspace = true
 axum.workspace = true
 tower.workspace = true
 tower-http.workspace = true

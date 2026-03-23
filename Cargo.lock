@@ -1946,6 +1946,7 @@ dependencies = [
  "chrono",
  "electro-agent",
  "electro-core",
+ "electro-runtime",
  "electro-test-utils",
  "hex",
  "rand 0.8.5",
@@ -2053,6 +2054,7 @@ dependencies = [
  "chrono",
  "electro-agent",
  "electro-core",
+ "serde",
  "tokio",
 ]
 

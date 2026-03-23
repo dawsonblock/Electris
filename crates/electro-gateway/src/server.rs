@@ -9,21 +9,46 @@ use electro_agent::AgentRuntime;
 use electro_core::types::config::GatewayConfig;
 use electro_core::types::error::ElectroError;
 use electro_core::Channel;
+use electro_runtime::RuntimeHandle;
 use tokio::net::TcpListener;
 use tracing::info;
 
 use crate::dashboard::{dashboard_config, dashboard_health, dashboard_page, dashboard_tasks};
-use crate::health::{health_handler, status_handler};
+use crate::health::{health_handler, readiness_handler, status_handler};
 use crate::identity::{oauth_callback_handler, OAuthIdentityManager};
 use crate::session::SessionManager;
 
 /// Shared application state accessible from all handlers.
 pub struct AppState {
     pub channels: Vec<Arc<dyn Channel>>,
-    pub agent: Arc<AgentRuntime>,
+    pub agent: Option<Arc<AgentRuntime>>,
+    pub runtime: Option<RuntimeHandle>,
     pub config: GatewayConfig,
     pub sessions: SessionManager,
     pub identity: Option<Arc<OAuthIdentityManager>>,
+}
+
+impl AppState {
+    pub async fn agent(&self) -> Option<Arc<AgentRuntime>> {
+        if let Some(runtime) = &self.runtime {
+            runtime.agent().await
+        } else {
+            self.agent.clone()
+        }
+    }
+
+    pub async fn active_provider_name(&self) -> Option<String> {
+        if let Some(runtime) = &self.runtime {
+            let provider = runtime.active_provider().await;
+            if provider.is_some() {
+                return provider;
+            }
+        }
+
+        self.agent
+            .as_ref()
+            .map(|agent| agent.provider().name().to_string())
+    }
 }
 
 /// The main SkyGate server.
@@ -35,12 +60,13 @@ impl SkyGate {
     /// Create a new SkyGate server.
     pub fn new(
         channels: Vec<Arc<dyn Channel>>,
-        agent: Arc<AgentRuntime>,
+        runtime: RuntimeHandle,
         config: GatewayConfig,
     ) -> Self {
         let state = Arc::new(AppState {
             channels,
-            agent,
+            agent: None,
+            runtime: Some(runtime),
             config,
             sessions: SessionManager::new(),
             identity: None,
@@ -51,13 +77,14 @@ impl SkyGate {
     /// Create a new SkyGate server with an OAuth identity manager.
     pub fn with_identity(
         channels: Vec<Arc<dyn Channel>>,
-        agent: Arc<AgentRuntime>,
+        runtime: RuntimeHandle,
         config: GatewayConfig,
         identity: OAuthIdentityManager,
     ) -> Self {
         let state = Arc::new(AppState {
             channels,
-            agent,
+            agent: None,
+            runtime: Some(runtime),
             config,
             sessions: SessionManager::new(),
             identity: Some(Arc::new(identity)),
@@ -69,6 +96,7 @@ impl SkyGate {
     fn build_router(&self) -> Router {
         let mut router = Router::new()
             .route("/health", get(health_handler))
+            .route("/health/ready", get(readiness_handler))
             .route("/status", get(status_handler))
             .route("/dashboard", get(dashboard_page))
             .route("/dashboard/api/health", get(dashboard_health))

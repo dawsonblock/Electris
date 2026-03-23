@@ -4,7 +4,7 @@ use crate::app::server::slot::ChatSlot;
 use electro_core::types::message::{ChatMessage, InboundMessage, OutboundMessage};
 use electro_core::types::session::SessionContext;
 use electro_core::{Channel, Memory, Tool, UsageStore, Vault};
-use electro_runtime::RuntimeHandle;
+use electro_runtime::{OutboundEvent, RuntimeHandle};
 use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -139,6 +139,9 @@ pub fn create_chat_worker(
             }
 
             let request_id = msg.id.clone();
+            let _ = runtime.emit_outbound_event(OutboundEvent::Started {
+                request_id: request_id.clone(),
+            });
             let request_cancel = tokio_util::sync::CancellationToken::new();
             let mut cancel_slot = cancel_token_worker.lock().await;
             cancel_slot.cancel();
@@ -214,6 +217,10 @@ pub fn create_chat_worker(
                 Ok(Ok((reply, _usage))) => {
                     let response_text = reply.text.clone();
                     let _ = sender.send_message(reply).await;
+                    let _ = runtime.emit_outbound_event(OutboundEvent::Completed {
+                        request_id: request_id.clone(),
+                        content: response_text.clone(),
+                    });
                     persistent_history = session_ctx.history.clone();
 
                     if let Ok(history_json) = serde_json::to_string(&persistent_history) {
@@ -240,13 +247,20 @@ pub fn create_chat_worker(
                     if request_cancel.is_cancelled() || interrupt_worker.load(Ordering::Relaxed) {
                         WorkerOutcome::Cancelled
                     } else {
-                        WorkerOutcome::Failed {
-                            error: error.to_string(),
-                        }
+                        let error = error.to_string();
+                        let _ = runtime.emit_outbound_event(OutboundEvent::Failed {
+                            request_id: request_id.clone(),
+                            error: error.clone(),
+                        });
+                        WorkerOutcome::Failed { error }
                     }
                 }
                 Err(_) => {
                     request_cancel.cancel();
+                    let _ = runtime.emit_outbound_event(OutboundEvent::Failed {
+                        request_id: request_id.clone(),
+                        error: format!("request timed out after {} seconds", max_task_duration),
+                    });
                     WorkerOutcome::Timeout
                 }
             };
@@ -338,7 +352,7 @@ mod tests {
     use electro_agent::AgentRuntime;
     use electro_core::types::config::{ElectroMode, MemoryStrategy};
     use electro_core::{Channel, Memory, UsageStore};
-    use electro_runtime::RuntimeHandle;
+    use electro_runtime::{OutboundEvent, RuntimeHandle};
     use electro_test_utils::{make_inbound_msg, MockChannel, MockMemory, MockProvider};
     use std::collections::{HashMap, HashSet};
     use std::sync::Arc;
@@ -404,8 +418,10 @@ mod tests {
             &None,
         );
 
+        let msg = make_inbound_msg("hello worker");
+
         slot.tx
-            .send(make_inbound_msg("hello worker"))
+            .send(msg)
             .await
             .expect("message should be accepted by worker");
 
@@ -433,5 +449,93 @@ mod tests {
         assert!(history.content.contains("hello worker"));
         assert!(history.content.contains("worker reply"));
         assert!(matches!(&*slot.state.read().await, WorkerState::Idle));
+    }
+
+    #[tokio::test]
+    async fn worker_emits_outbound_events_for_completed_requests() {
+        let sender = Arc::new(MockChannel::new("test"));
+        let sender_trait: Arc<dyn Channel> = sender.clone();
+        let memory = Arc::new(MockMemory::new());
+        let provider = Arc::new(MockProvider::with_text("worker reply"));
+        let agent = AgentRuntime::new(
+            provider,
+            memory.clone(),
+            Vec::new(),
+            "mock-model".to_string(),
+            None,
+        );
+        let (queue_tx, _queue_rx) = mpsc::channel(1);
+        let runtime = RuntimeHandle::new(
+            queue_tx,
+            Arc::new(RwLock::new(ElectroMode::Play)),
+            Arc::new(RwLock::new(MemoryStrategy::Lambda)),
+        );
+        runtime.set_agent(agent).await;
+
+        let usage_store: Arc<dyn UsageStore> = Arc::new(
+            electro_memory::SqliteUsageStore::new("sqlite::memory:")
+                .await
+                .expect("usage store should initialize"),
+        );
+        let slot = create_chat_worker(
+            "test-chat",
+            &sender_trait,
+            &runtime,
+            &(memory.clone() as Arc<dyn Memory>),
+            &[],
+            &Arc::new(electro_tools::CustomToolRegistry::new()),
+            #[cfg(feature = "mcp")]
+            &Arc::new(electro_mcp::McpManager::new()),
+            8,
+            4096,
+            8,
+            30,
+            10.0,
+            false,
+            false,
+            &None,
+            &std::env::temp_dir(),
+            &Arc::new(std::sync::Mutex::new(HashMap::new())),
+            &electro_gateway::SetupTokenStore::new(),
+            &Arc::new(Mutex::new(HashSet::new())),
+            #[cfg(feature = "browser")]
+            &Arc::new(Mutex::new(HashMap::new())),
+            &usage_store,
+            &None,
+            false,
+            #[cfg(feature = "browser")]
+            &None,
+            &None,
+        );
+        let mut events = runtime.subscribe_outbound_events();
+
+        let msg = make_inbound_msg("hello worker");
+        let request_id = msg.id.clone();
+
+        slot.tx
+            .send(msg)
+            .await
+            .expect("message should be accepted by worker");
+
+        let started = timeout(Duration::from_secs(2), events.recv())
+            .await
+            .expect("started event should arrive")
+            .expect("started event should be readable");
+        let completed = timeout(Duration::from_secs(2), events.recv())
+            .await
+            .expect("completed event should arrive")
+            .expect("completed event should be readable");
+
+        assert!(matches!(
+            started,
+            OutboundEvent::Started { request_id } if !request_id.is_empty()
+        ));
+        assert_eq!(
+            completed,
+            OutboundEvent::Completed {
+                request_id,
+                content: "worker reply".to_string(),
+            }
+        );
     }
 }
