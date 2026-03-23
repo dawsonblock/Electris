@@ -1140,8 +1140,10 @@ fn atomic_write_session_file(path: &std::path::Path, contents: &str) -> Result<(
         std::process::id()
     ));
 
-    std::fs::write(&tmp_path, contents)
-        .map_err(|e| ElectroError::Tool(format!("Failed to write session temp file: {}", e)))?;
+    if let Err(e) = std::fs::write(&tmp_path, contents) {
+        let _ = std::fs::remove_file(&tmp_path);
+        return Err(ElectroError::Tool(format!("Failed to write session temp file: {}", e)));
+    }
 
     #[cfg(unix)]
     {

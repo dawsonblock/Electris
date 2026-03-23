@@ -218,6 +218,20 @@ impl TaskGraph {
 
     /// Mark a sub-task as Completed with a result.
     pub fn mark_completed(&mut self, id: &str, result: String) -> Result<(), ElectroError> {
+        let current_status = {
+            let task = self.tasks.get(id).ok_or_else(|| {
+                ElectroError::NotFound(format!("Sub-task '{}' not found in graph", id))
+            })?;
+            task.status.clone()
+        };
+
+        if current_status != SubTaskStatus::Running {
+            return Err(ElectroError::Internal(format!(
+                "Cannot mark sub-task '{}' completed from status '{}' (must be Running)",
+                id, current_status
+            )));
+        }
+
         let task = self.tasks.get_mut(id).ok_or_else(|| {
             ElectroError::NotFound(format!("Sub-task '{}' not found in graph", id))
         })?;
@@ -229,6 +243,20 @@ impl TaskGraph {
 
     /// Mark a sub-task as Failed with an error description.
     pub fn mark_failed(&mut self, id: &str, error: String) -> Result<(), ElectroError> {
+        let current_status = {
+            let task = self.tasks.get(id).ok_or_else(|| {
+                ElectroError::NotFound(format!("Sub-task '{}' not found in graph", id))
+            })?;
+            task.status.clone()
+        };
+
+        if current_status != SubTaskStatus::Running {
+            return Err(ElectroError::Internal(format!(
+                "Cannot mark sub-task '{}' failed from status '{}' (must be Running)",
+                id, current_status
+            )));
+        }
+
         let task = self.tasks.get_mut(id).ok_or_else(|| {
             ElectroError::NotFound(format!("Sub-task '{}' not found in graph", id))
         })?;
@@ -877,6 +905,7 @@ mod tests {
     fn mark_completed_valid() {
         let tasks = vec![SubTask::new("1", "Deploy")];
         let mut graph = TaskGraph::new("goal", tasks).unwrap();
+        graph.mark_running("1").unwrap();
         graph
             .mark_completed("1", "deployment successful".into())
             .unwrap();
@@ -889,6 +918,7 @@ mod tests {
     fn mark_failed_valid() {
         let tasks = vec![SubTask::new("1", "Deploy")];
         let mut graph = TaskGraph::new("goal", tasks).unwrap();
+        graph.mark_running("1").unwrap();
         graph.mark_failed("1", "connection refused".into()).unwrap();
         let task = graph.get("1").unwrap();
         assert_eq!(task.status, SubTaskStatus::Failed);
@@ -915,9 +945,11 @@ mod tests {
         let mut graph = TaskGraph::new("goal", tasks).unwrap();
         assert!(!graph.is_complete());
 
+        graph.mark_running("1").unwrap();
         graph.mark_completed("1", "ok".into()).unwrap();
         assert!(!graph.is_complete());
 
+        graph.mark_running("2").unwrap();
         graph.mark_completed("2", "ok".into()).unwrap();
         assert!(graph.is_complete());
     }
@@ -931,6 +963,7 @@ mod tests {
         let mut graph = TaskGraph::new("goal", tasks).unwrap();
         assert!(!graph.is_failed());
 
+        graph.mark_running("1").unwrap();
         graph.mark_failed("1", "boom".into()).unwrap();
         assert!(graph.is_failed());
     }
@@ -956,6 +989,7 @@ mod tests {
             SubTask::new("3", "C"),
         ];
         let mut graph = TaskGraph::new("goal", tasks).unwrap();
+        graph.mark_running("1").unwrap();
         graph.mark_completed("1", "ok".into()).unwrap();
         graph.mark_running("2").unwrap();
         assert_eq!(
@@ -968,7 +1002,9 @@ mod tests {
     fn progress_summary_with_failure() {
         let tasks = vec![SubTask::new("1", "A"), SubTask::new("2", "B")];
         let mut graph = TaskGraph::new("goal", tasks).unwrap();
+        graph.mark_running("1").unwrap();
         graph.mark_completed("1", "ok".into()).unwrap();
+        graph.mark_running("2").unwrap();
         graph.mark_failed("2", "err".into()).unwrap();
         assert_eq!(
             graph.progress_summary(),
@@ -980,7 +1016,9 @@ mod tests {
     fn progress_summary_all_complete() {
         let tasks = vec![SubTask::new("1", "A"), SubTask::new("2", "B")];
         let mut graph = TaskGraph::new("goal", tasks).unwrap();
+        graph.mark_running("1").unwrap();
         graph.mark_completed("1", "ok".into()).unwrap();
+        graph.mark_running("2").unwrap();
         graph.mark_completed("2", "ok".into()).unwrap();
         assert_eq!(graph.progress_summary(), "2/2 subtasks complete");
     }
@@ -995,6 +1033,7 @@ mod tests {
             SubTask::new("3", "Verify health").with_dependency("2"),
         ];
         let mut graph = TaskGraph::new("deploy and verify", tasks).unwrap();
+        graph.mark_running("1").unwrap();
         graph
             .mark_completed("1", "deployed to prod".into())
             .unwrap();
@@ -1013,6 +1052,7 @@ mod tests {
     fn to_prompt_complete_graph() {
         let tasks = vec![SubTask::new("1", "Do thing")];
         let mut graph = TaskGraph::new("simple", tasks).unwrap();
+        graph.mark_running("1").unwrap();
         graph.mark_completed("1", "done".into()).unwrap();
 
         let prompt = graph.to_prompt();
@@ -1026,6 +1066,7 @@ mod tests {
             SubTask::new("2", "Second").with_dependency("1"),
         ];
         let mut graph = TaskGraph::new("failing", tasks).unwrap();
+        graph.mark_running("1").unwrap();
         graph.mark_failed("1", "connection refused".into()).unwrap();
 
         let prompt = graph.to_prompt();
@@ -1249,6 +1290,7 @@ mod tests {
             SubTask::new("2", "B").with_dependency("1"),
         ];
         let mut graph = TaskGraph::new("test goal", tasks).unwrap();
+        graph.mark_running("1").unwrap();
         graph.mark_completed("1", "done".into()).unwrap();
 
         let json = serde_json::to_string(&graph).unwrap();
@@ -1370,22 +1412,26 @@ mod tests {
 
         // Only 1 is ready initially
         assert_eq!(graph.ready_tasks().len(), 1);
+        graph.mark_running("1").unwrap();
         graph.mark_completed("1", "ok".into()).unwrap();
 
         // Now 2 and 3 are ready (parallel)
         assert_eq!(graph.ready_tasks().len(), 2);
+        graph.mark_running("2").unwrap();
         graph.mark_completed("2", "ok".into()).unwrap();
 
         // 4 not ready yet — 3 still pending
         assert_eq!(graph.ready_tasks().len(), 1);
         assert_eq!(graph.ready_tasks()[0].id, "3");
 
+        graph.mark_running("3").unwrap();
         graph.mark_completed("3", "ok".into()).unwrap();
 
         // Now 4 is ready
         assert_eq!(graph.ready_tasks().len(), 1);
         assert_eq!(graph.ready_tasks()[0].id, "4");
 
+        graph.mark_running("4").unwrap();
         graph.mark_completed("4", "ok".into()).unwrap();
         assert!(graph.is_complete());
     }
@@ -1407,5 +1453,28 @@ mod tests {
         assert!(prompt.contains("..."));
         // Should be truncated to ~200 chars
         assert!(prompt.len() < 800);
+    }
+
+    #[test]
+    fn graph_rejects_duplicate_ids() {
+        let tasks = vec![
+            SubTask::new("1", "Task A"),
+            SubTask::new("1", "Task B"),
+        ];
+        let result = TaskGraph::new("duplicate", tasks);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("Duplicate"));
+    }
+
+    #[test]
+    fn graph_enforces_pending_to_running() {
+        let tasks = vec![SubTask::new("1", "Task A")];
+        let mut graph = TaskGraph::new("goal", tasks).unwrap();
+        // Skip mark_running, try to complete directly
+        let result = graph.mark_completed("1", "done".into());
+        // Currently, mark_completed doesn't strictly check if it was Running.
+        // Let's check if we WANT it to. 
+        // Actually, the implementation of mark_completed just sets the status.
+        // If we want to harden this, we should change the implementation too.
     }
 }

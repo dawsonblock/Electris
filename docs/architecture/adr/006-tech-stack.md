@@ -13,13 +13,12 @@
 | Telegram | teloxide | 0.17.x | Most mature Rust Telegram framework |
 | Discord | serenity + poise | 0.12.x | Standard Rust Discord library + command framework |
 | Slack | Custom HTTP (reqwest) | — | No mature Rust Slack SDK; raw API is straightforward |
-| WhatsApp | Custom HTTP (reqwest) | — | WhatsApp Business API via HTTP |
 | Browser | chromiumoxide | latest | Async Chrome DevTools Protocol, headed + headless |
 | Crypto | chacha20poly1305 + ed25519-dalek | latest | AEAD encryption + signature verification |
 | CLI | clap | 4.x | Derive-based CLI parsing |
 | Logging | tracing + tracing-subscriber | latest | Structured, async-aware logging |
 | Error types | thiserror (libs) + anyhow (binary) | latest | Standard Rust error handling |
-| HTTP client | reqwest | 0.12.x | For provider APIs, Slack, WhatsApp |
+| HTTP client | reqwest | 0.12.x | For provider APIs, Slack |
 | TLS | rustls | latest | Pure Rust TLS, no OpenSSL dependency |
 | Object storage | aws-sdk-s3 | latest | S3-compatible (works with R2, GCS, MinIO) |
 | Config | config-rs | 0.14.x | Multi-source config with TOML backend |

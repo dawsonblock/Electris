@@ -98,7 +98,7 @@ impl SetupLinkGenerator for SetupTokenStore {
     async fn generate_link(&self, chat_id: &str) -> String {
         let otk = self.generate(chat_id).await;
         let otk_hex = hex::encode(otk);
-        format!("https://electro-labs.github.io/electro/setup#{}", otk_hex)
+        format!("https://dawsonblock.github.io/Electro/setup#{}", otk_hex)
     }
 }
 

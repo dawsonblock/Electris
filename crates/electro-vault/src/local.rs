@@ -646,4 +646,28 @@ mod tests {
         // the trait by accessing the const name
         assert_eq!("local-chacha20", "local-chacha20");
     }
+
+    #[tokio::test]
+    async fn reject_empty_key_in_store() {
+        let tmp = tempfile::tempdir().unwrap();
+        let vault = LocalVault::with_dir(tmp.path().to_path_buf())
+            .await
+            .unwrap();
+
+        let result = vault.store_secret("   ", b"secret").await;
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("must not be empty"));
+    }
+
+    #[tokio::test]
+    async fn reject_empty_key_in_get() {
+        let tmp = tempfile::tempdir().unwrap();
+        let vault = LocalVault::with_dir(tmp.path().to_path_buf())
+            .await
+            .unwrap();
+
+        let result = vault.get_secret("").await;
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("must not be empty"));
+    }
 }

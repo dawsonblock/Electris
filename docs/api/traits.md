@@ -42,7 +42,7 @@ pub trait Provider: Send + Sync {
 
 **File**: `traits/channel.rs`
 
-Messaging channel. Implement for each platform (Telegram, Discord, Slack, WhatsApp, CLI).
+Messaging channel. Implement for each platform (Telegram, Discord, Slack, CLI).
 
 ```rust
 #[async_trait]

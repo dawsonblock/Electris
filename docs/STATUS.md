@@ -1,32 +1,32 @@
-# Current Build Status
+# Electro Project Status — March 2026
 
-## Platform Implementation Status
+This document serves as the single source of truth for the current state of the Electro runtime.
 
-## Implemented channels
-- CLI
-- Telegram
-- Discord
-- Slack
+## Core Toolchain
+- **Channel**: Stable
+- **Version**: 1.83
+- **Pinning**: Pinned via `rust-toolchain.toml` and enforced in CI/Release workflows.
+- **Resolver**: Edition 2021, Resolver 2.
 
-## Not implemented in this archive
-- WhatsApp
+## Channel Support Matrix
 
-## MCP
-- MCP client and runtime manager are present.
-- `mcp_manage` supports: `list`, `remove`, `restart`.
-- The agent-facing runtime does not ship autonomous MCP discovery or installation tools.
-- User-facing MCP configuration can still be done through runtime commands or `~/.electro/mcp.toml`.
+| Channel | Status | Notes |
+| :--- | :--- | :--- |
+| **Telegram** | Stable | Full support via `teloxide`. |
+| **Discord** | Stable | Supported via `serenity`/`poise`. |
+| **Slack** | Beta | Internal adapter active. |
+| **Terminal** | Stable | Interactive TUI support. |
+| **Browser** | Active | Headless/Interactive Chromium via `chromiumoxide`. |
+| **MCP** | Active | Model Context Protocol server/client support. |
 
-## Shell runtime
-- Isolated shell execution is supported.
-- Intended default image: `electro-shell-runner:local`
-- Builder and smoke-test helpers:
-  - `scripts/build_shell_runner.sh`
-  - `scripts/smoke_shell_runner.sh`
+> [!NOTE]
+> WhatsApp, Signal, and iMessage are part of the **future vision** and are NOT currently implemented in the 3.2.x release line.
 
-## Toolchain
-- Rust 1.83 pinned via `rust-toolchain.toml`
+## Hardening & Robustness
+- [x] **Toolchain Alignment**: All manifests (Cargo, Docker, CI) standardized on 1.83.
+- [x] **Identity Consolidation**: Repository identity standardized to `dawsonblock/Electro`.
+- [x] **Safe Execution**: Defaulting to `electro-shell-runner:local` for containerized tool execution.
+- [x] **Panic Reduction**: Ongoing sweep to replace `unwrap()`/`expect()` in high-density runtime paths.
 
-## Known follow-up work
-- Remove panic-prone `unwrap()` usage from runtime-critical crates.
-- Validate workspace build and tests on a machine with Cargo available.
+## Historical Artifacts
+The `artifacts/` directory now contains a disclaimer and links to `archive/build-history/`. Any legacy logs found in the root or `artifacts/` should be considered non-authoritative snapshots.

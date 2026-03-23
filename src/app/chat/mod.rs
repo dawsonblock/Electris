@@ -81,7 +81,7 @@ pub async fn run_chat_mode(
     if agent_opt.is_none() {
         println!("No API key configured — running in onboarding mode.");
         let otk = core.setup_tokens.generate("cli").await;
-        let link = format!("https://electro-labs.github.io/electro/setup#{}", hex::encode(otk));
+        let link = format!("https://dawsonblock.github.io/Electro/setup#{}", hex::encode(otk));
         println!("\n{}", onboarding_message_with_link(&link));
         println!("\n{}", ONBOARDING_REFERENCE);
     }
@@ -253,7 +253,7 @@ async fn handle_chat_command(
 ) -> Result<bool> {
     if lower == "/addkey" {
         let otk = core.setup_tokens.generate("cli").await;
-        let link = format!("https://electro-labs.github.io/electro/setup#{}", hex::encode(otk));
+        let link = format!("https://dawsonblock.github.io/Electro/setup#{}", hex::encode(otk));
         println!("\nSecure key setup: {}\n", link);
         return Ok(true);
     }

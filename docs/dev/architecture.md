@@ -32,7 +32,7 @@ electro (binary)
   |     +-- electro-core
   |     +-- teloxide (Telegram)
   |     +-- serenity, poise (Discord)
-  |     +-- reqwest (Slack, WhatsApp)
+  |     +-- reqwest (Slack)
   |
   +-- electro-memory
   |     +-- electro-core
@@ -79,7 +79,7 @@ The `electro-core` crate contains:
 
 ```
 1. Platform Event
-   Telegram/Discord/Slack/WhatsApp sends a webhook or gateway event
+   Telegram/Discord/Slack sends a webhook or gateway event
 
 2. Channel::start()
    The channel listener receives the event and converts it to an InboundMessage

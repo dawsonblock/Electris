@@ -950,4 +950,21 @@ mod tests {
             .unwrap();
         assert_eq!(history.len(), 20);
     }
+
+    #[tokio::test]
+    async fn clock_skew_handling() {
+        let mem = SqliteMemory::new("sqlite::memory:").await.unwrap();
+        let mut entry = make_entry("skew1", "future message", None);
+        // Set timestamp 1 hour in the future
+        entry.timestamp = Utc::now() + chrono::Duration::hours(1);
+        mem.store(entry).await.unwrap();
+
+        // Should still be findable by ID
+        let fetched = mem.get("skew1").await.unwrap();
+        assert!(fetched.is_some());
+
+        // Should still show up in search
+        let results = mem.search("future", SearchOpts::default()).await.unwrap();
+        assert_eq!(results.len(), 1);
+    }
 }

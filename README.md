@@ -1,6 +1,6 @@
 
 <p align="center">
-  <a href="https://github.com/electro-labs/Electro/stargazers"><img src="https://img.shields.io/github/stars/electro-labs/Electro?style=for-the-badge&color=F5A623&logo=github&logoColor=white" alt="Stars"></a>&nbsp;
+  <a href="https://github.com/dawsonblock/Electro/stargazers"><img src="https://img.shields.io/github/stars/dawsonblock/Electro?style=for-the-badge&color=F5A623&logo=github&logoColor=white" alt="Stars"></a>&nbsp;
   <a href="https://discord.gg/3ux2c5xz"><img src="https://img.shields.io/badge/Discord-Community-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>&nbsp;
   <img src="https://img.shields.io/badge/License-MIT-A3E635?style=for-the-badge" alt="MIT">&nbsp;
   <img src="https://img.shields.io/badge/v3.2.0-Stable-06B6D4?style=for-the-badge" alt="Version">&nbsp;
@@ -28,13 +28,12 @@ Electro is a cloud-native AI agent runtime written in Rust. It connects to messa
 - **λ-Memory**: Exponential decay memory with hash-based recall
 - **Blueprints**: Structured, replayable recipes that capture learned procedures
 - **Many Tems**: Stigmergic swarm intelligence for parallel task execution
-- **Eigen-Tune**: Self-tuning distillation that trains local models from LLM interactions
 
 ## Quick Start
 
 ```bash
 # Clone and build
-git clone https://github.com/electro-labs/Electro.git && cd Electro
+git clone https://github.com/dawsonblock/Electro.git && cd Electro
 cargo build --release
 ```
 

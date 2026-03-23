@@ -140,7 +140,6 @@ This encompasses multiple dimensions:
 | Telegram | 50 MB (bot) / 2 GB (premium) | Yes | Yes |
 | Discord | 25 MB (free) / 500 MB (nitro) | Yes | Yes |
 | Slack | 1 GB | Yes | Yes |
-| WhatsApp | 2 GB | Yes | Yes |
 | Email | ~25 MB | Yes | Yes |
 | Matrix | Configurable | Yes | Yes |
 | Web API | Unlimited (streaming) | Yes | Yes |
@@ -163,8 +162,9 @@ Electro is designed for cloud-native deployment from day one:
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                     MESSAGING LAYER                          │
-│  Telegram · Discord · Slack · WhatsApp · Signal · iMessage │
-│  Matrix · Teams · LINE · Email · Web · API · Webhook        │
+│  Telegram · Discord · Slack                                 │
+│  Matrix · Teams · Email · Web · API · Webhook               │
+│  (WhatsApp · Signal · iMessage · LINE — future vision)       │
 └──────────────────────┬──────────────────────────────────────┘
                        │ Normalized messages + file streams
                        ▼
@@ -228,9 +228,10 @@ Electro supports multiple AI providers through a unified trait:
 ### Channel Adapters
 
 Trait-based messaging adapters with native file transfer:
-- **Telegram**, **Discord**, **Slack**, **WhatsApp**, **Signal**, **iMessage**
-- **Matrix**, **Teams**, **LINE**, **Email**
+- **Telegram**, **Discord**, **Slack**, **CLI**
+- **Matrix**, **Teams**, **Email**
 - **Web API**, **Webhooks** for programmatic access
+- *(WhatsApp, Signal, iMessage, LINE — future work; not yet implemented)*
 
 ### Memory Backends
 

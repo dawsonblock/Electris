@@ -264,7 +264,7 @@ The fundamental difference: other systems use LLM conversations for coordination
 ## 8. Reproducibility
 
 ```bash
-git clone https://github.com/electro-labs/electro
+git clone https://github.com/dawsonblock/Electro
 cd electro && git checkout many-tems
 
 # Unit tests (71 tests including parallelism proofs)

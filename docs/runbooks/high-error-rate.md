@@ -140,7 +140,6 @@ Channel-specific issues:
 - Telegram: Bot token expired or revoked. Webhook URL changed.
 - Discord: Gateway WebSocket disconnected. Bot permissions changed.
 - Slack: Socket Mode token expired. App reinstallation needed.
-- WhatsApp: Webhook verification failed. Business API issues.
 
 ### Step 6: Diagnose tool execution errors
 

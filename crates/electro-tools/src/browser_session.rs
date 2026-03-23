@@ -623,25 +623,24 @@ impl InteractiveBrowseSession {
                     use chromiumoxide::cdp::browser_protocol::input::DispatchKeyEventParams;
                     use chromiumoxide::cdp::browser_protocol::input::DispatchKeyEventType;
                     for ch in zeroizing.chars() {
-                        let _ = self
-                            .page
-                            .execute(
-                                DispatchKeyEventParams::builder()
-                                    .r#type(DispatchKeyEventType::KeyDown)
-                                    .text(ch.to_string())
-                                    .build()
-                                    .unwrap(),
-                            )
-                            .await;
-                        let _ = self
-                            .page
-                            .execute(
-                                DispatchKeyEventParams::builder()
-                                    .r#type(DispatchKeyEventType::KeyUp)
-                                    .build()
-                                    .unwrap(),
-                            )
-                            .await;
+                        let params = DispatchKeyEventParams::builder()
+                            .r#type(DispatchKeyEventType::KeyDown)
+                            .text(ch.to_string())
+                            .build()
+                            .map_err(|e| {
+                                ElectroError::Tool(format!("CDP key event build failed: {}", e))
+                            })?;
+
+                        let _ = self.page.execute(params).await;
+
+                        let params_up = DispatchKeyEventParams::builder()
+                            .r#type(DispatchKeyEventType::KeyUp)
+                            .build()
+                            .map_err(|e| {
+                                ElectroError::Tool(format!("CDP key event build failed: {}", e))
+                            })?;
+
+                        let _ = self.page.execute(params_up).await;
                     }
                     tracing::debug!(
                         session_id = %self.session_id,

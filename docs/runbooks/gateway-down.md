@@ -22,7 +22,7 @@
 - PagerDuty incident fires with `severity=critical, service=gateway`.
 - Slack #incidents channel receives notification.
 - External probes (Blackbox Exporter) report `/health` endpoint unreachable.
-- All channels (Telegram, Discord, Slack, WhatsApp, CLI) stop receiving responses.
+- All channels (Telegram, Discord, Slack, CLI) stop receiving responses.
 - `electro_gateway_up` gauge drops to 0.
 - No new entries in `electro_gateway_http_requests_total`.
 

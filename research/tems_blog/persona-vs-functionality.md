@@ -208,4 +208,4 @@ You've found a very expensive costume shop.
 
 ---
 
-*Tem is the AI agent runtime at the core of [ELECTRO](https://github.com/nagisanzenin/electro) — an open-source, cloud-native autonomous agent built in Rust. It focuses on doing things, not talking about doing things. Sometimes it does both, but only because it earned the right.*
+*Tem is the AI agent runtime at the core of [ELECTRO](https://github.com/dawsonblock/Electro) — an open-source, cloud-native autonomous agent built in Rust. It focuses on doing things, not talking about doing things. Sometimes it does both, but only because it earned the right.*
