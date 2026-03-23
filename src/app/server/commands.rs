@@ -11,7 +11,7 @@ use tokio::sync::Mutex;
 pub async fn handle_slash_command(
     msg: &InboundMessage,
     sender: &Arc<dyn Channel>,
-    runtime: &RuntimeHandle,
+    _runtime: &RuntimeHandle,
     memory: &Arc<dyn Memory>,
     history: &[ChatMessage],
     tools_template: &[Arc<dyn Tool>],
@@ -24,7 +24,6 @@ pub async fn handle_slash_command(
     vault: &Option<Arc<dyn Vault>>,
     personality_locked: bool,
 ) -> bool {
-    let _ = runtime;
     let text = msg.text.as_deref().unwrap_or_default().trim();
     if !text.starts_with('/') && !text.starts_with("enc:v1:") {
         return false;

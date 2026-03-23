@@ -194,6 +194,8 @@ pub async fn run_message_dispatcher(
                     )
                 });
 
+                // Heartbeats must traverse the worker loop too so they use the
+                // same execution, interruption, and persistence path.
                 let tx = slot.tx.clone();
                 let inbound_backup = inbound.clone();
                 drop(slots);
