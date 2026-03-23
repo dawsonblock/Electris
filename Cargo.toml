@@ -4,6 +4,7 @@ members = [
     "crates/electro-core",
     "crates/electro-gateway",
     "crates/electro-agent",
+    "crates/electro-runtime",
     "crates/electro-providers",
     "crates/electro-channels",
     "crates/electro-memory",
@@ -106,6 +107,7 @@ tokio-util = { version = "0.7", features = ["rt"] }
 electro-core = { path = "crates/electro-core" }
 electro-gateway = { path = "crates/electro-gateway" }
 electro-agent = { path = "crates/electro-agent" }
+electro-runtime = { path = "crates/electro-runtime" }
 electro-providers = { path = "crates/electro-providers" }
 electro-channels = { path = "crates/electro-channels" }
 electro-memory = { path = "crates/electro-memory" }
@@ -137,6 +139,7 @@ path = "src/main.rs"
 electro-core.workspace = true
 electro-gateway.workspace = true
 electro-agent.workspace = true
+electro-runtime.workspace = true
 electro-providers.workspace = true
 electro-channels.workspace = true
 electro-memory.workspace = true
@@ -186,3 +189,6 @@ lto = true
 codegen-units = 1
 strip = true
 panic = "unwind"  # Required for catch_unwind — enables per-task panic recovery
+
+[dev-dependencies]
+electro-test-utils.workspace = true

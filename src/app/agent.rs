@@ -1,6 +1,10 @@
 use anyhow::Result;
 use electro_agent::AgentRuntime;
-use electro_core::types::config::{ElectroConfig, ProviderConfig, ElectroMode};
+use electro_core::config::credentials::{
+    is_placeholder_key, load_active_provider_keys, load_saved_credentials,
+};
+use electro_core::types::config::{ElectroConfig, ElectroMode, ProviderConfig};
+use electro_core::types::model_registry::default_model;
 use electro_core::{Memory, Provider, Tool};
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -52,4 +56,58 @@ pub async fn create_provider(
     Ok(Arc::from(electro_providers::create_provider(
         provider_config,
     )?))
+}
+
+pub fn resolve_credentials(config: &ElectroConfig) -> Option<(String, String, String)> {
+    if let Some(ref key) = config.provider.api_key {
+        if !key.is_empty() && !key.starts_with("${") {
+            let name = config
+                .provider
+                .name
+                .clone()
+                .unwrap_or_else(|| "anthropic".to_string());
+            let model = config
+                .provider
+                .model
+                .clone()
+                .unwrap_or_else(|| default_model(&name).to_string());
+            return Some((name, key.clone(), model));
+        }
+    }
+
+    load_saved_credentials()
+}
+
+pub fn build_provider_config(
+    config: &ElectroConfig,
+    pname: &str,
+    key: &str,
+    model: &str,
+) -> ProviderConfig {
+    let (all_keys, effective_base_url) = load_active_provider_keys()
+        .and_then(|(saved_name, keys, _, burl)| {
+            if saved_name == pname {
+                let valid: Vec<String> = keys
+                    .into_iter()
+                    .filter(|candidate| !is_placeholder_key(candidate))
+                    .collect();
+                Some((valid, burl))
+            } else {
+                None
+            }
+        })
+        .unwrap_or_else(|| {
+            (
+                vec![key.to_string()],
+                config.provider.base_url.clone(),
+            )
+        });
+    ProviderConfig {
+        name: Some(pname.to_string()),
+        api_key: Some(key.to_string()),
+        keys: all_keys,
+        model: Some(model.to_string()),
+        base_url: effective_base_url,
+        extra_headers: config.provider.extra_headers.clone(),
+    }
 }
