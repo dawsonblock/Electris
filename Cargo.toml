@@ -21,15 +21,19 @@ members = [
     "crates/electro-test-utils", # Test helpers
     
     # ═══════════════════════════════════════════════════════════════════
-    # EXPERIMENTAL / OPTIONAL
-    # These crates are NOT included in core stabilization.
-    # They may be incomplete, untested, or require external deps.
+    # OPTIONAL MODULES
+    # Feature-gated modules that extend core functionality.
+    # ═══════════════════════════════════════════════════════════════════
+    "crates/electro-hive",         # Multi-agent swarm coordination
+    "crates/electro-codex-oauth",  # OAuth flow (optional)
+    
+    # ═══════════════════════════════════════════════════════════════════
+    # EXPERIMENTAL
+    # Not yet ready for production use.
     # ═══════════════════════════════════════════════════════════════════
     "crates/electro-skills",       # Skill system (partial)
     "crates/electro-automation",   # Proactive automation (experimental)
     "crates/electro-filestore",    # Object storage (optional)
-    "crates/electro-codex-oauth",  # OAuth flow (optional)
-    "crates/electro-hive",         # Multi-agent swarm (experimental)
 ]
 
 [workspace.package]
@@ -205,7 +209,7 @@ tokio-util.workspace = true
 core-only = []
 
 # Default: Full build with optional features
-default = ["telegram", "mcp", "tui"]
+default = ["telegram", "mcp", "tui", "hive"]
 
 # ═══════════════════════════════════════════════════════════════════
 # CHANNEL FEATURES
@@ -220,6 +224,7 @@ slack = ["electro-channels/slack"]
 mcp = ["dep:electro-mcp"]
 tui = ["dep:electro-tui"]
 codex-oauth = ["dep:electro-codex-oauth"]
+hive = ["dep:electro-hive"]
 
 # ═══════════════════════════════════════════════════════════════════
 # EXPERIMENTAL MODULES (not part of core stabilization)
@@ -227,7 +232,6 @@ codex-oauth = ["dep:electro-codex-oauth"]
 skills = ["dep:electro-skills"]
 automation = ["dep:electro-automation"]
 filestore = ["dep:electro-filestore"]
-hive = ["dep:electro-hive"]
 
 # ═══════════════════════════════════════════════════════════════════
 # DISABLED MODULES

@@ -7,8 +7,8 @@
 
 | Check | Status |
 |-------|--------|
-| Rust toolchain | ✅ 1.85.0 (consistent) |
-| `cargo check` | ✅ Zero warnings |
+| Rust toolchain | ✅ 1.88.0 (consistent) |
+| `cargo check` | ✅ Passes |
 | `cargo test` | ✅ 39 tests passing |
 | `cargo clippy` | ⚠️ Style warnings only (0 errors) |
 
@@ -28,7 +28,7 @@
 | Slack | ⚠️ Partial | Channel exists, limited testing |
 | Hive | ❌ Disabled | Experimental, feature-gated |
 | Automation | ❌ Disabled | Experimental, feature-gated |
-| Browser | ❌ Disabled | Requires Rust 1.88+ |
+| Browser | ✅ Operational | Browser automation enabled |
 
 ## Architecture Owners
 
@@ -44,7 +44,7 @@
 
 1. **TUI bypass**: TUI agent bridge calls `process_message` directly instead of using queue/dispatcher/worker spine
 2. **Tool sandbox**: Host execution available (behind validation), full container isolation recommended for production
-3. **Browser disabled**: htmd dependency requires Rust 1.88+
+3. **TUI architecture**: Uses RuntimeHandle with event subscription (transitional design)
 4. **Hive/Automation**: Experimental, not part of core stabilization
 
 ## Verification Commands

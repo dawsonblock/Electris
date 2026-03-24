@@ -111,7 +111,7 @@ pub fn create_chat_worker(
         Mutex<HashMap<String, electro_tools::browser_session::InteractiveBrowseSession>>,
     >,
     _usage_store_clone: &Arc<dyn UsageStore>,
-    #[allow(unused)] _hive_clone: &Option<Arc<()>>,
+    _hive_clone: &Option<Arc<dyn std::any::Any + Send + Sync>>,
     personality_locked: bool,
     #[cfg(feature = "browser")] browser_ref_worker: &Option<Arc<electro_tools::BrowserTool>>,
     vault: &Option<Arc<dyn Vault>>,

@@ -240,11 +240,12 @@ pub async fn start_server(
         }));
     }
 
-    // ── Hive (experimental, disabled in core-only build) ──
+    // ── Hive (multi-agent swarm coordination) ──
     #[cfg(feature = "hive")]
-    let hive_instance = {
+    let (hive_instance, hive_enabled) = {
         let hive_config = load_hive_config().await;
-        if hive_config.enabled {
+        let enabled = hive_config.enabled;
+        let instance = if enabled {
             let hive_url = format!(
                 "sqlite:{}?mode=rwc",
                 electro_core::paths::hive_db_file().display()
@@ -255,10 +256,11 @@ pub async fn start_server(
                 .map(Arc::new)
         } else {
             None
-        }
+        };
+        (instance, enabled)
     };
     #[cfg(not(feature = "hive"))]
-    let hive_instance: Option<Arc<()>> = None;
+    let (hive_instance, hive_enabled): (Option<Arc<()>>, bool) = (None, false);
 
     // ── Tenant Manager ──
     let tenant_manager = Arc::new(electro_core::tenant_impl::create_tenant_manager(&config));
@@ -276,10 +278,7 @@ pub async fn start_server(
                         tools.clone(),
                         model,
                         Some(build_system_prompt()),
-                        #[cfg(feature = "hive")]
-                        hive_config.enabled,
-                        #[cfg(not(feature = "hive"))]
-                        false,
+                        hive_enabled,
                         runtime.shared_mode.clone(),
                         runtime.shared_memory_strategy.clone(),
                     )

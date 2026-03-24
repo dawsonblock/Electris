@@ -76,9 +76,9 @@ pub async fn run_message_dispatcher(
         let login_sessions_clone = login_sessions.clone();
         let usage_store_clone = usage_store.clone();
         #[cfg(feature = "hive")]
-        let hive_clone = hive_instance.clone();
+        let hive_clone: Option<Arc<dyn std::any::Any + Send + Sync>> = hive_instance.clone().map(|h| h as Arc<dyn std::any::Any + Send + Sync>);
         #[cfg(not(feature = "hive"))]
-        let hive_clone: Option<Arc<()>> = None;
+        let hive_clone: Option<Arc<dyn std::any::Any + Send + Sync>> = None;
         let tenant_mgr_clone = tenant_manager.clone();
         let tenant_isolation_enabled = config.electro.tenant_isolation;
         #[cfg(feature = "browser")]
@@ -311,7 +311,7 @@ fn ensure_worker<'a>(
         Mutex<HashMap<String, electro_tools::browser_session::InteractiveBrowseSession>>,
     >,
     usage_store: &Arc<dyn UsageStore>,
-    #[allow(unused)] _hive_instance: &Option<Arc<()>>,
+    hive_instance: &Option<Arc<dyn std::any::Any + Send + Sync>>,
     workspace_path: &std::path::Path,
     _tenant_isolation_enabled: bool,
     personality_locked: bool,
@@ -344,7 +344,10 @@ fn ensure_worker<'a>(
             #[cfg(feature = "browser")]
             login_sessions,
             usage_store,
-            _hive_instance,
+            #[cfg(feature = "hive")]
+            &hive_instance.clone().map(|h| h as Arc<dyn std::any::Any + Send + Sync>),
+            #[cfg(not(feature = "hive"))]
+            &None,
             personality_locked,
             #[cfg(feature = "browser")]
             browser_tool_ref,
