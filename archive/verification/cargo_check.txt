@@ -1,0 +1,94 @@
+warning: constant `MAX_OUTPUT_SIZE` is never used
+  --> crates/electro-tools/src/git.rs:15:7
+   |
+15 | const MAX_OUTPUT_SIZE: usize = 32 * 1024;
+   |       ^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: constant `HOST_BLOCKED_PROGRAMS` is never used
+  --> crates/electro-tools/src/shell.rs:30:7
+   |
+30 | const HOST_BLOCKED_PROGRAMS: &[&str] = &[
+   |       ^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `program_basename` is never used
+   --> crates/electro-tools/src/shell.rs:306:4
+    |
+306 | fn program_basename(program: &str) -> String {
+    |    ^^^^^^^^^^^^^^^^
+
+warning: function `validate_host_program` is never used
+   --> crates/electro-tools/src/shell.rs:314:4
+    |
+314 | fn validate_host_program(parsed: &ParsedCommand) -> Result<(), ElectroError> {
+    |    ^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `passthrough_env_names` is never used
+   --> crates/electro-tools/src/shell.rs:327:4
+    |
+327 | fn passthrough_env_names() -> Vec<String> {
+    |    ^^^^^^^^^^^^^^^^^^^^^
+
+warning: `electro-tools` (lib) generated 5 warnings
+   Compiling electro v3.2.0 (/Users/dawsonblock/Downloads/Electris-main 2)
+warning: unused variable: `model`
+   --> crates/electro-tui/src/lib.rs:289:21
+    |
+289 |                 let model = default_model(&provider).to_string();
+    |                     ^^^^^ help: if this is intentional, prefix it with an underscore: `_model`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: `electro-tui` (lib) generated 1 warning
+warning: unused variable: `pname`
+  --> src/bin/../app/agent.rs:44:5
+   |
+44 |     pname: &str,
+   |     ^^^^^ help: if this is intentional, prefix it with an underscore: `_pname`
+   |
+   = note: `#[warn(unused_variables)]` on by default
+
+warning: unused import: `HashMap`
+ --> src/app/server/commands.rs:6:24
+  |
+6 | use std::collections::{HashMap, HashSet};
+  |                        ^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `load_hive_config`
+  --> src/app/mod.rs:13:53
+   |
+13 | pub use init::{check_hive_enabled, init_core_stack, load_hive_config};
+   |                                                     ^^^^^^^^^^^^^^^^
+
+warning: unused variable: `pname`
+  --> src/app/agent.rs:44:5
+   |
+44 |     pname: &str,
+   |     ^^^^^ help: if this is intentional, prefix it with an underscore: `_pname`
+   |
+   = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `browser_tool_ref`
+  --> src/app/chat/mod.rs:56:17
+   |
+56 |     let (tools, browser_tool_ref) = init_tools(
+   |                 ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_browser_tool_ref`
+
+warning: unused variable: `browser_tool_ref`
+   --> src/app/server/mod.rs:186:17
+    |
+186 |     let (tools, browser_tool_ref) = init_tools(
+    |                 ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_browser_tool_ref`
+
+warning: `electro` (bin "worker-node") generated 1 warning
+warning: unused variable: `hive_instance`
+   --> src/app/server/dispatcher.rs:307:5
+    |
+307 |     hive_instance: &Option<Arc<dyn std::any::Any + Send + Sync>>,
+    |     ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_hive_instance`
+
+warning: `electro` (bin "electro") generated 6 warnings (run `cargo fix --bin "electro"` to apply 2 suggestions)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.28s

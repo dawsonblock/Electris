@@ -1,0 +1,30 @@
+crates/electro-codex-oauth/src/lib.rs:288:        std::process::Command::new("open")
+crates/electro-codex-oauth/src/lib.rs:295:        std::process::Command::new("xdg-open")
+crates/electro-codex-oauth/src/lib.rs:302:        std::process::Command::new("cmd")
+src/daemon.rs:33:        || std::process::Command::new("kill")
+src/daemon.rs:50:                let status = std::process::Command::new("kill")
+src/daemon.rs:63:                let status = std::process::Command::new("taskkill")
+src/daemon.rs:177:    let child = std::process::Command::new(exe)
+src/admin.rs:57:        || std::process::Command::new("kill")
+src/reset.rs:105:        || std::process::Command::new("kill")
+crates/electro-tui/src/lib.rs:76:    let _ = std::process::Command::new("stty")
+crates/electro-tools/src/browser.rs:1648:        if let Ok(output) = std::process::Command::new("pgrep")
+crates/electro-tools/src/browser.rs:1659:                        let _ = std::process::Command::new("kill")
+crates/electro-tools/src/browser.rs:1679:        let _ = std::process::Command::new("taskkill")
+crates/electro-tools/src/shell.rs:239:    Ok(ParsedCommand::new(program, iter.collect()))
+crates/electro-tools/src/shell.rs:243:    tokio::process::Command::new(program)
+crates/electro-tools/src/shell.rs:556:    let mut command = tokio::process::Command::new(engine);
+crates/electro-tools/src/shell.rs:797:        let parsed = ParsedCommand::new("ls".to_string(), vec!["-la".to_string()]);
+crates/electro-tools/src/shell.rs:827:        let parsed = ParsedCommand::new(
+crates/electro-tools/src/runner.rs:182:    let mut cmd = Command::new(&request.program);
+crates/electro-tools/src/git.rs:308:        let parsed = crate::shell::ParsedCommand::new("git".to_string(), cmd_args.clone());
+crates/electro-mcp/src/transport/stdio.rs:60:        let mut cmd = Command::new(command);
+crates/electro-hive/tests/context_degradation_bench.rs:250:    let out = tokio::process::Command::new("python3")
+crates/electro-hive/tests/project_bench_v2.rs:293:        let check = tokio::process::Command::new("cargo")
+crates/electro-hive/tests/project_bench_v2.rs:364:    let check = tokio::process::Command::new("cargo")
+crates/electro-hive/tests/project_bench_v2.rs:378:    let test = tokio::process::Command::new("cargo")
+crates/electro-hive/tests/project_bench_py.rs:233:    let out = tokio::process::Command::new("python3")
+crates/electro-hive/tests/project_bench_py.rs:247:    let out = tokio::process::Command::new("python3")
+crates/electro-hive/tests/project_bench_py.rs:359:    let out = tokio::process::Command::new("python3")
+crates/electro-hive/tests/project_bench.rs:367:    let check = tokio::process::Command::new("cargo")
+crates/electro-hive/tests/project_bench.rs:395:    let test = tokio::process::Command::new("cargo")
