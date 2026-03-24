@@ -10,6 +10,7 @@ description = "Interactive TUI for ELECTRO — Claude Code-level terminal experi
 # Internal
 electro-core.workspace = true
 electro-agent.workspace = true
+electro-runtime.workspace = true
 electro-providers.workspace = true
 electro-memory.workspace = true
 electro-vault.workspace = true

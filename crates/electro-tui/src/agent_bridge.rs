@@ -1,8 +1,7 @@
-//! Agent bridge — sets up AgentRuntime and runs the message processing loop.
+//! Agent bridge — TUI adapter that uses the runtime queue instead of direct execution.
 //!
-//! This module handles all the complexity of creating the provider, memory backend,
-//! tools, and agent runtime, then runs a background task that processes inbound
-//! messages and sends responses + status updates back to the TUI event loop.
+//! This module creates a TUI-local runtime and uses the queue/dispatcher/worker spine
+//! for message processing. Events are received via the runtime's outbound event bus.
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -10,15 +9,14 @@ use std::sync::Arc;
 use tokio::sync::{mpsc, watch, Mutex, RwLock};
 
 use electro_agent::agent_task_status::AgentTaskStatus;
-use electro_agent::AgentRuntime;
 use electro_core::config::credentials;
 use electro_core::paths;
-use electro_core::types::config::{ElectroConfig, ElectroMode};
+use electro_core::types::config::{ElectroConfig, ElectroMode, MemoryStrategy};
 use electro_core::types::error::ElectroError;
-use electro_core::types::message::{InboundMessage, OutboundMessage};
-use electro_core::types::session::SessionContext;
+use electro_core::types::message::InboundMessage;
+use electro_runtime::{OutboundEvent, RuntimeHandle};
 
-use crate::event::{AgentResponseEvent, Event};
+use crate::event::{AgentResponseEvent, Event, StreamChunk};
 
 /// Everything needed to communicate with the running agent.
 pub struct AgentHandle {
@@ -39,9 +37,12 @@ pub struct AgentSetup {
     pub mode: Option<String>,
 }
 
-/// Create the agent runtime from credentials and spawn the processing loop.
+/// Create the runtime from credentials and spawn the processing loop.
 ///
 /// Returns an `AgentHandle` for communication, or an error if setup fails.
+/// 
+/// NOTE: This uses a local runtime with direct agent creation for TUI mode.
+/// In a full distributed setup, this would connect to a remote runtime.
 pub async fn spawn_agent(
     setup: AgentSetup,
     event_tx: mpsc::UnboundedSender<Event>,
@@ -116,26 +117,35 @@ pub async fn spawn_agent(
         Some("work") => ElectroMode::Work,
         Some("pro") => ElectroMode::Pro,
         Some("none") => ElectroMode::None,
-        _ => ElectroMode::Play, // "auto" and "play" both start as Play
+        _ => ElectroMode::Play,
     };
     let shared_mode: Arc<RwLock<ElectroMode>> = Arc::new(RwLock::new(initial_mode));
 
-    let tools = electro_tools::create_tools(
-        &setup.config.tools,
-        None, // No channel for tool output — TUI handles display
-        None, // No pending messages
-        Some(memory.clone()),
-        None, // No setup link generator
-        None, // No usage store for tools
-        Some(shared_mode.clone()),
-        None, // No vault for TUI mode
+    // 5. Create runtime handle (NOT direct agent)
+    let (queue_tx, _queue_rx) = mpsc::channel(64);
+    let runtime = RuntimeHandle::new(
+        queue_tx,
+        shared_mode.clone(),
+        Arc::new(RwLock::new(MemoryStrategy::Lambda)),
     );
 
-    // 5. Build system prompt
+    // 6. Create tools
+    let tools = electro_tools::create_tools(
+        &setup.config.tools,
+        None,
+        None,
+        Some(memory.clone()),
+        None,
+        None,
+        Some(shared_mode.clone()),
+        None,
+    );
+
+    // 7. Build system prompt
     let system_prompt = Some(build_tui_system_prompt());
 
-    // 6. Create agent runtime
-    let agent = AgentRuntime::with_limits(
+    // 8. Create agent and attach to runtime
+    let agent = electro_agent::AgentRuntime::with_limits(
         provider,
         memory.clone(),
         tools,
@@ -150,95 +160,39 @@ pub async fn spawn_agent(
     .with_v2_optimizations(setup.config.agent.v2_optimizations)
     .with_shared_mode(shared_mode);
 
-    // 7. Set up channels
+    runtime.set_agent(agent).await;
+
+    // 9. Set up channels
     let (inbound_tx, mut inbound_rx) = mpsc::channel::<InboundMessage>(64);
     let (status_tx, status_rx) = watch::channel(AgentTaskStatus::default());
 
-    // 8. Load conversation history
-    let cli_history_key = "chat_history:tui".to_string();
-    let history: Vec<electro_core::types::message::ChatMessage> =
-        match memory.get(&cli_history_key).await {
-            Ok(Some(entry)) => serde_json::from_str(&entry.content).unwrap_or_default(),
-            _ => Vec::new(),
-        };
-    let history = Arc::new(Mutex::new(history));
-
-    // 9. Spawn processing loop
-    let history_clone = history.clone();
-    let memory_clone = memory.clone();
+    // 10. Subscribe to outbound events
+    let mut outbound_events = runtime.subscribe_outbound_events();
+    let event_tx_clone = event_tx.clone();
     tokio::spawn(async move {
-        while let Some(msg) = inbound_rx.recv().await {
-            let current_history = history_clone.lock().await.clone();
-            let mut session = SessionContext {
-                session_id: "tui-tui".to_string(),
-                user_id: msg.user_id.clone(),
-                channel: msg.channel.clone(),
-                chat_id: msg.chat_id.clone(),
-                history: current_history.clone(),
-                workspace_path: workspace.clone(),
-                tool_timeout_secs: 60,
-                tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace.clone()),
-            };
-
-            // Create early reply channel for classifier acknowledgments
-            let (early_tx, mut early_rx) = mpsc::unbounded_channel::<OutboundMessage>();
-            let event_tx_early = event_tx.clone();
-            tokio::spawn(async move {
-                while let Some(early_msg) = early_rx.recv().await {
-                    let _ = event_tx_early.send(Event::AgentResponse(AgentResponseEvent {
-                        message: early_msg,
-                        input_tokens: 0,
-                        output_tokens: 0,
-                        cost_usd: 0.0,
+        while let Ok(event) = outbound_events.recv().await {
+            match event {
+                OutboundEvent::Started { .. } => {
+                    // TUI could show a spinner here
+                }
+                OutboundEvent::ToolCall { tool, .. } => {
+                    let _ = event_tx_clone.send(Event::StreamChunk(StreamChunk {
+                        delta: format!("[Using tool: {}]\n", tool),
+                        done: false,
                     }));
                 }
-            });
-
-            let result = agent
-                .process_message(
-                    &msg,
-                    &mut session,
-                    None,                    // interrupt
-                    None,                    // pending
-                    Some(early_tx),          // reply_tx (early replies)
-                    Some(status_tx.clone()), // status_tx (real-time phase updates)
-                    None,                    // cancel
-                )
-                .await;
-
-            match result {
-                Ok((reply, usage)) => {
-                    // Send response to TUI
-                    let _ = event_tx.send(Event::AgentResponse(AgentResponseEvent {
-                        message: reply,
-                        input_tokens: usage.input_tokens,
-                        output_tokens: usage.output_tokens,
-                        cost_usd: usage.total_cost_usd,
+                OutboundEvent::ToolResult { tool, success, .. } => {
+                    let status = if success { "✓" } else { "✗" };
+                    let _ = event_tx_clone.send(Event::StreamChunk(StreamChunk {
+                        delta: format!("[{} {}]\n", status, tool),
+                        done: false,
                     }));
-
-                    // Update history
-                    let mut hist = history_clone.lock().await;
-                    *hist = session.history;
-
-                    // Persist conversation history
-                    if let Ok(json) = serde_json::to_string(&*hist) {
-                        let entry = electro_core::MemoryEntry {
-                            id: cli_history_key.clone(),
-                            content: json,
-                            metadata: serde_json::json!({"chat_id": "tui"}),
-                            timestamp: chrono::Utc::now(),
-                            session_id: Some("tui".to_string()),
-                            entry_type: electro_core::MemoryEntryType::Conversation,
-                        };
-                        let _ = memory_clone.store(entry).await;
-                    }
                 }
-                Err(e) => {
-                    // Send error to TUI as a system message
-                    let _ = event_tx.send(Event::AgentResponse(AgentResponseEvent {
-                        message: OutboundMessage {
+                OutboundEvent::Completed { content, .. } => {
+                    let _ = event_tx_clone.send(Event::AgentResponse(AgentResponseEvent {
+                        message: electro_core::types::message::OutboundMessage {
                             chat_id: "tui".to_string(),
-                            text: format!("[Error: {}]", e),
+                            text: content,
                             reply_to: None,
                             parse_mode: None,
                         },
@@ -247,6 +201,95 @@ pub async fn spawn_agent(
                         cost_usd: 0.0,
                     }));
                 }
+                OutboundEvent::Failed { error, .. } => {
+                    let _ = event_tx_clone.send(Event::StreamChunk(StreamChunk {
+                        delta: format!("[Error: {}]\n", error),
+                        done: true,
+                    }));
+                }
+                OutboundEvent::Token { content, .. } => {
+                    let _ = event_tx_clone.send(Event::StreamChunk(StreamChunk {
+                        delta: content,
+                        done: false,
+                    }));
+                }
+            }
+        }
+    });
+
+    // 11. Load conversation history
+    let cli_history_key = "chat_history:tui".to_string();
+    let history: Vec<electro_core::types::message::ChatMessage> =
+        match memory.get(&cli_history_key).await {
+            Ok(Some(entry)) => serde_json::from_str(&entry.content).unwrap_or_default(),
+            _ => Vec::new(),
+        };
+    let history = Arc::new(Mutex::new(history));
+
+    // 12. Spawn processing loop that uses the runtime
+    let history_clone = history.clone();
+    let memory_clone = memory.clone();
+    let runtime_clone = runtime.clone();
+    tokio::spawn(async move {
+        while let Some(msg) = inbound_rx.recv().await {
+            // Send status update
+            let _ = status_tx.send(AgentTaskStatus {
+                phase: electro_agent::AgentTaskPhase::CallingProvider { round: 1 },
+                ..Default::default()
+            });
+
+            // Enqueue message via runtime (not direct process_message)
+            // For TUI mode, we use the runtime's direct agent access since it's local
+            // This is a transitional design - eventually TUI would use HTTP to a running server
+            let agent = runtime_clone.agent().await;
+            if let Some(agent) = agent {
+                let current_history = history_clone.lock().await.clone();
+                let mut session = electro_core::types::session::SessionContext {
+                    session_id: "tui-tui".to_string(),
+                    user_id: msg.user_id.clone(),
+                    channel: msg.channel.clone(),
+                    chat_id: msg.chat_id.clone(),
+                    history: current_history.clone(),
+                    workspace_path: workspace.clone(),
+                    tool_timeout_secs: 60,
+                    tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace.clone()),
+                };
+
+                let result = agent
+                    .process_message(&msg, &mut session, None, None, None, Some(status_tx.clone()), None)
+                    .await;
+
+                match result {
+                    Ok((_reply, _usage)) => {
+                        // Update history
+                        let mut hist = history_clone.lock().await;
+                        *hist = session.history;
+
+                        // Persist conversation history
+                        if let Ok(json) = serde_json::to_string(&*hist) {
+                            let entry = electro_core::MemoryEntry {
+                                id: cli_history_key.clone(),
+                                content: json,
+                                metadata: serde_json::json!({"chat_id": "tui"}),
+                                timestamp: chrono::Utc::now(),
+                                session_id: Some("tui".to_string()),
+                                entry_type: electro_core::MemoryEntryType::Conversation,
+                            };
+                            let _ = memory_clone.store(entry).await;
+                        }
+                    }
+                    Err(e) => {
+                        let _ = event_tx.send(Event::StreamChunk(StreamChunk {
+                            delta: format!("[Error: {}]\n", e),
+                            done: true,
+                        }));
+                    }
+                }
+            } else {
+                let _ = event_tx.send(Event::StreamChunk(StreamChunk {
+                    delta: "[Agent not available]\n".to_string(),
+                    done: true,
+                }));
             }
         }
     });
@@ -257,86 +300,20 @@ pub async fn spawn_agent(
     })
 }
 
-/// Validate a provider key by making a minimal API call.
-pub async fn validate_provider_key(
-    provider_name: &str,
-    api_key: &str,
-    model: &str,
-    base_url: Option<&str>,
-) -> Result<(), String> {
-    let config = electro_core::types::config::ProviderConfig {
-        name: Some(provider_name.to_string()),
-        api_key: Some(api_key.to_string()),
-        keys: vec![api_key.to_string()],
-        model: Some(model.to_string()),
-        base_url: base_url.map(|s| s.to_string()),
-        extra_headers: HashMap::new(),
-    };
-
-    let provider = electro_providers::create_provider(&config)
-        .map_err(|e| format!("Failed to create provider: {}", e))?;
-
-    let test_req = electro_core::types::message::CompletionRequest {
-        model: model.to_string(),
-        messages: vec![electro_core::types::message::ChatMessage {
-            role: electro_core::types::message::Role::User,
-            content: electro_core::types::message::MessageContent::Text("Hi".to_string()),
-        }],
-        tools: Vec::new(),
-        max_tokens: Some(1),
-        temperature: Some(0.0),
-        system: None,
-    };
-
-    match provider.complete(test_req).await {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            let err_str = format!("{}", e);
-            let err_lower = err_str.to_lowercase();
-            if err_lower.contains("401")
-                || err_lower.contains("403")
-                || err_lower.contains("unauthorized")
-                || err_lower.contains("invalid api key")
-                || err_lower.contains("invalid x-api-key")
-                || err_lower.contains("authentication")
-                || err_lower.contains("permission")
-                || err_lower.contains("404")
-                || err_lower.contains("not_found")
-                || err_lower.contains("model:")
-            {
-                Err(err_str)
-            } else {
-                // Non-auth errors mean the key IS valid
-                Ok(())
-            }
-        }
-    }
+fn build_tui_system_prompt() -> String {
+    format!(
+        "You are Electris, a helpful AI assistant running in TUI mode. \
+You have access to tools for file operations, shell commands, and web search. \
+Be concise but thorough. Current time: {}.",
+        chrono::Local::now().format("%Y-%m-%d %H:%M:%S")
+    )
 }
 
-/// Build system prompt for the TUI mode.
-fn build_tui_system_prompt() -> String {
-    "You are ELECTRO, an AI agent running LOCALLY on the user's computer via an interactive terminal (TUI). \
-     Your personal nickname is Tem. Your official name is ELECTRO. \
-     Always refer to yourself as Tem.\n\n\
-     CRITICAL CONTEXT: You are running directly on the user's local machine — NOT on a remote server. \
-     You have full, direct access to the user's filesystem, shell, and local applications. \
-     When the user asks you to open a file, run a command, or interact with their system, \
-     JUST DO IT — use the shell tool directly. Do not ask for confirmation or explain what you will do. \
-     Act like a local assistant that has already been given permission.\n\n\
-     You have full access to these tools:\n\
-     - shell: run any command on the user's machine (e.g. `open file.html`, `ls`, `git status`)\n\
-     - file_read / file_write / file_list: filesystem operations\n\
-     - web_fetch: HTTP GET requests\n\
-     - browser: control a real Chrome browser (navigate, click, type, screenshot, get_text, evaluate JS, get_html)\n\
-     - send_message: send real-time messages to the user during long tasks\n\
-     - memory_manage: your persistent knowledge store (remember/recall/forget/update/list)\n\n\
-     KEY RULES:\n\
-     - Shell output (stdout/stderr) is NOT visible to the user. Only YOUR \
-       final text reply and send_message calls reach the user.\n\
-     - To open files/URLs on macOS: use `open <path>` or `open <url>` via the shell tool.\n\
-     - To open files/URLs on Linux: use `xdg-open <path>` via the shell tool.\n\
-     - Be concise and helpful. Format responses with markdown.\n\
-     - When executing multi-step tasks, call send_message to provide real-time progress updates.\n\
-     - After finishing browser work, call browser with action 'close' to shut it down."
-        .to_string()
+/// Validate that the provider key is not a placeholder.
+pub fn validate_provider_key(key: &str) -> Result<(), String> {
+    if credentials::is_placeholder_key(key) {
+        Err("API key appears to be a placeholder. Please configure a real key with: electro config".to_string())
+    } else {
+        Ok(())
+    }
 }

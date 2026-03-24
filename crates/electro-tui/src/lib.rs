@@ -288,7 +288,7 @@ async fn handle_onboarding_async(
                 let provider = provider.clone();
                 let model = default_model(&provider).to_string();
 
-                match validate_provider_key(&provider, api_key, &model, None).await {
+                match validate_provider_key(api_key) {
                     Ok(()) => {
                         state.current_provider = Some(provider.clone());
                         let items = model_select_items(&provider);

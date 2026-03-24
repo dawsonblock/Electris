@@ -37,7 +37,7 @@ version = "3.2.0"
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/dawsonblock/Electro"
-rust-version = "1.85"
+rust-version = "1.88"
 
 [workspace.dependencies]
 # Async runtime
@@ -83,8 +83,7 @@ tracing-opentelemetry = "0.28"
 
 # Browser
 chromiumoxide = { version = "0.7", features = ["tokio-runtime"] }
-# htmd disabled for Rust 1.85 compatibility (requires 1.88+)
-# htmd = "0.5"
+htmd = "0.5"
 
 # Object storage
 aws-sdk-s3 = "1"
@@ -233,8 +232,8 @@ hive = ["dep:electro-hive"]
 # ═══════════════════════════════════════════════════════════════════
 # DISABLED MODULES
 # ═══════════════════════════════════════════════════════════════════
-# Browser disabled - requires htmd which needs Rust 1.88+
-browser = []
+# Browser enabled - requires Rust 1.88+
+browser = ["electro-tools/browser"]
 postgres = ["electro-memory/postgres"]
 
 [profile.release]
