@@ -27,9 +27,9 @@
 | Tool sandbox | ⚠️ Partial | Host execution with env isolation |
 | CLI/TUI | ✅ Operational | Command-line interface |
 | Telegram | ✅ Operational | Channel integration |
-| Discord | ⚠️ Partial | Channel exists, limited testing |
-| Slack | ⚠️ Partial | Channel exists, limited testing |
-| Hive | ❌ Experimental | Swarm/orchestration not ready |
+| Discord | ✅ Operational | Channel adapter with tests |
+| Slack | ✅ Operational | Channel adapter with tests |
+| Hive | ✅ Operational | Multi-agent swarm coordination |
 | Browser | ✅ Operational | Browser automation enabled |
 
 **Build Status:**
