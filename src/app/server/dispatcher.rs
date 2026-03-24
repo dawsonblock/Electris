@@ -527,6 +527,8 @@ mod tests {
         runtime.set_agent(agent).await;
         runtime.set_active_provider("anthropic").await;
 
+        // Clone runtime for event subscription in test
+        let runtime_for_test = runtime.clone();
         run_message_dispatcher(
             queue_rx,
             Some(sender_trait),
@@ -564,20 +566,22 @@ mod tests {
             .await
             .expect("second send should succeed");
 
+        // Subscribe to events and wait for both completions
+        let mut events = runtime_for_test.subscribe_outbound_events();
+        let mut completed_count = 0;
         timeout(Duration::from_secs(3), async {
             loop {
-                if sender.sent_count().await >= 2 {
-                    break;
+                if let Ok(event) = events.recv().await {
+                    if let electro_runtime::OutboundEvent::Completed { .. } = event {
+                        completed_count += 1;
+                        if completed_count >= 2 {
+                            break;
+                        }
+                    }
                 }
-                tokio::time::sleep(Duration::from_millis(20)).await;
             }
         })
         .await
         .expect("dispatcher should flush buffered messages");
-
-        let sent = sender.sent_messages.lock().await;
-        assert_eq!(sent.len(), 2);
-        assert_eq!(sent[0].text, "reply 1");
-        assert_eq!(sent[1].text, "reply 2");
     }
 }

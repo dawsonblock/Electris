@@ -30,9 +30,7 @@ fn emit_outbound_event(runtime: &RuntimeHandle, event: OutboundEvent) {
     }
 }
 
-fn should_send_direct_reply(channel: &str) -> bool {
-    channel != "cli"
-}
+// Note: Worker emits events only. Adapters subscribe to OutboundEvent and send platform-specific replies.
 
 async fn emit_tool_results_from_history(
     runtime: &RuntimeHandle,
@@ -197,17 +195,7 @@ pub fn create_chat_worker(
                             .to_string(),
                     },
                 );
-                if should_send_direct_reply(&msg.channel) {
-                    let _ = sender
-                        .send_message(OutboundMessage {
-                            chat_id: msg.chat_id.clone(),
-                            text: "Agent offline. Configure credentials to start processing messages."
-                                .to_string(),
-                            reply_to: Some(msg.id.clone()),
-                            parse_mode: None,
-                        })
-                        .await;
-                }
+
                 *state_worker.write().await = WorkerState::Failed;
                 is_heartbeat_worker.store(false, Ordering::Relaxed);
                 continue;
@@ -301,16 +289,7 @@ pub fn create_chat_worker(
                                     error: error.clone(),
                                 },
                             );
-                            if should_send_direct_reply(&msg.channel) {
-                                let _ = sender
-                                    .send_message(OutboundMessage {
-                                        chat_id: msg.chat_id.clone(),
-                                        text: format!("Error: {error}"),
-                                        reply_to: Some(msg.id.clone()),
-                                        parse_mode: None,
-                                    })
-                                    .await;
-                            }
+
                             *state_worker.write().await = WorkerState::Failed;
                             if let Ok(mut task) = current_task_worker.lock() {
                                 task.clear();
@@ -348,16 +327,6 @@ pub fn create_chat_worker(
                                 &[("route", "remote")],
                             )
                             .await;
-                        if should_send_direct_reply(&msg.channel) {
-                            let _ = sender
-                                .send_message(OutboundMessage {
-                                    chat_id: msg.chat_id.clone(),
-                                    text: response.output.clone(),
-                                    reply_to: Some(msg.id.clone()),
-                                    parse_mode: None,
-                                })
-                                .await;
-                        }
                         emit_outbound_event(
                             &runtime,
                             OutboundEvent::Completed {
@@ -502,9 +471,6 @@ pub fn create_chat_worker(
             let outcome = match result {
                 Ok(Ok((reply, _usage))) => {
                     let response_text = reply.text.clone();
-                    if should_send_direct_reply(&msg.channel) {
-                        let _ = sender.send_message(reply).await;
-                    }
                     emit_outbound_event(
                         &runtime,
                         OutboundEvent::Completed {
@@ -599,19 +565,7 @@ pub fn create_chat_worker(
                         timeout_secs = max_task_duration,
                         "worker request timed out"
                     );
-                    if should_send_direct_reply(&msg.channel) {
-                        let _ = sender
-                            .send_message(OutboundMessage {
-                                chat_id: msg.chat_id.clone(),
-                                text: format!(
-                                    "Error: request timed out after {} seconds",
-                                    max_task_duration
-                                ),
-                                reply_to: Some(msg.id.clone()),
-                                parse_mode: None,
-                            })
-                            .await;
-                    }
+
                     *state_worker.write().await = WorkerState::Idle;
                 }
                 WorkerOutcome::Cancelled => {
@@ -636,16 +590,7 @@ pub fn create_chat_worker(
                         error = %error,
                         "worker request failed"
                     );
-                    if should_send_direct_reply(&msg.channel) {
-                        let _ = sender
-                            .send_message(OutboundMessage {
-                                chat_id: msg.chat_id.clone(),
-                                text: format!("Error: {error}"),
-                                reply_to: Some(msg.id.clone()),
-                                parse_mode: None,
-                            })
-                            .await;
-                    }
+
                     *state_worker.write().await = WorkerState::Failed;
                 }
             }
@@ -803,27 +748,34 @@ mod tests {
         );
 
         let msg = make_inbound_msg("hello worker");
+        let request_id = msg.id.clone();
 
         slot.tx
             .send(msg)
             .await
             .expect("message should be accepted by worker");
 
-        timeout(Duration::from_secs(2), async {
+        // Subscribe to events and wait for completion
+        let mut events = runtime.subscribe_outbound_events();
+        let completed = timeout(Duration::from_secs(2), async {
             loop {
-                if sender.sent_count().await > 0 {
-                    break;
+                if let Ok(event) = events.recv().await {
+                    if let OutboundEvent::Completed { .. } = event {
+                        return event;
+                    }
                 }
-                tokio::time::sleep(Duration::from_millis(20)).await;
             }
         })
         .await
-        .expect("worker should emit a reply");
+        .expect("worker should emit completed event");
 
-        let sent = sender.sent_messages.lock().await;
-        assert_eq!(sent.len(), 1);
-        assert_eq!(sent[0].text, "worker reply");
-        drop(sent);
+        assert_eq!(
+            completed,
+            OutboundEvent::Completed {
+                request_id,
+                content: "worker reply".to_string(),
+            }
+        );
 
         let history = memory
             .get("chat_history:test-chat")
