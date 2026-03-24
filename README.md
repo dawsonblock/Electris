@@ -3,7 +3,7 @@
   <a href="https://discord.gg/3ux2c5xz"><img src="https://img.shields.io/badge/Discord-Community-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>&nbsp;
   <img src="https://img.shields.io/badge/License-MIT-A3E635?style=for-the-badge" alt="MIT">&nbsp;
   <img src="https://img.shields.io/badge/v3.2.0-Stable-06B6D4?style=for-the-badge" alt="Version">&nbsp;
-  <img src="https://img.shields.io/badge/Rust-1.83+-E34F26?style=for-the-badge&logo=rust&logoColor=white" alt="Rust">
+  <img src="https://img.shields.io/badge/Rust-1.88+-E34F26?style=for-the-badge&logo=rust&logoColor=white" alt="Rust">
 </p>
 
 <p align="center">
@@ -30,12 +30,12 @@
 | Discord | ⚠️ Partial | Channel exists, limited testing |
 | Slack | ⚠️ Partial | Channel exists, limited testing |
 | Hive | ❌ Experimental | Swarm/orchestration not ready |
-| Browser | ❌ Disabled | Requires Rust 1.88+ |
+| Browser | ✅ Operational | Browser automation enabled |
 
 **Build Status:**
-- ✅ `cargo check` passes (zero warnings)
+- ✅ `cargo check` passes
 - ✅ `cargo test` passes (39 tests)
-- ✅ Rust 1.85.0 toolchain
+- ✅ Rust 1.88.0 toolchain
 
 ## What is Electris
 
@@ -72,7 +72,7 @@ pub async fn deploy() -> Result<Eternity, Never> {
 
 ### Prerequisites
 
-- **Rust** 1.83+ (`rustup update stable`)
+- **Rust** 1.88+ (`rustup update stable`)
 - **Chrome/Chromium** (for browser automation tool)
 - **SQLite** or **PostgreSQL** (for memory persistence)
 
