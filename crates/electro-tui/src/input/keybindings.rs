@@ -41,6 +41,10 @@ pub enum Action {
     Redraw,
     /// Toggle observability panel (Ctrl+O).
     ToggleActivityPanel,
+    /// Toggle AI thinking face (Ctrl+F).
+    ToggleAiFace,
+    /// Toggle options panel (Ctrl+P).
+    ToggleOptionsPanel,
     /// Scroll messages up.
     ScrollUp,
     /// Scroll messages down.
@@ -82,6 +86,8 @@ pub fn map_key(key: KeyEvent) -> Action {
         (KeyModifiers::CONTROL, KeyCode::Char('d')) => Action::Quit,
         (KeyModifiers::CONTROL, KeyCode::Char('l')) => Action::Redraw,
         (KeyModifiers::CONTROL, KeyCode::Char('o')) => Action::ToggleActivityPanel,
+        (KeyModifiers::CONTROL, KeyCode::Char('f')) => Action::ToggleAiFace,
+        (KeyModifiers::CONTROL, KeyCode::Char('p')) => Action::ToggleOptionsPanel,
         // Scrolling
         (KeyModifiers::NONE, KeyCode::PageUp) => Action::PageUp,
         (KeyModifiers::NONE, KeyCode::PageDown) => Action::PageDown,

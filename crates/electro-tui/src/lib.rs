@@ -189,7 +189,7 @@ pub async fn launch_tui(config: ElectroConfig) -> anyhow::Result<()> {
     tick_interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
 
     // 6. Initial draw
-    terminal.draw(|frame| view(&state, frame))?;
+    terminal.draw(|frame| view(&mut state, frame))?;
     state.needs_redraw = false;
 
     // 7. Main event loop
@@ -262,7 +262,7 @@ pub async fn launch_tui(config: ElectroConfig) -> anyhow::Result<()> {
 
         // Render if needed
         if state.needs_redraw {
-            terminal.draw(|frame| view(&state, frame))?;
+            terminal.draw(|frame| view(&mut state, frame))?;
             state.needs_redraw = false;
         }
     }
@@ -286,7 +286,7 @@ async fn handle_onboarding_async(
         OnboardingStep::ValidatingKey { provider } => {
             if let Some(ref api_key) = state.onboarding_api_key.clone() {
                 let provider = provider.clone();
-                let model = default_model(&provider).to_string();
+                let _model = default_model(&provider).to_string();
 
                 match validate_provider_key(api_key) {
                     Ok(()) => {
@@ -434,7 +434,7 @@ fn whoami() -> String {
 }
 
 /// TEA view function — renders AppState to a ratatui frame.
-fn view(state: &AppState, frame: &mut ratatui::Frame) {
+fn view(state: &mut AppState, frame: &mut ratatui::Frame) {
     let area = frame.area();
 
     match state.screen {
@@ -447,7 +447,7 @@ fn view(state: &AppState, frame: &mut ratatui::Frame) {
             );
         }
         Screen::Chat => {
-            views::chat::render_chat(state, area, frame.buffer_mut());
+            views::chat_enhanced::render_chat_enhanced(state, area, frame.buffer_mut());
 
             // Render overlay on top
             match &state.overlay {

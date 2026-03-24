@@ -20,6 +20,10 @@ pub enum InputResult {
     Redraw,
     /// Toggle observability panel (Ctrl+O).
     ToggleActivityPanel,
+    /// Toggle AI thinking face (Ctrl+F).
+    ToggleAiFace,
+    /// Toggle options panel (Ctrl+P).
+    ToggleOptionsPanel,
     /// Scroll message history.
     ScrollUp,
     ScrollDown,
@@ -120,6 +124,8 @@ pub fn handle_input_event(
         Action::TabComplete => InputResult::TabComplete,
         Action::Redraw => InputResult::Redraw,
         Action::ToggleActivityPanel => InputResult::ToggleActivityPanel,
+        Action::ToggleAiFace => InputResult::ToggleAiFace,
+        Action::ToggleOptionsPanel => InputResult::ToggleOptionsPanel,
         Action::ScrollUp => InputResult::ScrollUp,
         Action::ScrollDown => InputResult::ScrollDown,
         Action::PageUp => InputResult::PageUp,

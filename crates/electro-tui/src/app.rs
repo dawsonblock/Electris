@@ -13,8 +13,10 @@ use crate::streaming::renderer::StreamingRenderer;
 use crate::streaming::token_counter::TokenCounter;
 use crate::theme::Theme;
 use crate::widgets::activity_panel::ActivityPanel;
+use crate::widgets::ai_face::AiFace;
 use crate::widgets::markdown::{render_markdown_with_width, RenderedLine};
 use crate::widgets::message_list::{DisplayMessage, MessageList, MessageRole, TurnUsage};
+use crate::widgets::options_panel::OptionsPanel;
 use crate::widgets::select_list::SelectState;
 
 /// Active screen / view state.
@@ -47,6 +49,11 @@ pub struct AppState {
     // Agent
     pub is_agent_working: bool,
     pub activity_panel: ActivityPanel,
+    pub ai_face: AiFace,
+    pub show_ai_face: bool,
+
+    // Options panel
+    pub options_panel: OptionsPanel,
 
     // Streaming
     pub streaming_renderer: Option<StreamingRenderer>,
@@ -94,6 +101,9 @@ impl AppState {
             input: InputState::new(),
             is_agent_working: false,
             activity_panel: ActivityPanel::new(),
+            ai_face: AiFace::new(theme.clone()),
+            show_ai_face: true,
+            options_panel: OptionsPanel::new(theme.clone()),
             streaming_renderer: None,
             token_counter: TokenCounter::new(),
             current_model: None,
@@ -263,6 +273,34 @@ fn handle_key(state: &mut AppState, key: crossterm::event::KeyEvent) {
         return;
     }
 
+    // Handle options panel navigation
+    if state.options_panel.is_visible {
+        match key.code {
+            crossterm::event::KeyCode::Esc | crossterm::event::KeyCode::Char('q') => {
+                state.options_panel.hide();
+                state.needs_redraw = true;
+                return;
+            }
+            crossterm::event::KeyCode::Up => {
+                state.options_panel.previous();
+                state.needs_redraw = true;
+                return;
+            }
+            crossterm::event::KeyCode::Down => {
+                state.options_panel.next();
+                state.needs_redraw = true;
+                return;
+            }
+            crossterm::event::KeyCode::Enter => {
+                state.options_panel.toggle_current();
+                state.options_panel.cycle_current();
+                state.needs_redraw = true;
+                return;
+            }
+            _ => {}
+        }
+    }
+
     // Handle onboarding
     if state.screen == Screen::Onboarding {
         handle_onboarding_key(state, key);
@@ -339,6 +377,12 @@ fn handle_key(state: &mut AppState, key: crossterm::event::KeyEvent) {
         }
         InputResult::ToggleActivityPanel => {
             state.activity_panel.toggle();
+        }
+        InputResult::ToggleAiFace => {
+            state.show_ai_face = !state.show_ai_face;
+        }
+        InputResult::ToggleOptionsPanel => {
+            state.options_panel.toggle();
         }
         InputResult::ScrollUp => {
             state.message_list.scroll_up(3);
