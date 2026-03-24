@@ -507,7 +507,7 @@ fn validate_arguments(
                         FileAccessPolicy::ReadWrite(p) => p,
                     };
 
-                    if granted_path_str == "*" {
+                    if granted_path_str.as_os_str() == "*" {
                         allowed = true;
                         break;
                     }
@@ -720,7 +720,7 @@ fn validate_sandbox(tool: &dyn Tool, session: &SessionContext) -> Result<(), Ele
             FileAccessPolicy::ReadWrite(p) => p,
         };
 
-        if path_str == "*" {
+        if path_str.as_os_str() == "*" {
             continue;
         }
 

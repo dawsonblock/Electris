@@ -72,7 +72,8 @@ tracing-opentelemetry = "0.28"
 
 # Browser
 chromiumoxide = { version = "0.7", features = ["tokio-runtime"] }
-htmd = "0.5"
+# htmd disabled for Rust 1.85 compatibility (requires 1.88+)
+# htmd = "0.5"
 
 # Object storage
 aws-sdk-s3 = "1"
@@ -178,11 +179,12 @@ futures.workspace = true
 tokio-util.workspace = true
 
 [features]
-default = ["telegram", "browser", "mcp", "codex-oauth"]
+default = ["telegram", "mcp", "codex-oauth"]
+# browser feature disabled for Rust 1.85 compatibility
 telegram = ["electro-channels/telegram"]
 discord = ["electro-channels/discord"]
 slack = ["electro-channels/slack"]
-browser = ["electro-tools/browser"]
+# browser = ["electro-tools/browser"]  # disabled for Rust 1.85 compatibility
 postgres = ["electro-memory/postgres"]
 mcp = ["dep:electro-mcp"]
 codex-oauth = ["dep:electro-codex-oauth"]
