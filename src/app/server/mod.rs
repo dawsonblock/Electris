@@ -55,7 +55,7 @@ pub async fn start_server(
     // ── Channel bootstrapping ──
     let mut channels: Vec<Arc<dyn Channel>> = Vec::new();
     let mut primary_channel: Option<Arc<dyn Channel>> = None;
-    let mut channel_receivers = Vec::new();
+    let mut channel_receivers: Vec<tokio::sync::mpsc::Receiver<electro_core::types::message::InboundMessage>> = Vec::new();
 
     // Auto-inject Telegram config from env var
     let mut config = config.clone();
