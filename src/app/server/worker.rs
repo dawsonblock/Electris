@@ -2,7 +2,7 @@ use crate::app::server::commands::handle_slash_command;
 use crate::app::server::dispatcher::state::WorkerState;
 use crate::app::server::slot::ChatSlot;
 use electro_core::types::message::{
-    ChatMessage, ContentPart, InboundMessage, MessageContent, OutboundMessage, Role,
+    ChatMessage, ContentPart, InboundMessage, MessageContent, Role,
 };
 use electro_core::types::session::SessionContext;
 use electro_core::{Channel, Memory, Tool, UsageStore, Vault};

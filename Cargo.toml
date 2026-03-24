@@ -1,23 +1,25 @@
 [workspace]
 resolver = "2"
 members = [
+    # Core runtime - required for operation
     "crates/electro-core",
-    "crates/electro-gateway",
-    "crates/electro-agent",
     "crates/electro-runtime",
+    "crates/electro-agent",
+    "crates/electro-gateway",
+    "crates/electro-tools",
     "crates/electro-providers",
-    "crates/electro-channels",
     "crates/electro-memory",
     "crates/electro-vault",
-    "crates/electro-tools",
+    "crates/electro-channels",
+    "crates/electro-mcp",
+    "crates/electro-tui",
+    "crates/electro-observable",
+    "crates/electro-test-utils",
+    # Experimental - feature-gated
     "crates/electro-skills",
     "crates/electro-automation",
-    "crates/electro-observable",
     "crates/electro-filestore",
-    "crates/electro-test-utils",
-    "crates/electro-mcp",
     "crates/electro-codex-oauth",
-    "crates/electro-tui",
     "crates/electro-hive",
 ]
 
@@ -180,11 +182,11 @@ tokio-util.workspace = true
 
 [features]
 default = ["telegram", "mcp", "codex-oauth"]
-# browser feature disabled for Rust 1.85 compatibility
 telegram = ["electro-channels/telegram"]
 discord = ["electro-channels/discord"]
 slack = ["electro-channels/slack"]
-# browser = ["electro-tools/browser"]  # disabled for Rust 1.85 compatibility
+# Browser disabled - requires htmd which needs Rust 1.88
+browser = []
 postgres = ["electro-memory/postgres"]
 mcp = ["dep:electro-mcp"]
 codex-oauth = ["dep:electro-codex-oauth"]

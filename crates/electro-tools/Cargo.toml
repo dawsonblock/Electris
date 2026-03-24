@@ -7,8 +7,8 @@ rust-version.workspace = true
 description = "Tool integrations for ELECTRO agents"
 
 [features]
-# Browser feature disabled for Rust 1.85 compatibility
-# browser = ["dep:chromiumoxide", "dep:futures", "dep:base64", "dep:htmd"]
+# Browser disabled - requires htmd which needs Rust 1.88
+browser = []
 
 [dependencies]
 electro-core.workspace = true

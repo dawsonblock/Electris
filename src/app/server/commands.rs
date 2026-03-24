@@ -3,7 +3,7 @@ use crate::app::onboarding::decrypt_otk_blob;
 use electro_core::types::message::{ChatMessage, InboundMessage, OutboundMessage};
 use electro_core::{Channel, Memory, Tool, Vault};
 use electro_runtime::RuntimeHandle;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
