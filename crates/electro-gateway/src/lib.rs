@@ -4,7 +4,6 @@
 pub mod dashboard;
 pub mod health;
 pub mod identity;
-pub mod router;
 pub mod server;
 pub mod session;
 pub mod setup_tokens;
