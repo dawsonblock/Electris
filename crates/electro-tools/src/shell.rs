@@ -433,82 +433,107 @@ fn build_container_args(
     args
 }
 
+/// Run a command on the host using the canonical sandbox runner.
+/// 
+/// This is the hardened path that enforces:
+/// - Policy check (shell access)
+/// - Command validation (dangerous characters, path traversal)
+/// - Sandbox constraints (timeout, output cap)
+/// - Audit logging
+///
+/// All live shell execution must flow through this function.
 pub async fn run_host_command(
     parsed: &ParsedCommand,
     timeout_secs: u64,
     ctx: &ToolContext,
     stdin_data: Option<Vec<u8>>,
 ) -> Result<ToolOutput, ElectroError> {
-    validate_host_program(parsed)?;
+    use crate::runner::{ExecutionRequest, SandboxConstraints};
+    use electro_core::policy::{CapabilityPolicy, ShellPolicy};
+
+    // Build sandbox policy (allow shell, restrict network by default)
+    let policy = CapabilityPolicy {
+        file_access: vec![electro_core::policy::FileAccessPolicy::ReadWrite(
+            ctx.workspace_path.clone(),
+        )],
+        network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+        shell_access: ShellPolicy::Allowed,
+        browser_access: electro_core::policy::BrowserPolicy::Blocked,
+    };
+
+    // Build execution request
+    let mut request = ExecutionRequest::new(&parsed.program)
+        .args(parsed.args.iter().map(|s| s.as_str()))
+        .working_dir(&ctx.workspace_path);
+
+    // Add environment variables
     let (home, cache, config, state, tmp) = prepare_host_runtime_dirs(ctx)?;
-
-    let mut command = tokio::process::Command::new(&parsed.program);
-    command
-        .args(&parsed.args)
-        .current_dir(&ctx.workspace_path)
-        .env_clear()
-        .env("ELECTRO_WORKSPACE", &ctx.workspace_path)
-        .env("HOME", &home)
-        .env("XDG_CACHE_HOME", &cache)
-        .env("XDG_CONFIG_HOME", &config)
-        .env("XDG_STATE_HOME", &state)
-        .env("TMPDIR", &tmp)
-        .env("CARGO_HOME", cache.join("cargo"))
-        .env("RUSTUP_HOME", cache.join("rustup"))
-        .env("PIP_CACHE_DIR", cache.join("pip"))
-        .env("NPM_CONFIG_CACHE", cache.join("npm"))
+    request = request
+        .env("ELECTRO_WORKSPACE", ctx.workspace_path.to_string_lossy())
+        .env("HOME", home.to_string_lossy())
+        .env("XDG_CACHE_HOME", cache.to_string_lossy())
+        .env("XDG_CONFIG_HOME", config.to_string_lossy())
+        .env("XDG_STATE_HOME", state.to_string_lossy())
+        .env("TMPDIR", tmp.to_string_lossy())
         .env("GIT_CONFIG_NOSYSTEM", "1")
-        .env("PYTHONNOUSERSITE", "1")
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-
-    if stdin_data.is_some() {
-        command.stdin(Stdio::piped());
-    }
+        .env("PYTHONNOUSERSITE", "1");
 
     if let Ok(path) = std::env::var("PATH") {
-        command.env("PATH", path);
+        request = request.env("PATH", path);
     }
     if let Ok(lang) = std::env::var("LANG") {
-        command.env("LANG", lang);
-    }
-    if let Ok(locale) = std::env::var("LC_ALL") {
-        command.env("LC_ALL", locale);
-    }
-    if let Ok(term) = std::env::var("TERM") {
-        command.env("TERM", term);
+        request = request.env("LANG", lang);
     }
 
-    for name in passthrough_env_names() {
-        if let Ok(value) = std::env::var(&name) {
-            command.env(&name, value);
+    // Add stdin if provided
+    if let Some(data) = stdin_data {
+        request = request.stdin(String::from_utf8_lossy(&data));
+    }
+
+    // Set sandbox constraints
+    let constraints = SandboxConstraints {
+        timeout_secs,
+        max_output_bytes: MAX_OUTPUT_SIZE,
+        ..Default::default()
+    };
+
+    // Execute through canonical sandbox runner
+    match crate::runner::run_sandboxed(request, &policy, Some(constraints)).await {
+        Ok(result) => {
+            // Extract fields before moving stdout
+            let success = result.success();
+            let timed_out = result.timed_out;
+            let truncated = result.truncated;
+            let stderr = result.stderr;
+            
+            let mut content = result.stdout;
+            if !stderr.is_empty() {
+                if !content.is_empty() {
+                    content.push('\n');
+                }
+                content.push_str("[stderr]\n");
+                content.push_str(&stderr);
+            }
+            
+            let is_error = !success || timed_out;
+            
+            if timed_out {
+                content.push_str(&format!("\n[Command timed out after {}s]", timeout_secs));
+            }
+            
+            if truncated {
+                content.push_str("\n... [output truncated]");
+            }
+            
+            Ok(ToolOutput { content, is_error })
         }
-    }
-
-    let mut child = match command.spawn() {
-        Ok(c) => c,
         Err(e) => {
-            return Ok(ToolOutput {
-                content: format!("Failed to execute command via host runner: {}", e),
+            Ok(ToolOutput {
+                content: format!("Sandbox error: {}", e),
                 is_error: true,
             })
         }
-    };
-
-    if let Some(data) = stdin_data {
-        if let Some(mut stdin) = child.stdin.take() {
-            use tokio::io::AsyncWriteExt;
-            let _ = stdin.write_all(&data).await;
-        }
     }
-
-    let result = tokio::time::timeout(
-        std::time::Duration::from_secs(timeout_secs),
-        child.wait_with_output(),
-    )
-    .await;
-
-    render_output(result, timeout_secs, "host")
 }
 
 pub async fn run_container_command(

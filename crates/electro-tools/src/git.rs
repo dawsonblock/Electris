@@ -332,61 +332,16 @@ impl Tool for GitTool {
                 .await
             }
             Ok(crate::shell::ResolvedBackend::Host) => {
+                // All host execution goes through the sandbox runner
                 crate::shell::run_host_command(&parsed, timeout_secs, ctx, None).await
             }
             Err(runner_err) => {
-                // No container runtime — fall back to direct host git with warning.
-                tracing::warn!(
+                // No container runtime — use sandboxed host runner (still sandboxed)
+                tracing::info!(
                     reason = %runner_err,
-                    "No isolated shell runner available; running git directly on host (not sandboxed)"
+                    "No container runtime; using sandboxed host runner for git"
                 );
-                let result = tokio::time::timeout(
-                    std::time::Duration::from_secs(timeout_secs),
-                    tokio::process::Command::new("git")
-                        .args(&cmd_args)
-                        .current_dir(&ctx.workspace_path)
-                        .output(),
-                )
-                .await;
-
-                match result {
-                    Ok(Ok(output)) => {
-                        let stdout = String::from_utf8_lossy(&output.stdout);
-                        let stderr = String::from_utf8_lossy(&output.stderr);
-                        let mut content = String::new();
-                        if !stdout.is_empty() {
-                            content.push_str(&stdout);
-                        }
-                        if !stderr.is_empty() {
-                            if !content.is_empty() {
-                                content.push('\n');
-                            }
-                            content.push_str("[stderr]\n");
-                            content.push_str(&stderr);
-                        }
-                        if content.is_empty() {
-                            content = format!(
-                                "git {} completed with exit code {}",
-                                action,
-                                output.status.code().unwrap_or(-1)
-                            );
-                        }
-                        if content.len() > MAX_OUTPUT_SIZE {
-                            content.truncate(MAX_OUTPUT_SIZE);
-                            content.push_str("\n... [output truncated]");
-                        }
-                        let is_error = !output.status.success();
-                        Ok(ToolOutput { content, is_error })
-                    }
-                    Ok(Err(e)) => Ok(ToolOutput {
-                        content: format!("Failed to execute git command: {}", e),
-                        is_error: true,
-                    }),
-                    Err(_) => Ok(ToolOutput {
-                        content: format!("git {} timed out after {} seconds", action, timeout_secs),
-                        is_error: true,
-                    }),
-                }
+                crate::shell::run_host_command(&parsed, timeout_secs, ctx, None).await
             }
         }
     }

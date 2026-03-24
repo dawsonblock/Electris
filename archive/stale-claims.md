@@ -29,11 +29,11 @@ This file tracks claims that were previously made about Electris but have been c
 ### "Fully Sandboxed"
 **Previous claim**: Implied all tool execution was fully sandboxed.
 
-**Status**: Corrected.
+**Status**: ✅ RESOLVED.
 
-**Current status**: "Policy engine in place, shell/git migration in progress"
+**Current status**: "All live tool execution goes through canonical sandbox"
 
-**Rationale**: The sandbox infrastructure (policy engine, runner) is complete, but shell and git tools still use direct `Command::new`. They need to be migrated to the canonical sandbox runner.
+**Rationale**: Shell and git tools now route through `runner.rs` with policy → validation → sandbox runner → output cap → audit event chain. The only remaining `Command::new` calls are in admin utilities (outside request path) and container engines (which provide their own isolation).
 
 ---
 

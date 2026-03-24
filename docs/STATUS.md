@@ -10,7 +10,7 @@ Strict status table reflecting verified repo state.
 | Gateway | ✅ Active | HTTP endpoints, health checks, SSE streaming, queue ingestion |
 | Event streaming | ✅ Active | OutboundEvent system, subscription-based |
 | Remote worker | ✅ Active | Authenticated remote execution via worker-node |
-| Tool sandbox | 🟡 Partial | Policy engine complete, runner created, tool migration in progress |
+| Tool sandbox | ✅ Active | Policy engine + runner + shell/git migrated to sandbox |
 | TUI | ✅ Active | Pure adapter pattern (enqueue + event subscription) |
 | CLI | ✅ Active | Command-line interface with queue integration |
 | Telegram | ✅ Active | Channel adapter with full integration |

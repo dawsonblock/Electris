@@ -24,7 +24,7 @@
 | Gateway | ✅ Operational | HTTP endpoints, health checks, SSE streaming |
 | Event streaming | ✅ Operational | OutboundEvent system |
 | Remote worker | ✅ Operational | Authenticated remote execution |
-| Tool sandbox | ⚠️ Partial | Policy engine in place, shell/git migration in progress |
+| Tool sandbox | ✅ Operational | Policy → validation → sandbox runner → audit |
 | CLI/TUI | ✅ Operational | Command-line interface |
 | Telegram | ✅ Operational | Channel integration |
 | Discord | ✅ Operational | Channel adapter with tests |
