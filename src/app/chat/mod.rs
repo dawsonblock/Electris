@@ -53,7 +53,7 @@ pub async fn run_chat_mode(
     let censored_cli: Arc<dyn Channel> = Arc::new(SecretCensorChannel {
         inner: cli_arc.clone(),
     });
-    let (tools, _browser_tool_ref) = init_tools(
+    let (tools, browser_tool_ref) = init_tools(
         &config.tools,
         Some(censored_cli),
         Some(pending_messages.clone()),

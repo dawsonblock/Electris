@@ -2,7 +2,7 @@
   <a href="https://github.com/electro-labs/Electro/stargazers"><img src="https://img.shields.io/github/stars/electro-labs/Electro?style=for-the-badge&color=F5A623&logo=github&logoColor=white" alt="Stars"></a>&nbsp;
   <a href="https://discord.gg/3ux2c5xz"><img src="https://img.shields.io/badge/Discord-Community-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>&nbsp;
   <img src="https://img.shields.io/badge/License-MIT-A3E635?style=for-the-badge" alt="MIT">&nbsp;
-  <img src="https://img.shields.io/badge/v3.2.0-Stable-06B6D4?style=for-the-badge" alt="Version">&nbsp;
+  <img src="https://img.shields.io/badge/v3.2.0-Operational%20Beta-06B6D4?style=for-the-badge" alt="Version">&nbsp;
   <img src="https://img.shields.io/badge/Rust-1.88+-E34F26?style=for-the-badge&logo=rust&logoColor=white" alt="Rust">
 </p>
 
@@ -24,18 +24,23 @@
 | Gateway | ✅ Operational | HTTP endpoints, health checks, SSE streaming |
 | Event streaming | ✅ Operational | OutboundEvent system |
 | Remote worker | ✅ Operational | Authenticated remote execution |
-| Tool sandbox | ⚠️ Partial | Host execution with env isolation |
+| Tool sandbox | ⚠️ Partial | Policy engine in place, shell/git migration in progress |
 | CLI/TUI | ✅ Operational | Command-line interface |
 | Telegram | ✅ Operational | Channel integration |
 | Discord | ✅ Operational | Channel adapter with tests |
 | Slack | ✅ Operational | Channel adapter with tests |
-| Hive | ✅ Operational | Multi-agent swarm coordination |
+| Hive | ⚠️ Feature-gated | Multi-agent swarm (experimental, build with `--features hive`) |
 | Browser | ✅ Operational | Browser automation enabled |
 
 **Build Status:**
-- ✅ `cargo check` passes
-- ✅ `cargo test` passes (39 tests)
+- ✅ `cargo check` passes (default features)
+- ✅ `cargo test` passes (39+ tests)
 - ✅ Rust 1.88.0 toolchain
+
+**Feature Flags:**
+- Default: `telegram`, `mcp`, `tui`
+- Experimental (not in default): `hive`, `skills`, `automation`, `filestore`, `codex-oauth`
+- Build with experimental: `cargo build --features "hive,skills,automation,filestore"`
 
 ## What is Electris
 
@@ -63,7 +68,7 @@ pub async fn deploy() -> Result<Eternity, Never> {
 | **Memory Footprint** | < 50 MB baseline |
 | **Cold Start** | < 100ms |
 | **Test Coverage** | 905+ tests |
-| **Clippy Warnings** | 0 |
+| **Clippy Warnings** | Core clean, experimental has warnings |
 | **Channels** | 4 (Telegram, Discord, Slack, CLI) |
 | **AI Providers** | 6 (Anthropic, OpenAI, Gemini, Grok, OpenRouter, Codex OAuth) |
 | **Built-in Tools** | 10+ categories |

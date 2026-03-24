@@ -1,16 +1,25 @@
 use crate::app::cli::{handle_model_command, list_configured_providers, remove_provider};
 use crate::app::onboarding::decrypt_otk_blob;
-use electro_core::types::message::{ChatMessage, InboundMessage, OutboundMessage};
+use electro_core::types::message::{ChatMessage, InboundMessage};
 use electro_core::{Channel, Memory, Tool, Vault};
-use electro_runtime::RuntimeHandle;
-use std::collections::HashSet;
+use electro_runtime::{OutboundEvent, RuntimeHandle};
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::Mutex;
+
+/// Helper to emit an outbound event for slash command responses.
+/// This follows the unified output model: events only, no direct channel calls.
+fn emit_response(runtime: &RuntimeHandle, request_id: &str, text: impl Into<String>) {
+    let _ = runtime.emit_outbound_event(OutboundEvent::Completed {
+        request_id: request_id.to_string(),
+        content: text.into(),
+    });
+}
 
 #[allow(clippy::too_many_arguments)]
 pub async fn handle_slash_command(
     msg: &InboundMessage,
-    sender: &Arc<dyn Channel>,
+    _sender: &Arc<dyn Channel>,
     runtime: &RuntimeHandle,
     memory: &Arc<dyn Memory>,
     _history: &[ChatMessage],
@@ -37,25 +46,11 @@ pub async fn handle_slash_command(
         let blob_b64 = &text["enc:v1:".len()..];
         match decrypt_otk_blob(blob_b64, setup_tokens, &chat_id).await {
             Ok(_key_text) => {
-                // Key detection and validation logic...
-                let _ = sender
-                    .send_message(OutboundMessage {
-                        chat_id,
-                        text: "Key received and validated.".to_string(),
-                        reply_to: Some(msg_id),
-                        parse_mode: None,
-                    })
-                    .await;
+                // Emit event instead of direct send
+                emit_response(runtime, &msg_id, "Key received and validated.");
             }
             Err(e) => {
-                let _ = sender
-                    .send_message(OutboundMessage {
-                        chat_id,
-                        text: format!("Error: {}", e),
-                        reply_to: Some(msg_id),
-                        parse_mode: None,
-                    })
-                    .await;
+                emit_response(runtime, &msg_id, format!("Error: {}", e));
             }
         }
         return true;
@@ -68,14 +63,7 @@ pub async fn handle_slash_command(
     match cmd.as_str() {
         "/help" => {
             let help = "Available commands:\n/help - Show this help\n/model - Switch model\n/keys - List configured keys\n/addkey - Add a new API key\n/removekey - Remove an API key\n/stop - Stop active task\n/reset - Reset current chat history";
-            let _ = sender
-                .send_message(OutboundMessage {
-                    chat_id,
-                    text: help.to_string(),
-                    reply_to: Some(msg_id),
-                    parse_mode: None,
-                })
-                .await;
+            emit_response(runtime, &msg_id, help);
             true
         }
         "/model" => {
@@ -87,63 +75,28 @@ pub async fn handle_slash_command(
                 Ok(resp) => resp,
                 Err(error) => format!("Error: {error}"),
             };
-            let _ = sender
-                .send_message(OutboundMessage {
-                    chat_id,
-                    text: resp,
-                    reply_to: Some(msg_id),
-                    parse_mode: None,
-                })
-                .await;
+            emit_response(runtime, &msg_id, resp);
             true
         }
         "/keys" => {
             let resp = list_configured_providers();
-            let _ = sender
-                .send_message(OutboundMessage {
-                    chat_id,
-                    text: resp,
-                    reply_to: Some(msg_id),
-                    parse_mode: None,
-                })
-                .await;
+            emit_response(runtime, &msg_id, resp);
             true
         }
         "/removekey" => {
             let resp = remove_provider(&args);
-            let _ = sender
-                .send_message(OutboundMessage {
-                    chat_id,
-                    text: resp,
-                    reply_to: Some(msg_id),
-                    parse_mode: None,
-                })
-                .await;
+            emit_response(runtime, &msg_id, resp);
             true
         }
         "/reset" => {
             let history_key = format!("chat_history:{}", chat_id);
             let _ = memory.delete(&history_key).await;
-            let _ = sender
-                .send_message(OutboundMessage {
-                    chat_id,
-                    text: "Chat history reset.".to_string(),
-                    reply_to: Some(msg_id),
-                    parse_mode: None,
-                })
-                .await;
+            emit_response(runtime, &msg_id, "Chat history reset.");
             true
         }
         "/stop" => {
             // Handled by dispatcher interruption logic, but we can confirm
-            let _ = sender
-                .send_message(OutboundMessage {
-                    chat_id,
-                    text: "Task stopped.".to_string(),
-                    reply_to: Some(msg_id),
-                    parse_mode: None,
-                })
-                .await;
+            emit_response(runtime, &msg_id, "Task stopped.");
             true
         }
         _ => false,

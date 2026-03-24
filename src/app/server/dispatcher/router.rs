@@ -1,10 +1,9 @@
 use crate::app::server::dispatcher::classify::InboundKind;
 use crate::app::server::dispatcher::state::{DispatchEntry, WorkerState, MAX_PENDING_PER_CHAT};
 use crate::app::server::dispatcher::StopRequest;
-use electro_core::types::message::{InboundMessage, OutboundMessage};
-use electro_core::Channel;
+use electro_core::types::message::InboundMessage;
+use electro_runtime::{OutboundEvent, RuntimeHandle};
 use std::sync::atomic::Ordering;
-use std::sync::Arc;
 
 pub fn queue_pending_message(
     entry: &mut DispatchEntry,
@@ -44,7 +43,7 @@ pub fn queue_pending_message(
 
 pub async fn request_stop(
     stop_request: StopRequest,
-    sender: &Arc<dyn Channel>,
+    runtime: &RuntimeHandle,
     inbound: &InboundMessage,
 ) {
     let request_id = match &*stop_request.state.read().await {
@@ -65,23 +64,16 @@ pub async fn request_stop(
             request_id = %request_id,
             "cancelling active worker request"
         );
-        let _ = sender
-            .send_message(OutboundMessage {
-                chat_id: inbound.chat_id.clone(),
-                text: "Task stopped.".to_string(),
-                reply_to: Some(inbound.id.clone()),
-                parse_mode: None,
-            })
-            .await;
+        // Unified output: emit event instead of direct send_message
+        let _ = runtime.emit_outbound_event(OutboundEvent::Completed {
+            request_id: inbound.id.clone(),
+            content: "Task stopped.".to_string(),
+        });
     } else {
-        let _ = sender
-            .send_message(OutboundMessage {
-                chat_id: inbound.chat_id.clone(),
-                text: "No active task to stop.".to_string(),
-                reply_to: Some(inbound.id.clone()),
-                parse_mode: None,
-            })
-            .await;
+        let _ = runtime.emit_outbound_event(OutboundEvent::Completed {
+            request_id: inbound.id.clone(),
+            content: "No active task to stop.".to_string(),
+        });
     }
 }
 

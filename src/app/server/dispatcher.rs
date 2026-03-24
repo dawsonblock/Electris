@@ -152,18 +152,11 @@ pub async fn run_message_dispatcher(
                         runtime_clone
                             .increment_counter("electro.runtime.overload_rejections", &[])
                             .await;
+                        // Unified output: emit event only, adapters will send to channels
                         let _ = runtime_clone.emit_outbound_event(electro_runtime::OutboundEvent::Failed {
                             request_id: inbound.id.clone(),
-                            error: "overloaded".to_string(),
+                            error: "System overloaded. Please retry shortly.".to_string(),
                         });
-                        let _ = sender
-                            .send_message(electro_core::types::message::OutboundMessage {
-                                chat_id: inbound.chat_id.clone(),
-                                text: "System overloaded. Please retry shortly.".to_string(),
-                                reply_to: Some(inbound.id.clone()),
-                                parse_mode: None,
-                            })
-                            .await;
                         continue;
                     }
 
@@ -234,7 +227,7 @@ pub async fn run_message_dispatcher(
                                 state: entry.slot.state.clone(),
                             };
                             drop(slots);
-                            request_stop(stop_entry, &sender, &inbound).await;
+                            request_stop(stop_entry, &runtime_clone, &inbound).await;
                             continue;
                         }
                         InboundKind::SystemEvent => {}
@@ -358,13 +351,11 @@ fn ensure_worker<'a>(
 }
 
 fn maybe_intercept_busy_message(
-    sender: &Arc<dyn Channel>,
+    _sender: &Arc<dyn Channel>,
     runtime: &RuntimeHandle,
     entry: &DispatchEntry,
     inbound: &InboundMessage,
 ) {
-    let icpt_sender = sender.clone();
-    let icpt_chat_id = inbound.chat_id.clone();
     let icpt_msg_id = inbound.id.clone();
     let icpt_msg_text = inbound.text.clone().unwrap_or_default();
     let icpt_interrupt = entry.slot.interrupt.clone();
@@ -413,15 +404,14 @@ fn maybe_intercept_busy_message(
                 let should_cancel = text.contains("[CANCEL]");
                 text = text.replace("[CANCEL]", "").trim().to_string();
 
+                // Unified output: emit event instead of direct send_message
                 if !text.is_empty() {
-                    let _ = icpt_sender
-                        .send_message(electro_core::types::message::OutboundMessage {
-                            chat_id: icpt_chat_id,
-                            text,
-                            reply_to: Some(icpt_msg_id),
-                            parse_mode: None,
-                        })
-                        .await;
+                    let _ = icpt_runtime.emit_outbound_event(
+                        electro_runtime::OutboundEvent::Completed {
+                            request_id: icpt_msg_id,
+                            content: text,
+                        }
+                    );
                 }
 
                 if should_cancel {

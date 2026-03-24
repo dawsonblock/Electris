@@ -797,6 +797,8 @@ mod tests {
 
     #[test]
     fn host_program_validation_blocks_shell_launchers() {
+        // Ensure the env var is not set for this test
+        std::env::remove_var("ELECTRO_SHELL_ALLOW_HOST_LAUNCHER");
         let parsed = ParsedCommand::new(
             "bash".to_string(),
             vec!["-lc".to_string(), "echo hi".to_string()],

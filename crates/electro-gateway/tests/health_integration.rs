@@ -126,7 +126,8 @@ async fn readiness_endpoint_reports_degraded_when_agent_missing() {
         .unwrap();
 
     let resp = app.oneshot(req).await.unwrap();
-    assert_eq!(resp.status(), StatusCode::OK);
+    // Degraded state returns 503 Service Unavailable but with valid JSON body
+    assert_eq!(resp.status(), StatusCode::SERVICE_UNAVAILABLE);
 
     let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
         .await

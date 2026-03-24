@@ -1,45 +1,101 @@
 # Stale Claims Archive
 
-**Claims that have been removed or corrected from the codebase.**
+This file tracks claims that were previously made about Electris but have been corrected or removed.
 
 ## Removed Claims
 
-### "Production-grade"
-**Status:** Removed from README
-**Reason:** The codebase is operational but not production-ready. Tool sandbox is partial, TUI bypasses queue, and several features are experimental.
+### "Stable" / "Production-Grade"
+**Previous claim**: Version badges and documentation described the project as "Stable" or "production-grade".
 
-### "Zero warnings"
-**Status:** Corrected
-**Reason:** Build currently has style warnings (clippy). Core compiles with zero errors.
+**Status**: Removed.
 
-### "Fully sandboxed"
-**Status:** Corrected to "Partial"
-**Reason:** Host execution is still available (behind validation). Full sandbox requires Docker/Podman backend.
+**Current status**: "Operational Beta" - the core runtime is functional and tested, but the project is still evolving.
 
-### "Fully unified runtime"
-**Status:** Corrected
-**Reason:** TUI agent bridge still calls `process_message` directly instead of using queue/dispatcher/worker spine.
+**Rationale**: The term "stable" implies a level of maturity and API stability that wasn't accurate. The runtime is operational but still under active development.
 
-### "Stable release"
-**Status:** Removed
-**Reason:** This is a stabilization branch, not a release. See `docs/status.md` for actual capability status.
+---
 
-### "Browser automation included"
-**Status:** Disabled
-**Reason:** htmd dependency requires Rust 1.88+, currently on 1.85.0.
+### "Clippy Warnings: 0"
+**Previous claim**: Documentation claimed zero clippy warnings.
 
-## Outdated Documentation
+**Status**: Corrected.
 
-The following documents may contain stale information:
-- `COMPLETE_FIX_PLAN.md` - May reference completed work
-- `CORRECTED_BUILD_NOTES.md` - Historical context, not current state
-- `docs/operations.md` - May have outdated conflict scan instructions
+**Current status**: "Core clean, experimental has warnings"
 
-## Verification
+**Rationale**: While the core stabilization set is relatively clean, experimental modules and some edge cases generate warnings. Claiming zero was inaccurate.
 
-Current truth sources:
-- `docs/status.md` - Operational status
-- `docs/ownership.md` - Architecture ownership
-- `scripts/check_core_paths.sh` - Verification script
-- `cargo check` - Build status
-- `cargo test` - Test status
+---
+
+### "Fully Sandboxed"
+**Previous claim**: Implied all tool execution was fully sandboxed.
+
+**Status**: Corrected.
+
+**Current status**: "Policy engine in place, shell/git migration in progress"
+
+**Rationale**: The sandbox infrastructure (policy engine, runner) is complete, but shell and git tools still use direct `Command::new`. They need to be migrated to the canonical sandbox runner.
+
+---
+
+### "Hive: Operational"
+**Previous claim**: Hive (multi-agent swarm) was listed as operational.
+
+**Status**: Corrected.
+
+**Current status**: "⚠️ Feature-gated" - Experimental, not in default build
+
+**Rationale**: Hive is functional but not part of the core stabilization set. It's now feature-gated and requires explicit opt-in.
+
+---
+
+## Corrected Architecture Claims
+
+### TUI Execution
+**Previous claim**: TUI was a normal adapter.
+
+**Issue**: TUI was calling `agent.process_message()` directly in a spawned task, bypassing the queue.
+
+**Correction**: Refactored to pure adapter pattern:
+- TUI creates `InboundMessage`
+- Enqueues via `RuntimeHandle`
+- Worker executes agent
+- TUI subscribes to `OutboundEvent` for UI updates
+
+**Verification**: `rg 'process_message' crates/electro-tui/src --type rust` now only shows the worker task.
+
+---
+
+### Output Unification
+**Previous claim**: Output was unified through events.
+
+**Issue**: Multiple direct output paths existed:
+- `commands.rs` used `sender.send_message()` directly
+- `dispatcher.rs` used `sender.send_message()` for overload and busy messages
+- `router.rs` used `sender.send_message()` for stop confirmations
+
+**Correction**: All converted to use `OutboundEvent`:
+- `commands.rs` → `OutboundEvent::Completed`
+- `dispatcher.rs` → `OutboundEvent::Failed` (overload)
+- `router.rs` → `OutboundEvent::Completed` (stop)
+- Busy interceptor → `OutboundEvent::Completed`
+
+**Verification**: `rg 'send_message' src/app/server --type rust` now only shows trait definitions and adapter implementations.
+
+---
+
+## Why This Archive Exists
+
+Transparency about past claims helps:
+1. **Track evolution**: Show how the project has matured
+2. **Prevent regression**: Document what was fixed and why
+3. **Build trust**: Honest accounting of past overclaims
+4. **Guide future**: Remind contributors to verify claims
+
+## Adding New Entries
+
+When correcting a claim:
+1. Document the previous claim
+2. Explain why it was inaccurate
+3. State the current corrected status
+4. Provide verification method
+5. Date the correction

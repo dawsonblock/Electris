@@ -22,6 +22,8 @@ mod mode_switch;
 mod network_guard;
 pub mod policy;
 pub mod prowl_blueprints;
+/// Sandbox runner for tool execution with policy enforcement.
+pub mod runner;
 mod send_file;
 mod send_message;
 mod shell;
@@ -40,6 +42,7 @@ pub use key_manage::KeyManageTool;
 pub use lambda_recall::LambdaRecallTool;
 pub use memory_manage::MemoryManageTool;
 pub use mode_switch::{ModeSwitchTool, SharedMode};
+pub use runner::{run_git_command, run_shell_command, run_sandboxed, ExecutionRequest, ExecutionResult, SandboxConstraints};
 pub use send_file::SendFileTool;
 pub use send_message::SendMessageTool;
 pub use shell::ShellTool;

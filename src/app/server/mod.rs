@@ -183,7 +183,7 @@ pub async fn start_server(
     );
 
     // ── Tools ──
-    let (tools, _browser_tool_ref) = init_tools(
+    let (tools, browser_tool_ref) = init_tools(
         &config.tools,
         censored_channel,
         Some(pending_messages.clone()),

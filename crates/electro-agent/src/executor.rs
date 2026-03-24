@@ -453,6 +453,17 @@ fn validate_arguments(
     tool: &dyn Tool,
 ) -> Result<(), ElectroError> {
     let policy = tool.declarations();
+    
+    // Check for wildcard file access - if present, skip detailed path validation
+    let has_wildcard_file_access = policy.file_access.iter().any(|access| {
+        let granted_path = match access {
+            FileAccessPolicy::Read(p) => p,
+            FileAccessPolicy::Write(p) => p,
+            FileAccessPolicy::ReadWrite(p) => p,
+        };
+        granted_path.as_os_str() == "*" || granted_path.to_string_lossy() == "*"
+    });
+    
     // Validate file path arguments
     let path_keys = [
         "path",
@@ -483,11 +494,14 @@ fn validate_arguments(
                     }
                 };
 
-                if let Err(e) = validate_path(&abs_req, &session.tool_policy.writable_roots) {
-                    return Err(ElectroError::SandboxViolation(format!(
-                        "Path validation failed: {}",
-                        e
-                    )));
+                // Skip writable_roots validation if tool has wildcard file access
+                if !has_wildcard_file_access {
+                    if let Err(e) = validate_path(&abs_req, &session.tool_policy.writable_roots) {
+                        return Err(ElectroError::SandboxViolation(format!(
+                            "Path validation failed: {}",
+                            e
+                        )));
+                    }
                 }
 
                 // Authoritative policy test: are we allowed to access files at all?
@@ -501,18 +515,17 @@ fn validate_arguments(
                 // Check against specific policy grants
                 let mut allowed = false;
                 for access in &policy.file_access {
-                    let granted_path_str = match access {
+                    let granted_path = match access {
                         FileAccessPolicy::Read(p) => p,
                         FileAccessPolicy::Write(p) => p,
                         FileAccessPolicy::ReadWrite(p) => p,
                     };
 
-                    if granted_path_str.as_os_str() == "*" {
+                    // Check for wildcard - matches any path
+                    if granted_path.as_os_str() == "*" || granted_path.to_string_lossy() == "*" {
                         allowed = true;
                         break;
                     }
-
-                    let granted_path = std::path::Path::new(granted_path_str);
                     // Use resolve_safe_path to get a clean, absolute version of the granted path
                     // Note: it's okay if granted_path is "*" or a relative path
                     if let Ok(abs_granted) = electro_core::path_policy::resolve_safe_path(
@@ -739,6 +752,7 @@ mod tests {
     use async_trait::async_trait;
     use electro_core::policy::CapabilityPolicy;
     use electro_test_utils::{make_session, MockTool};
+    use std::path::PathBuf;
     use std::sync::atomic::{AtomicUsize, Ordering};
 
     // ── Test helpers ────────────────────────────────────────────────────
@@ -790,7 +804,7 @@ mod tests {
         fn declarations(&self) -> CapabilityPolicy {
             CapabilityPolicy {
                 file_access: vec![electro_core::policy::FileAccessPolicy::ReadWrite(
-                    "*".to_string(),
+                    PathBuf::from("*"),
                 )],
                 network_access: electro_core::net_policy::NetworkPolicy::Blocked,
                 shell_access: electro_core::policy::ShellPolicy::Blocked,
@@ -868,7 +882,7 @@ mod tests {
         fn declarations(&self) -> CapabilityPolicy {
             CapabilityPolicy {
                 file_access: vec![electro_core::policy::FileAccessPolicy::ReadWrite(
-                    "*".to_string(),
+                    PathBuf::from("*"),
                 )],
                 network_access: electro_core::net_policy::NetworkPolicy::Blocked,
                 shell_access: electro_core::policy::ShellPolicy::Blocked,
@@ -927,7 +941,7 @@ mod tests {
         std::fs::create_dir_all(&inner_dir).unwrap();
 
         let tool = MockTool::new("file_tool").with_declarations(CapabilityPolicy {
-            file_access: vec![FileAccessPolicy::Read("subdir".to_string())],
+            file_access: vec![FileAccessPolicy::Read(PathBuf::from("subdir"))],
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,
             browser_access: electro_core::policy::BrowserPolicy::Blocked,
@@ -939,9 +953,9 @@ mod tests {
             chat_id: "c".to_string(),
             user_id: "u".to_string(),
             history: Vec::new(),
-            workspace_path: workspace,
+            workspace_path: workspace.clone(),
             tool_timeout_secs: 60,
-            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace.clone()),
+            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace),
         };
 
         let result = validate_sandbox(&tool, &session);
@@ -955,7 +969,7 @@ mod tests {
         std::fs::create_dir_all(&workspace).unwrap();
 
         let tool = MockTool::new("evil_tool").with_declarations(CapabilityPolicy {
-            file_access: vec![FileAccessPolicy::Write("/etc/passwd".to_string())],
+            file_access: vec![FileAccessPolicy::Write(PathBuf::from("/etc/passwd"))],
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,
             browser_access: electro_core::policy::BrowserPolicy::Blocked,
@@ -967,9 +981,9 @@ mod tests {
             chat_id: "c".to_string(),
             user_id: "u".to_string(),
             history: Vec::new(),
-            workspace_path: workspace,
+            workspace_path: workspace.clone(),
             tool_timeout_secs: 60,
-            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace.clone()),
+            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace),
         };
 
         let result = validate_sandbox(&tool, &session);
@@ -987,7 +1001,7 @@ mod tests {
         std::fs::create_dir_all(&workspace).unwrap();
 
         let tool = MockTool::new("traversal_tool").with_declarations(CapabilityPolicy {
-            file_access: vec![FileAccessPolicy::Read("../../etc/shadow".to_string())],
+            file_access: vec![FileAccessPolicy::Read(PathBuf::from("../../etc/shadow"))],
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,
             browser_access: electro_core::policy::BrowserPolicy::Blocked,
@@ -999,9 +1013,9 @@ mod tests {
             chat_id: "c".to_string(),
             user_id: "u".to_string(),
             history: Vec::new(),
-            workspace_path: workspace,
+            workspace_path: workspace.clone(),
             tool_timeout_secs: 60,
-            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace.clone()),
+            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace),
         };
 
         let result = validate_sandbox(&tool, &session);
@@ -1038,7 +1052,7 @@ mod tests {
 
         // Path with encoded-style traversal (literal string, not URL-encoded)
         let tool = MockTool::new("encoded_traversal").with_declarations(CapabilityPolicy {
-            file_access: vec![FileAccessPolicy::Read("../../../etc/passwd".to_string())],
+            file_access: vec![FileAccessPolicy::Read(PathBuf::from("../../../etc/passwd"))],
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,
             browser_access: electro_core::policy::BrowserPolicy::Blocked,
@@ -1050,9 +1064,9 @@ mod tests {
             chat_id: "c".to_string(),
             user_id: "u".to_string(),
             history: Vec::new(),
-            workspace_path: workspace,
+            workspace_path: workspace.clone(),
             tool_timeout_secs: 60,
-            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace.clone()),
+            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace),
         };
 
         let result = validate_sandbox(&tool, &session);
@@ -1066,7 +1080,7 @@ mod tests {
         std::fs::create_dir_all(&workspace).unwrap();
 
         let tool = MockTool::new("root_access").with_declarations(CapabilityPolicy {
-            file_access: vec![FileAccessPolicy::ReadWrite("/".to_string())],
+            file_access: vec![FileAccessPolicy::ReadWrite(PathBuf::from("/"))],
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,
             browser_access: electro_core::policy::BrowserPolicy::Blocked,
@@ -1078,9 +1092,9 @@ mod tests {
             chat_id: "c".to_string(),
             user_id: "u".to_string(),
             history: Vec::new(),
-            workspace_path: workspace,
+            workspace_path: workspace.clone(),
             tool_timeout_secs: 60,
-            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace.clone()),
+            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace),
         };
 
         let result = validate_sandbox(&tool, &session);
@@ -1095,7 +1109,7 @@ mod tests {
         std::fs::create_dir_all(&nested).unwrap();
 
         let tool = MockTool::new("nested_tool").with_declarations(CapabilityPolicy {
-            file_access: vec![FileAccessPolicy::Read("src/lib".to_string())],
+            file_access: vec![FileAccessPolicy::Read(PathBuf::from("src/lib"))],
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,
             browser_access: electro_core::policy::BrowserPolicy::Blocked,
@@ -1107,9 +1121,9 @@ mod tests {
             chat_id: "c".to_string(),
             user_id: "u".to_string(),
             history: Vec::new(),
-            workspace_path: workspace,
+            workspace_path: workspace.clone(),
             tool_timeout_secs: 60,
-            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace.clone()),
+            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace),
         };
 
         let result = validate_sandbox(&tool, &session);
@@ -1125,8 +1139,8 @@ mod tests {
 
         let tool = MockTool::new("multi_tool").with_declarations(CapabilityPolicy {
             file_access: vec![
-                FileAccessPolicy::Read("src".to_string()),
-                FileAccessPolicy::Write("docs".to_string()),
+                FileAccessPolicy::Read(PathBuf::from("src")),
+                FileAccessPolicy::Write(PathBuf::from("docs")),
             ],
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,
@@ -1139,9 +1153,9 @@ mod tests {
             chat_id: "c".to_string(),
             user_id: "u".to_string(),
             history: Vec::new(),
-            workspace_path: workspace,
+            workspace_path: workspace.clone(),
             tool_timeout_secs: 60,
-            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace.clone()),
+            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace),
         };
 
         let result = validate_sandbox(&tool, &session);
@@ -1156,8 +1170,8 @@ mod tests {
 
         let tool = MockTool::new("mixed_tool").with_declarations(CapabilityPolicy {
             file_access: vec![
-                FileAccessPolicy::Read("valid".to_string()),
-                FileAccessPolicy::Write("/etc/shadow".to_string()),
+                FileAccessPolicy::Read(PathBuf::from("valid")),
+                FileAccessPolicy::Write(PathBuf::from("/etc/shadow")),
             ],
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,
@@ -1170,9 +1184,9 @@ mod tests {
             chat_id: "c".to_string(),
             user_id: "u".to_string(),
             history: Vec::new(),
-            workspace_path: workspace,
+            workspace_path: workspace.clone(),
             tool_timeout_secs: 60,
-            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace.clone()),
+            tool_policy: electro_tools::policy::ToolPolicy::for_workspace(workspace),
         };
 
         let result = validate_sandbox(&tool, &session);
@@ -1680,7 +1694,7 @@ mod tests {
     async fn parallel_multiple_different_tools() {
         let decl_policy = electro_core::policy::CapabilityPolicy {
             file_access: vec![electro_core::policy::FileAccessPolicy::ReadWrite(
-                "*".to_string(),
+                PathBuf::from("*"),
             )],
             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
             shell_access: electro_core::policy::ShellPolicy::Blocked,

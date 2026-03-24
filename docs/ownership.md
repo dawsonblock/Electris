@@ -1,100 +1,162 @@
-# Electris Architecture Ownership
+# Electris Ownership
 
-**Single Source of Truth for Component Ownership**
+This document explicitly assigns ownership of critical runtime concerns.
 
 ## Execution Authority
 
-**Owner:** `src/app/server/worker.rs` and `src/bin/worker-node.rs`
+### Normal Runtime
+- **Owner**: `src/app/server/worker.rs`
+- **Invariant**: Only this file executes the agent for normal runtime requests
+- **Entry Point**: `create_chat_worker()` spawns the worker task
+- **Responsibilities**:
+  - Acquire execution permit
+  - Emit `Started` event
+  - Select local vs remote execution
+  - Run with timeout
+  - Emit `ToolCall`, `ToolResult`, `Completed`/`Failed` events
+  - Persist history
+  - Release permit
 
-These are the ONLY files that may call `agent.process_message()` in the live runtime.
+### Remote Execution
+- **Owner**: `src/bin/worker-node.rs`
+- **Invariant**: Only this binary executes the agent for remote requests
+- **Entry Point**: `/execute` HTTP handler
+- **Responsibilities**:
+  - Authenticate requests
+  - Execute agent
+  - Return structured success/failure response
 
-- `worker.rs` - Local worker pool execution
-- `worker-node.rs` - Remote worker node execution
-
-**NOT authorized to execute directly:**
-- `electro-gateway` - Must only enqueue
-- `electro-tui` - Currently bypasses (tech debt)
-- Any channel adapters - Must use queue
+### Prohibited
+The following must NOT execute the agent directly:
+- Gateway routes (must enqueue only)
+- TUI/CLI adapters (must enqueue only)
+- Channel adapters (must enqueue only)
+- Command handlers (must emit events only)
 
 ## HTTP Surface
 
-**Owner:** `crates/electro-gateway`
+- **Owner**: `crates/electro-gateway`
+- **Invariant**: Only this crate owns the HTTP service surface
+- **Routes**:
+  - `GET /health/live` - Liveness probe
+  - `GET /health/ready` - Readiness probe (returns 503 if degraded)
+  - `POST /message` - Enqueue message (returns request_id)
+  - `GET /stream` - SSE stream of `OutboundEvent`
+  - `POST /execute` - Remote worker execution endpoint
 
-The gateway crate owns all HTTP endpoints:
-- `/health/live` - Liveness probe
-- `/health/ready` - Readiness probe  
-- `/message` - Request enqueue
-- `/stream` - Event stream (SSE)
-
-**NOT authorized:**
-- `src/app/server/gateway.rs` - Deleted (was duplicate)
-- Any other server modules
+### Prohibited
+No other crate may define HTTP routes that:
+- Duplicate gateway functionality
+- Execute the agent directly
+- Bypass the queue/dispatcher/worker path
 
 ## Output Contract
 
-**Owner:** `electro-runtime::OutboundEvent`
+- **Owner**: `crates/electro-runtime::events::OutboundEvent`
+- **Invariant**: This is the exclusive runtime output contract
+- **Events**:
+  - `Started { request_id }`
+  - `Token { request_id, content }`
+  - `ToolCall { request_id, tool }`
+  - `ToolResult { request_id, tool, success, content }`
+  - `Completed { request_id, content }`
+  - `Failed { request_id, error }`
 
-All output goes through the event system:
-- `Started` - Request started
-- `ToolCall` - Tool invoked
-- `ToolResult` - Tool completed
-- `Completed` - Request completed
-- `Failed` - Request failed
+### Responsibilities by Component
 
-Adapters subscribe to events and render platform-specific output.
+**Worker** (emits):
+- All execution events
+- No direct output formatting
 
-**NOT authorized:**
-- Direct `sender.send_message()` calls from worker (removed)
-- Direct `println!` in core (removed)
+**Adapters** (consume and render):
+- Gateway: SSE stream
+- CLI: Print to stdout
+- TUI: Render to UI
+- Channels: Send platform messages
 
-## Tool Policy
+### Prohibited
+- Worker must not format platform-specific responses
+- Dispatcher must not own final output delivery
+- Command handlers must not bypass event flow
 
-**Owner:** `crates/electro-tools`
+## Sandbox Boundary
 
-Tool execution policy enforced by:
-- `policy.rs` - Policy definitions
-- `shell.rs` - Shell runner with backend selection (host/docker/podman)
-- `tool.rs` - Tool trait implementations
+- **Owner**: `crates/electro-tools`
+- **Policy**: `crates/electro-tools/src/policy.rs`
+- **Runner**: `crates/electro-tools/src/runner.rs`
+- **Invariant**: All live tool execution must follow: `policy → validation → sandbox runner → output cap → audit event`
 
-**Backends:**
-- Host - With validation, env isolation (development)
-- Docker/Podman - Full sandbox (production recommended)
+### Canonical Chain
+
+1. **Policy Check**: `CapabilityPolicy` evaluation
+2. **Validation**: Command safety, path traversal checks
+3. **Sandbox Runner**: `run_sandboxed()` with constraints
+4. **Output Cap**: Truncation at 64KB default
+5. **Audit Event**: Execution logging
+
+### Tool Classes
+
+**Shell**:
+- Route through: `run_shell_command()`
+- Sandbox-only (no direct host execution)
+- Strict timeout
+- No network by default
+
+**Git**:
+- Route through: `run_git_command()`
+- Restricted to approved workspace roots
+- No arbitrary path traversal
+
+**Browser**:
+- Isolated process model
+- Explicit policy for no-sandbox overrides
+
+### Prohibited
+- Direct `Command::new()` in request-handling paths
+- Execution outside the canonical chain
 
 ## Runtime State
 
-**Owner:** `electro-runtime`
+- **Owner**: `crates/electro-runtime`
+- **Key Types**:
+  - `RuntimeHandle` - Runtime interaction
+  - `OutboundEvent` - Output contract
+  - `ExecutionController` - Concurrency control
+  - `ExecutionRouter` - Local vs remote routing
 
-Runtime state managed by:
-- `RuntimeHandle` - Shared runtime reference
-- `ExecutionRouter` - Local vs remote routing
-- `OutboundEvent` bus - Event broadcasting
+## Memory & Persistence
 
-## Crate Classification
+- **Owner**: `crates/electro-memory`
+- **Backends**: SQLite (default), PostgreSQL (optional)
+- **Responsibilities**:
+  - Conversation history
+  - Lambda memory
+  - Configuration storage
 
-### Core Stabilization (Required)
-- `electro-core` - Types, policies
-- `electro-runtime` - Execution controller
-- `electro-agent` - Agent runtime
-- `electro-gateway` - HTTP surface
-- `electro-tools` - Tool registry
-- `electro-providers` - LLM providers
-- `electro-memory` - Persistence
-- `electro-vault` - Secrets
-- `electro-channels` - Channel adapters
-- `electro-mcp` - MCP support
-- `electro-tui` - CLI (despite bypass issue)
-- `electro-observable` - Metrics
+## Providers
 
-### Optional/Experimental (Feature-gated)
-- `electro-skills` - Skill system
-- `electro-automation` - Proactive automation
-- `electro-filestore` - Object storage
-- `electro-codex-oauth` - OAuth
-- `electro-hive` - Multi-agent swarm
+- **Owner**: `crates/electro-providers`
+- **Supported**: Anthropic, OpenAI, Gemini, Grok, OpenRouter
+- **Responsibilities**:
+  - API client implementation
+  - Authentication
+  - Rate limiting
+  - Circuit breaking
 
-## Change Control
+## Verification
 
-When modifying architecture:
-1. Update this doc if ownership changes
-2. Update `docs/status.md` if capability status changes
-3. Run `scripts/check_core_paths.sh` to verify
+To verify ownership invariants:
+
+```bash
+# Execution authority
+grep -r 'process_message(' src crates --include='*.rs' | grep -v test | grep -v 'runtime.rs'
+# Should only show: worker.rs, worker-node.rs, agent_bridge.rs (worker task)
+
+# HTTP surface
+grep -r 'health/live\|health/ready\|/message\|/stream' crates/electro-gateway/src --include='*.rs'
+# Should only show in: electro-gateway
+
+# Command::new in live paths
+grep -r 'Command::new' crates/electro-tools/src/shell.rs crates/electro-tools/src/git.rs
+# Should be routed through runner.rs
+```

@@ -208,8 +208,8 @@ tokio-util.workspace = true
 # Usage: cargo build --no-default-features --features "core-only,telegram"
 core-only = []
 
-# Default: Full build with optional features
-default = ["telegram", "mcp", "tui", "hive"]
+# Default: Operational build (excludes experimental modules)
+default = ["telegram", "mcp", "tui"]
 
 # ═══════════════════════════════════════════════════════════════════
 # CHANNEL FEATURES
@@ -219,16 +219,17 @@ discord = ["electro-channels/discord"]
 slack = ["electro-channels/slack"]
 
 # ═══════════════════════════════════════════════════════════════════
-# OPTIONAL MODULES
+# OPTIONAL MODULES (included in default build)
 # ═══════════════════════════════════════════════════════════════════
 mcp = ["dep:electro-mcp"]
 tui = ["dep:electro-tui"]
 codex-oauth = ["dep:electro-codex-oauth"]
-hive = ["dep:electro-hive"]
 
 # ═══════════════════════════════════════════════════════════════════
-# EXPERIMENTAL MODULES (not part of core stabilization)
+# EXPERIMENTAL MODULES (not included in default build)
+# Enable with: cargo build --features "hive,skills,automation,filestore"
 # ═══════════════════════════════════════════════════════════════════
+hive = ["dep:electro-hive"]
 skills = ["dep:electro-skills"]
 automation = ["dep:electro-automation"]
 filestore = ["dep:electro-filestore"]

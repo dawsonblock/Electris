@@ -117,14 +117,14 @@ impl FileAccessPolicy {
 }
 
 /// Shell access policy.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ShellPolicy {
     Blocked,
     Allowed,
 }
 
 /// Browser access policy with detailed controls.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum BrowserPolicy {
     Blocked,
     Allowed {
@@ -138,7 +138,7 @@ pub enum BrowserPolicy {
 }
 
 /// Network access policy.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum NetworkAccessPolicy {
     Blocked,
     Allowed,
