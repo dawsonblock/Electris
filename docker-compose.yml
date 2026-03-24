@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  electro:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: electro:latest
+    container_name: electro
+    ports:
+      - "8080:8080"
+    environment:
+      - ELECTRO_MODE=auto
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - RUST_LOG=info
+    volumes:
+      # Mount host .electro directory for development
+      # Ensure Dockerfile creates 'electro' user with HOME=/home/electro
+      - ${HOME}/.electro:/home/electro/.electro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+
+  # -----------------------------------------------
+  # Optional: PostgreSQL for persistent memory
+  # Uncomment to enable.
+  # -----------------------------------------------
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: electro-postgres
+  #   environment:
+  #     POSTGRES_DB: electro
+  #     POSTGRES_USER: electro
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - pgdata:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U electro"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+# volumes:
+  # pgdata:  # Uncomment when using PostgreSQL

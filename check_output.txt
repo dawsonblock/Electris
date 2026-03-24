@@ -1,0 +1,1892 @@
+    Checking electro v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2)
+error[E0428]: the name `start_server` is defined multiple times
+   --> src/server_mode.rs:28:1
+    |
+  5 | / pub async fn start_server(
+  6 | |     config: &mut ElectroConfig,
+  7 | |     personality: String,
+  8 | |     cli_mode: String,
+  9 | | ) -> Result<()> {
+ 10 | |     crate::app::server::start_...
+ 11 | | }
+    | |_- previous definition of the value `start_server` here
+...
+ 28 | / pub async fn start_server(
+ 29 | |     config: &mut electro_core:...
+ 30 | |     personality: String,
+ 31 | |     cli_mode: String,
+...   |
+574 | |     Ok(())
+575 | | }
+    | |_^ `start_server` redefined here
+    |
+    = note: `start_server` must be defined only once in the value namespace of this module
+
+error: argument never used
+   --> src/app/server/dispatcher.rs:116:138
+    |
+116 | ...t!("{}\n\n=== INTERCEPTOR MODE ===\n(Rules...) === END INTERCEPTOR ===", soul, task_desc)),
+    |       --------------------------------------------------------------------        ^^^^^^^^^ argument never used
+    |       |
+    |       formatting specifier missing
+
+error[E0432]: unresolved import `electro_core::types::model_registry::is_placeholder_key`
+ --> src/app/chat/mod.rs:6:58
+  |
+6 | ...del, is_placeholder_key};
+  |         ^^^^^^^^^^^^^^^^^^ no `is_placeholder_key` in `types::model_registry`
+
+error[E0432]: unresolved import `electro_tools::SecretCensorChannel`
+  --> src/app/chat/mod.rs:11:21
+   |
+11 | ...ls::{SecretCensorChannel};
+   |         ^^^^^^^^^^^^^^^^^^^ no `SecretCensorChannel` in the root
+   |
+   = help: consider importing this struct instead:
+           crate::bootstrap::SecretCensorChannel
+
+error[E0432]: unresolved import `crate::onboarding`
+ --> src/app/server/mod.rs:9:12
+  |
+9 | use crate::onboarding::{build_syst...
+  |            ^^^^^^^^^^ unresolved import
+  |
+help: a similar path exists
+  |
+9 | use crate::app::onboarding::{build_system_prompt};
+  |            +++++
+
+error[E0432]: unresolved import `crate::onboarding`
+  --> src/app/server/dispatcher.rs:12:12
+   |
+12 | ...crate::onboarding::{build_syst...
+   |           ^^^^^^^^^^ unresolved import
+   |
+help: a similar path exists
+   |
+12 | use crate::app::onboarding::{build_system_prompt};
+   |            +++++
+
+error[E0432]: unresolved imports `crate::cli::SkillCommands`, `crate::cli::ConfigCommands`
+ --> src/app/cli.rs:7:28
+  |
+7 | ...s, SkillCommands, ConfigCommands};
+  |       ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^ no `ConfigCommands` in `cli`
+  |       |
+  |       no `SkillCommands` in `cli`
+
+error[E0432]: unresolved imports `crate::cli::format_user_error`, `crate::cli::handle_model_command`, `crate::cli::list_configured_providers`, `crate::cli::remove_provider`
+  --> src/server_mode.rs:16:5
+   |
+16 |     format_user_error, handle_model_command, list_configured_providers, remove_provider,
+   |     ^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^ no `remove_provider` in `cli`
+   |     |                  |                     |
+   |     |                  |                     no `list_configured_providers` in `cli`
+   |     |                  no `handle_model_command` in `cli`
+   |     no `format_user_error` in `cli`
+
+error[E0432]: unresolved import `crate::onboarding`
+  --> src/server_mode.rs:21:12
+   |
+21 | use crate::onboarding::{
+   |            ^^^^^^^^^^ unresolved import
+   |
+help: a similar path exists
+   |
+21 | use crate::app::onboarding::{
+   |            +++++
+
+error[E0433]: cannot find `status` in `types`
+   --> src/app/chat/mod.rs:140:58
+    |
+140 | ...::types::status::Phase::Done {
+    |             ^^^^^^ could not find `status` in `types`
+
+error[E0425]: cannot find type `SkillCommands` in this scope
+  --> src/cli.rs:51:18
+   |
+51 |         command: SkillCommands,
+   |                  ^^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `ConfigCommands` in this scope
+  --> src/cli.rs:56:18
+   |
+56 |         command: ConfigCommands,
+   |                  ^^^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `AuthCommands` in this scope
+  --> src/cli.rs:72:18
+   |
+72 |         command: AuthCommands,
+   |                  ^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Arc` in this scope
+  --> src/server_mode.rs:78:17
+   |
+78 | ...et memory: Arc<dyn electro_cor...
+   |               ^^^ not found in this scope
+   |
+help: consider importing this struct
+   |
+ 1 + use std::sync::Arc;
+   |
+
+error[E0433]: cannot find type `Arc` in this scope
+  --> src/server_mode.rs:78:49
+   |
+78 | ...:Memory> = Arc::from(
+   |               ^^^ use of undeclared type `Arc`
+   |
+help: consider importing this struct
+   |
+ 1 + use std::sync::Arc;
+   |
+
+error[E0425]: cannot find type `Arc` in this scope
+  --> src/server_mode.rs:84:27
+   |
+84 | ...nnels: Vec<Arc<dyn electro_cor...
+   |               ^^^ not found in this scope
+   |
+help: consider importing this struct
+   |
+ 1 + use std::sync::Arc;
+   |
+
+error[E0425]: cannot find type `Arc` in this scope
+  --> src/server_mode.rs:85:37
+   |
+85 | ...el: Option<Arc<dyn electro_cor...
+   |               ^^^ not found in this scope
+   |
+help: consider importing this struct
+   |
+ 1 + use std::sync::Arc;
+   |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:126:37
+    |
+126 | ...et tg_arc: Arc<dyn electro_co...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:126:70
+    |
+126 | ...Channel> = Arc::new(tg);
+    |               ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:191:9
+    |
+191 |         Arc::new(std::sync::Mute...
+    |         ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:197:27
+    |
+197 | ..._raw_keys: Arc<Mutex<HashSet<...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Mutex` in this scope
+   --> src/server_mode.rs:197:31
+    |
+197 | ...eys: Arc<Mutex<HashSet<String...
+    |             ^^^^^ not found in this scope
+    |
+help: consider importing one of these structs
+    |
+  1 + use std::sync::Mutex;
+    |
+  1 + use std::sync::nonpoison::Mutex;
+    |
+  1 + use futures::lock::Mutex;
+    |
+  1 + use tokio::sync::Mutex;
+    |
+
+error[E0425]: cannot find type `HashSet` in this scope
+   --> src/server_mode.rs:197:37
+    |
+197 | ...rc<Mutex<HashSet<String>>> = ...
+    |             ^^^^^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::collections::HashSet;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:197:57
+    |
+197 | ...tring>>> = Arc::new(Mutex::ne...
+    |               ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Mutex` in this scope
+   --> src/server_mode.rs:197:66
+    |
+197 | ...Arc::new(Mutex::new(HashSet::...
+    |             ^^^^^ use of undeclared type `Mutex`
+    |
+help: consider importing one of these structs
+    |
+  1 + use std::sync::Mutex;
+    |
+  1 + use std::sync::nonpoison::Mutex;
+    |
+  1 + use futures::lock::Mutex;
+    |
+  1 + use tokio::sync::Mutex;
+    |
+
+error[E0433]: cannot find type `HashSet` in this scope
+   --> src/server_mode.rs:197:77
+    |
+197 | ...tex::new(HashSet::new()));
+    |             ^^^^^^^ use of undeclared type `HashSet`
+    |
+help: consider importing this struct
+    |
+  1 + use std::collections::HashSet;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:201:25
+    |
+201 |     let login_sessions: Arc<
+    |                         ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Mutex` in this scope
+   --> src/server_mode.rs:202:9
+    |
+202 |         Mutex<HashMap<String, el...
+    |         ^^^^^ not found in this scope
+    |
+help: consider importing one of these structs
+    |
+  1 + use std::sync::Mutex;
+    |
+  1 + use std::sync::nonpoison::Mutex;
+    |
+  1 + use futures::lock::Mutex;
+    |
+  1 + use tokio::sync::Mutex;
+    |
+
+error[E0425]: cannot find type `HashMap` in this scope
+   --> src/server_mode.rs:202:15
+    |
+202 | ...   Mutex<HashMap<String, elec...
+    |             ^^^^^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::collections::HashMap;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:203:9
+    |
+203 |     > = Arc::new(Mutex::new(Hash...
+    |         ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Mutex` in this scope
+   --> src/server_mode.rs:203:18
+    |
+203 | ...Arc::new(Mutex::new(HashMap::...
+    |             ^^^^^ use of undeclared type `Mutex`
+    |
+help: consider importing one of these structs
+    |
+  1 + use std::sync::Mutex;
+    |
+  1 + use std::sync::nonpoison::Mutex;
+    |
+  1 + use futures::lock::Mutex;
+    |
+  1 + use tokio::sync::Mutex;
+    |
+
+error[E0433]: cannot find type `HashMap` in this scope
+   --> src/server_mode.rs:203:29
+    |
+203 | ...tex::new(HashMap::new()));
+    |             ^^^^^^^ use of undeclared type `HashMap`
+    |
+help: consider importing this struct
+    |
+  1 + use std::collections::HashMap;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:206:22
+    |
+206 | ...age_store: Arc<dyn electro_co...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:207:9
+    |
+207 |         Arc::new(electro_memory:...
+    |         ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:211:23
+    |
+211 | ...lt: Option<Arc<dyn electro_co...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:214:18
+    |
+214 | ...      Some(Arc::new(v) as Arc...
+    |               ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:214:33
+    |
+214 | ...:new(v) as Arc<dyn electro_co...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:223:34
+    |
+223 | ...el: Option<Arc<dyn electro_co...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:225:19
+    |
+225 | ... .map(|ch| Arc::new(SecretCen...
+    |               ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:225:66
+    |
+225 | ...: ch }) as Arc<dyn electro_co...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:226:50
+    |
+226 | ...aredMode = Arc::new(tokio::sy...
+    |               ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:227:33
+    |
+227 | ..._strategy: Arc<
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:229:9
+    |
+229 |     > = Arc::new(tokio::sync::Rw...
+    |         ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:241:14
+    |
+241 |         Some(Arc::new(setup_toke...
+    |              ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:241:48
+    |
+241 | ...lone()) as Arc<dyn electro_co...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:268:32
+    |
+268 | ...registry = Arc::new(electro_t...
+    |               ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:279:22
+    |
+279 | ...p_manager: Arc<electro_mcp::M...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:280:19
+    |
+280 | ... let mgr = Arc::new(electro_m...
+    |               ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:297:22
+    |
+297 | ...ent_state: Arc<tokio::sync::R...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:297:53
+    |
+297 | ...ock<Option<Arc<electro_agent:...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:298:9
+    |
+298 |         Arc::new(tokio::sync::Rw...
+    |         ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:325:27
+    |
+325 | ... provider: Arc<dyn electro_co...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:327:25
+    |
+327 |             let agent = Arc::new(
+    |                         ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:361:39
+    |
+361 | ... provider: Arc<dyn electro_co...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:362:29
+    |
+362 | ...           Arc::new(electro_c...
+    |               ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:366:37
+    |
+366 | ...et agent = Arc::new(
+    |               ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:452:31
+    |
+452 | ...ce: Option<Arc<electro_hive::...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:462:22
+    |
+462 |                 Some(Arc::new(h))
+    |                      ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:488:9
+    |
+488 |         Arc::new(mgr)
+    |         ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:527:23
+    |
+527 | ... gateway = Arc::new(electro_g...
+    |               ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:630:13
+    |
+630 | ) -> Result<Arc<dyn electro_core...
+    |             ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:634:19
+    |
+634 | ... return Ok(Arc::new(electro_c...
+    |               ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:640:8
+    |
+640 |     Ok(Arc::from(electro_provide...
+    |        ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:648:16
+    |
+648 |     interrupt: Arc<AtomicBool>,
+    |                ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `AtomicBool` in this scope
+   --> src/server_mode.rs:648:20
+    |
+648 |     interrupt: Arc<AtomicBool>,
+    |                    ^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this type alias
+    |
+  1 + use std::sync::atomic::AtomicBool;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:649:19
+    |
+649 |     is_heartbeat: Arc<AtomicBool>,
+    |                   ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `AtomicBool` in this scope
+   --> src/server_mode.rs:649:23
+    |
+649 |     is_heartbeat: Arc<AtomicBool>,
+    |                       ^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this type alias
+    |
+  1 + use std::sync::atomic::AtomicBool;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:650:14
+    |
+650 |     is_busy: Arc<AtomicBool>,
+    |              ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `AtomicBool` in this scope
+   --> src/server_mode.rs:650:18
+    |
+650 |     is_busy: Arc<AtomicBool>,
+    |                  ^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this type alias
+    |
+  1 + use std::sync::atomic::AtomicBool;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:651:19
+    |
+651 | ...rent_task: Arc<std::sync::Mut...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:658:29
+    |
+658 | ...el: Option<Arc<dyn electro_co...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:659:18
+    |
+659 | ...ent_state: Arc<tokio::sync::R...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:659:49
+    |
+659 | ...ock<Option<Arc<electro_agent:...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:660:13
+    |
+660 |     memory: Arc<dyn electro_core...
+    |             ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:661:16
+    |
+661 | ...tools: Vec<Arc<dyn electro_co...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:662:27
+    |
+662 | ..._registry: Arc<electro_tools:...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:663:42
+    |
+663 | ...p_manager: Arc<electro_mcp::M...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:667:23
+    |
+667 | ..._raw_keys: Arc<Mutex<HashSet<...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Mutex` in this scope
+   --> src/server_mode.rs:667:27
+    |
+667 | ...eys: Arc<Mutex<HashSet<String...
+    |             ^^^^^ not found in this scope
+    |
+help: consider importing one of these structs
+    |
+  1 + use std::sync::Mutex;
+    |
+  1 + use std::sync::nonpoison::Mutex;
+    |
+  1 + use futures::lock::Mutex;
+    |
+  1 + use tokio::sync::Mutex;
+    |
+
+error[E0425]: cannot find type `HashSet` in this scope
+   --> src/server_mode.rs:667:33
+    |
+667 | ...rc<Mutex<HashSet<String>>>,
+    |             ^^^^^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::collections::HashSet;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:668:49
+    |
+668 | ..._sessions: Arc<
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Mutex` in this scope
+   --> src/server_mode.rs:669:9
+    |
+669 |         Mutex<HashMap<String, el...
+    |         ^^^^^ not found in this scope
+    |
+help: consider importing one of these structs
+    |
+  1 + use std::sync::Mutex;
+    |
+  1 + use std::sync::nonpoison::Mutex;
+    |
+  1 + use futures::lock::Mutex;
+    |
+  1 + use tokio::sync::Mutex;
+    |
+
+error[E0425]: cannot find type `HashMap` in this scope
+   --> src/server_mode.rs:669:15
+    |
+669 | ...   Mutex<HashMap<String, elec...
+    |             ^^^^^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::collections::HashMap;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:671:18
+    |
+671 | ...age_store: Arc<dyn electro_co...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:672:27
+    |
+672 | ...ce: Option<Arc<electro_hive::...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:674:29
+    |
+674 | ..._strategy: Arc<tokio::sync::R...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:677:21
+    |
+677 | ...t_manager: Arc<electro_core::...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:678:58
+    |
+678 | ...ef: Option<Arc<electro_tools:...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:679:19
+    |
+679 | ...lt: Option<Arc<dyn electro_co...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:707:25
+    |
+707 | ...hat_slots: Arc<Mutex<HashMap<...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Mutex` in this scope
+   --> src/server_mode.rs:707:29
+    |
+707 | ...ots: Arc<Mutex<HashMap<String...
+    |             ^^^^^ not found in this scope
+    |
+help: consider importing one of these structs
+    |
+  1 + use std::sync::Mutex;
+    |
+  1 + use std::sync::nonpoison::Mutex;
+    |
+  1 + use futures::lock::Mutex;
+    |
+  1 + use tokio::sync::Mutex;
+    |
+
+error[E0425]: cannot find type `HashMap` in this scope
+   --> src/server_mode.rs:707:35
+    |
+707 | ...rc<Mutex<HashMap<String, Chat...
+    |             ^^^^^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::collections::HashMap;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:708:13
+    |
+708 |             Arc::new(Mutex::new(...
+    |             ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Mutex` in this scope
+   --> src/server_mode.rs:708:22
+    |
+708 | ...Arc::new(Mutex::new(HashMap::...
+    |             ^^^^^ use of undeclared type `Mutex`
+    |
+help: consider importing one of these structs
+    |
+  1 + use std::sync::Mutex;
+    |
+  1 + use std::sync::nonpoison::Mutex;
+    |
+  1 + use futures::lock::Mutex;
+    |
+  1 + use tokio::sync::Mutex;
+    |
+
+error[E0433]: cannot find type `HashMap` in this scope
+   --> src/server_mode.rs:708:33
+    |
+708 | ...tex::new(HashMap::new()));
+    |             ^^^^^^^ use of undeclared type `HashMap`
+    |
+help: consider importing this struct
+    |
+  1 + use std::collections::HashMap;
+    |
+
+error[E0433]: cannot find type `Ordering` in this scope
+   --> src/server_mode.rs:721:51
+    |
+721 | ...eat.load(Ordering::Relaxed) {
+    |             ^^^^^^^^ use of undeclared type `Ordering`
+    |
+help: consider importing one of these enums
+    |
+  1 + use std::cmp::Ordering;
+    |
+  1 + use std::sync::atomic::Ordering;
+    |
+
+error[E0433]: cannot find type `Ordering` in this scope
+   --> src/server_mode.rs:726:56
+    |
+726 | ...re(true, Ordering::Relaxed);
+    |             ^^^^^^^^ use of undeclared type `Ordering`
+    |
+help: consider importing one of these enums
+    |
+  1 + use std::cmp::Ordering;
+    |
+  1 + use std::sync::atomic::Ordering;
+    |
+
+error[E0433]: cannot find type `Ordering` in this scope
+   --> src/server_mode.rs:742:56
+    |
+742 | ...re(true, Ordering::Relaxed);
+    |             ^^^^^^^^ use of undeclared type `Ordering`
+    |
+help: consider importing one of these enums
+    |
+  1 + use std::cmp::Ordering;
+    |
+  1 + use std::sync::atomic::Ordering;
+    |
+
+error[E0433]: cannot find type `Ordering` in this scope
+   --> src/server_mode.rs:748:46
+    |
+748 | ...usy.load(Ordering::Relaxed) {
+    |             ^^^^^^^^ use of undeclared type `Ordering`
+    |
+help: consider importing one of these enums
+    |
+  1 + use std::cmp::Ordering;
+    |
+  1 + use std::sync::atomic::Ordering;
+    |
+
+error[E0433]: cannot find type `Ordering` in this scope
+   --> src/server_mode.rs:833:72
+    |
+833 | ...re(true, Ordering::Relaxed);
+    |             ^^^^^^^^ use of undeclared type `Ordering`
+    |
+help: consider importing one of these enums
+    |
+  1 + use std::cmp::Ordering;
+    |
+  1 + use std::sync::atomic::Ordering;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:964:14
+    |
+964 |     sender: &Arc<dyn electro_cor...
+    |              ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:965:19
+    |
+965 | ...nt_state: &Arc<tokio::sync::R...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:965:50
+    |
+965 | ...ock<Option<Arc<electro_agent:...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:966:14
+    |
+966 |     memory: &Arc<dyn electro_cor...
+    |              ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:967:23
+    |
+967 | ...emplate: &[Arc<dyn electro_co...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:968:23
+    |
+968 | ...registry: &Arc<electro_tools:...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:969:39
+    |
+969 | ... mcp_mgr: &Arc<electro_mcp::M...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:981:30
+    |
+981 | ...ys_clone: &Arc<Mutex<HashSet<...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Mutex` in this scope
+   --> src/server_mode.rs:981:34
+    |
+981 | ...ne: &Arc<Mutex<HashSet<String...
+    |             ^^^^^ not found in this scope
+    |
+help: consider importing one of these structs
+    |
+  1 + use std::sync::Mutex;
+    |
+  1 + use std::sync::nonpoison::Mutex;
+    |
+  1 + use futures::lock::Mutex;
+    |
+  1 + use tokio::sync::Mutex;
+    |
+
+error[E0425]: cannot find type `HashSet` in this scope
+   --> src/server_mode.rs:981:40
+    |
+981 | ...rc<Mutex<HashSet<String>>>,
+    |             ^^^^^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::collections::HashSet;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:982:56
+    |
+982 | ...ns_clone: &Arc<
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Mutex` in this scope
+   --> src/server_mode.rs:983:9
+    |
+983 |         Mutex<HashMap<String, el...
+    |         ^^^^^ not found in this scope
+    |
+help: consider importing one of these structs
+    |
+  1 + use std::sync::Mutex;
+    |
+  1 + use std::sync::nonpoison::Mutex;
+    |
+  1 + use futures::lock::Mutex;
+    |
+  1 + use tokio::sync::Mutex;
+    |
+
+error[E0425]: cannot find type `HashMap` in this scope
+   --> src/server_mode.rs:983:15
+    |
+983 | ...   Mutex<HashMap<String, elec...
+    |             ^^^^^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::collections::HashMap;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:985:25
+    |
+985 | ...re_clone: &Arc<dyn electro_co...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:986:25
+    |
+986 | ...e: &Option<Arc<electro_hive::...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:988:29
+    |
+988 | ..._strategy: Arc<tokio::sync::R...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:990:61
+    |
+990 | ...r: &Option<Arc<electro_tools:...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:991:48
+    |
+991 | ...t: &Option<Arc<dyn electro_co...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:996:21
+    |
+996 | ...nterrupt = Arc::new(AtomicBoo...
+    |               ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `AtomicBool` in this scope
+   --> src/server_mode.rs:996:30
+    |
+996 | ...c::new(AtomicBool::new(false));
+    |           ^^^^^^^^^^ use of undeclared type `AtomicBool`
+    |
+help: consider importing this type alias
+    |
+  1 + use std::sync::atomic::AtomicBool;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:997:24
+    |
+997 | ...eartbeat = Arc::new(AtomicBoo...
+    |               ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `AtomicBool` in this scope
+   --> src/server_mode.rs:997:33
+    |
+997 | ...c::new(AtomicBool::new(false));
+    |           ^^^^^^^^^^ use of undeclared type `AtomicBool`
+    |
+help: consider importing this type alias
+    |
+  1 + use std::sync::atomic::AtomicBool;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:998:19
+    |
+998 | ... is_busy = Arc::new(AtomicBoo...
+    |               ^^^ use of undeclared type `Arc`
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `AtomicBool` in this scope
+   --> src/server_mode.rs:998:28
+    |
+998 | ...c::new(AtomicBool::new(false));
+    |           ^^^^^^^^^^ use of undeclared type `AtomicBool`
+    |
+help: consider importing this type alias
+    |
+  1 + use std::sync::atomic::AtomicBool;
+    |
+
+error[E0425]: cannot find type `Arc` in this scope
+   --> src/server_mode.rs:999:23
+    |
+999 | ...rent_task: Arc<std::sync::Mut...
+    |               ^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use std::sync::Arc;
+    |
+
+error[E0433]: cannot find type `Arc` in this scope
+    --> src/server_mode.rs:1000:9
+     |
+1000 |         Arc::new(std::sync::Mut...
+     |         ^^^ use of undeclared type `Arc`
+     |
+help: consider importing this struct
+     |
+   1 + use std::sync::Arc;
+     |
+
+error[E0425]: cannot find function `handle_remaining_commands` in module `cli`
+  --> src/main.rs:75:18
+   |
+75 | ...i::handle_remaining_commands(cl...
+   |       ^^^^^^^^^^^^^^^^^^^^^^^^^ not found in `cli`
+   |
+help: consider importing this function
+   |
+ 9 + use crate::app::cli::handle_remaining_commands;
+   |
+help: if you import `handle_remaining_commands`, refer to it directly
+   |
+75 -             cli::handle_remaining_commands(cli.command, &config).await?;
+75 +             handle_remaining_commands(cli.command, &config).await?;
+   |
+
+warning: unused import: `std::panic::AssertUnwindSafe`
+ --> src/app/logging.rs:1:5
+  |
+1 | use std::panic::AssertUnwindSafe;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused imports: `check_hive_enabled`, `create_agent`, and `create_provider`
+ --> src/app/server/mod.rs:8:35
+  |
+8 | ...k, create_agent, create_provider, init_tools, check_hive_enabled, l...
+  |       ^^^^^^^^^^^^  ^^^^^^^^^^^^^^^              ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `tokio_util::sync::CancellationToken`
+ --> src/app/server/dispatcher.rs:5:5
+  |
+5 | use tokio_util::sync::CancellationToken;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::bootstrap::SecretCensorChannel`
+  --> src/app/server/dispatcher.rs:11:5
+   |
+11 | use crate::bootstrap::SecretCensorChannel;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `MessageContent`, `OutboundMessage`, and `Role`
+ --> src/app/server/worker.rs:7:65
+  |
+7 | ...e, Role, MessageContent, OutboundMessage};
+  |       ^^^^  ^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^
+
+warning: unused import: `Provider`
+ --> src/app/server/commands.rs:4:43
+  |
+4 | ...ory, Tool, Provider, Vault};
+  |               ^^^^^^^^
+
+warning: unused import: `ElectroMode`
+ --> src/app/server/commands.rs:6:51
+  |
+6 | ...Strategy, ElectroMode};
+  |              ^^^^^^^^^^^
+
+warning: unused imports: `is_placeholder_key` and `load_credentials_file`
+ --> src/app/onboarding.rs:2:41
+  |
+2 | ...::{is_placeholder_key, load_credentials_file};
+  |       ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `electro_core::types::model_registry::default_model`
+ --> src/app/onboarding.rs:3:5
+  |
+3 | use electro_core::types::model_registry::default_model;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `load_active_provider_keys`
+ --> src/app/cli.rs:2:43
+  |
+2 | ...y, load_active_provider_keys, l...
+  |       ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `available_models_for_provider` and `is_vision_model`
+ --> src/app/cli.rs:5:5
+  |
+5 |     available_models_for_provider, is_vision_model,
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^
+
+warning: unused imports: `credentials_path`, `is_placeholder_key`, `load_active_provider_keys`, and `load_credentials_file`
+ --> src/cli.rs:3:5
+  |
+3 |     credentials_path, is_placeholder_key, load_active_provider_keys, load_credentials_file,
+  |     ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `available_models_for_provider`, `default_model`, and `is_vision_model`
+ --> src/cli.rs:6:5
+  |
+6 |     available_models_for_provider, default_model, is_vision_model,
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::admin::is_admin_user`
+  --> src/server_mode.rs:13:5
+   |
+13 | use crate::admin::is_admin_user;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `censor_secrets`
+  --> src/server_mode.rs:14:24
+   |
+14 | ...strap::{censor_secrets, Secret...
+   |            ^^^^^^^^^^^^^^
+
+warning: unused imports: `is_process_alive`, `pid_file_path`, `read_pid_file`, and `write_pid_file`
+  --> src/server_mode.rs:19:5
+   |
+19 |     is_process_alive, pid_file_path, read_pid_file, remove_pid_file, write_pid_file,
+   |     ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^^^^                   ^^^^^^^^^^^^^^
+
+error[E0061]: this method takes 7 arguments but 2 arguments were supplied
+   --> src/app/chat/mod.rs:133:40
+    |
+133 | ...nt.process_message(msg.clone(), history.clone()).aw...
+    |       ^^^^^^^^^^^^^^^------------------------------
+    |                      ||
+    |                      |expected `&InboundMessage`, found `InboundMessage`
+    |                      multiple arguments are missing
+    |
+note: expected `&mut SessionContext`, found `Vec<ChatMessage>`
+   --> src/app/chat/mod.rs:133:69
+    |
+133 | ...one(), history.clone()).await?;
+    |           ^^^^^^^^^^^^^^^
+    = note: expected mutable reference `&mut SessionContext`
+                          found struct `Vec<ChatMessage>`
+note: method defined here
+   --> crates/electro-agent/src/runtime.rs:273:18
+    |
+273 |     pub async fn process_message(
+    |                  ^^^^^^^^^^^^^^^
+help: consider borrowing here
+    |
+133 |              let mut status_rx = agent.process_message(&msg.clone(), history.clone()).await?;
+    |                                                        +
+help: provide the arguments
+    |
+133 -              let mut status_rx = agent.process_message(msg.clone(), history.clone()).await?;
+133 +              let mut status_rx = agent.process_message(/* &InboundMessage */, /* &mut SessionContext */, /* std::option::Option<Arc<Atomic<bool>>> */, /* std::option::Option<Arc<std::sync::Mutex<HashMap<std::string::String, Vec<std::string::String>>>>> */, /* std::option::Option<tokio::sync::mpsc::UnboundedSender<OutboundMessage>> */, /* std::option::Option<tokio::sync::watch::Sender<AgentTaskStatus>> */, /* std::option::Option<CancellationToken> */).await?;
+    |
+
+error[E0599]: no method named `recv` found for tuple `(..., ...)` in the current scope
+   --> src/app/chat/mod.rs:134:49
+    |
+134 | ...tatus_rx.recv().await {
+    |             ^^^^ method not found in `(..., ...)`
+    |
+    = note: the full name for the type has been written to '/Users/dawsonblock/Downloads/Electro-main 2/target/debug/deps/electro-1e06f07df264c5f0.long-type-16400510700075916922.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+
+error[E0308]: mismatched types
+  --> src/app/tools.rs:35:22
+   |
+35 |         (tools, Some(browser_ref))
+   |                 ---- ^^^^^^^^^^^ expected `Arc<BrowserTool>`, found `Option<Arc<BrowserTool>>`
+   |                 |
+   |                 arguments to this enum variant are incorrect
+   |
+   = note: expected struct `Arc<_>`
+                found enum `std::option::Option<Arc<_>>`
+help: the type constructed contains `std::option::Option<Arc<BrowserTool>>` due to the type of the argument passed
+  --> src/app/tools.rs:35:17
+   |
+35 |         (tools, Some(browser_ref))
+   |                 ^^^^^-----------^
+   |                      |
+   |                      this argument influences the type of `Some`
+note: tuple variant defined here
+  --> /rustc/20f19f4615200b16e3631816e7824e832ff394db/library/core/src/option.rs:608:4
+help: consider using `Option::expect` to unwrap the `std::option::Option<Arc<BrowserTool>>` value, panicking if the value is an `Option::None`
+   |
+35 |         (tools, Some(browser_ref.expect("REASON")))
+   |                                 +++++++++++++++++
+
+error[E0599]: no variant or associated item named `Tui` found for enum `Commands` in the current scope
+  --> src/main.rs:19:41
+   |
+19 | ... Commands::Tui)
+   |               ^^^ variant or associated item not found in `Commands`
+   |
+  ::: src/cli.rs:29:1
+   |
+29 | pub enum Commands {
+   | ----------------- variant or associated item `Tui` not found for this enum
+
+warning: unused import: `tracing_subscriber::prelude`
+ --> src/app/logging.rs:3:5
+  |
+3 | use tracing_subscriber::prelude::*;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused variable: `agent_opt`
+   --> src/app/chat/mod.rs:213:5
+    |
+213 |     agent_opt: &mut Option<elect...
+    |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_agent_opt`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `config`
+   --> src/app/chat/mod.rs:214:5
+    |
+214 |     config: &ElectroConfig,
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: unused variable: `tools`
+   --> src/app/chat/mod.rs:215:5
+    |
+215 |     tools: &[Arc<dyn electro_cor...
+    |     ^^^^^ help: if this is intentional, prefix it with an underscore: `_tools`
+
+warning: unused variable: `hive_enabled`
+   --> src/app/chat/mod.rs:216:5
+    |
+216 |     hive_enabled: &bool,
+    |     ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_hive_enabled`
+
+warning: unused variable: `shared_mode`
+   --> src/app/chat/mod.rs:217:5
+    |
+217 |     shared_mode: &Arc<tokio::syn...
+    |     ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_shared_mode`
+
+warning: unused variable: `shared_memory_strategy`
+   --> src/app/chat/mod.rs:218:5
+    |
+218 |     shared_memory_strategy: &Arc...
+    |     ^^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_shared_memory_strategy`
+
+warning: variable does not need to be mutable
+  --> src/app/server/worker.rs:78:13
+   |
+78 | ...et mut persistent_history: Vec...
+   |       ----^^^^^^^^^^^^^^^^^^
+   |       |
+   |       help: remove this `mut`
+   |
+   = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `custom_registry`
+  --> src/app/server/worker.rs:19:5
+   |
+19 |     custom_registry: &Arc<electro...
+   |     ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_custom_registry`
+
+warning: unused variable: `mcp_mgr`
+  --> src/app/server/worker.rs:20:29
+   |
+20 | ... "mcp")] mcp_mgr: &Arc<electro...
+   |             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_mcp_mgr`
+
+warning: unused variable: `max_turns`
+  --> src/app/server/worker.rs:21:5
+   |
+21 |     max_turns: usize,
+   |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_turns`
+
+warning: unused variable: `max_ctx`
+  --> src/app/server/worker.rs:22:5
+   |
+22 |     max_ctx: usize,
+   |     ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_ctx`
+
+warning: unused variable: `max_rounds`
+  --> src/app/server/worker.rs:23:5
+   |
+23 |     max_rounds: usize,
+   |     ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_rounds`
+
+warning: unused variable: `max_task_duration`
+  --> src/app/server/worker.rs:24:5
+   |
+24 |     max_task_duration: u64,
+   |     ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_task_duration`
+
+warning: unused variable: `max_spend`
+  --> src/app/server/worker.rs:25:5
+   |
+25 |     max_spend: f64,
+   |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_spend`
+
+warning: unused variable: `v2_opt`
+  --> src/app/server/worker.rs:26:5
+   |
+26 |     v2_opt: bool,
+   |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_v2_opt`
+
+warning: unused variable: `pp_opt`
+  --> src/app/server/worker.rs:27:5
+   |
+27 |     pp_opt: bool,
+   |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_pp_opt`
+
+warning: unused variable: `base_url`
+  --> src/app/server/worker.rs:28:5
+   |
+28 |     base_url: &Option<String>,
+   |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_base_url`
+
+warning: unused variable: `current_task_worker`
+  --> src/app/server/worker.rs:56:9
+   |
+56 |     let current_task_worker = cur...
+   |         ^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_current_task_worker`
+
+warning: unused variable: `interrupt_worker`
+  --> src/app/server/worker.rs:57:9
+   |
+57 |     let interrupt_worker = interr...
+   |         ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_interrupt_worker`
+
+warning: unused variable: `is_heartbeat_worker`
+  --> src/app/server/worker.rs:58:9
+   |
+58 |     let is_heartbeat_worker = is_...
+   |         ^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_is_heartbeat_worker`
+
+warning: unused variable: `cancel_token_worker`
+  --> src/app/server/worker.rs:59:9
+   |
+59 |     let cancel_token_worker = can...
+   |         ^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cancel_token_worker`
+
+warning: unused variable: `ws_path`
+  --> src/app/server/worker.rs:61:9
+   |
+61 |     let ws_path = ws_path.to_path...
+   |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_ws_path`
+
+warning: unused variable: `pending_messages`
+  --> src/app/server/worker.rs:62:9
+   |
+62 |     let pending_messages = pendin...
+   |         ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pending_messages`
+
+warning: unused variable: `usage_store`
+  --> src/app/server/worker.rs:67:9
+   |
+67 |     let usage_store = usage_store...
+   |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_usage_store`
+
+warning: unused variable: `hive`
+  --> src/app/server/worker.rs:68:9
+   |
+68 |     let hive = hive_clone.clone();
+   |         ^^^^ help: if this is intentional, prefix it with an underscore: `_hive`
+
+warning: unused variable: `agent_state`
+  --> src/app/server/commands.rs:15:5
+   |
+15 |     agent_state: &Arc<tokio::sync...
+   |     ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_agent_state`
+
+warning: unused variable: `history`
+  --> src/app/server/commands.rs:17:5
+   |
+17 |     history: &[ChatMessage],
+   |     ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_history`
+
+warning: unused variable: `tools_template`
+  --> src/app/server/commands.rs:18:5
+   |
+18 |     tools_template: &[Arc<dyn Too...
+   |     ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_tools_template`
+
+warning: unused variable: `pending_raw_keys`
+  --> src/app/server/commands.rs:20:5
+   |
+20 |     pending_raw_keys: &Arc<Mutex<...
+   |     ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pending_raw_keys`
+
+warning: unused variable: `login_sessions`
+  --> src/app/server/commands.rs:21:33
+   |
+21 | ...ser")] login_sessions: &Arc<
+   |           ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_login_sessions`
+
+warning: unused variable: `browser_ref`
+  --> src/app/server/commands.rs:24:33
+   |
+24 | ...ser")] browser_ref: &Option<Ar...
+   |           ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_browser_ref`
+
+warning: unused variable: `vault`
+  --> src/app/server/commands.rs:25:5
+   |
+25 |     vault: &Option<Arc<dyn Vault>>,
+   |     ^^^^^ help: if this is intentional, prefix it with an underscore: `_vault`
+
+warning: unused variable: `shared_mode`
+  --> src/app/server/commands.rs:26:5
+   |
+26 |     shared_mode: &electro_tools::...
+   |     ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_shared_mode`
+
+warning: unused variable: `shared_memory_strategy`
+  --> src/app/server/commands.rs:27:5
+   |
+27 |     shared_memory_strategy: &Arc<...
+   |     ^^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_shared_memory_strategy`
+
+warning: unused variable: `personality_locked`
+  --> src/app/server/commands.rs:28:5
+   |
+28 |     personality_locked: bool,
+   |     ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_personality_locked`
+
+warning: unused variable: `key_text`
+  --> src/app/server/commands.rs:40:16
+   |
+40 |             Ok(key_text) => {
+   |                ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_key_text`
+
+warning: unused variable: `cli_mode`
+  --> src/app/server/mod.rs:22:5
+   |
+22 |     cli_mode: String,
+   |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cli_mode`
+
+warning: unused variable: `sender`
+   --> src/app/onboarding.rs:100:5
+    |
+100 |     sender: &dyn electro_core::C...
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_sender`
+
+warning: unused variable: `reply`
+   --> src/app/onboarding.rs:101:5
+    |
+101 |     reply: electro_core::types::...
+    |     ^^^^^ help: if this is intentional, prefix it with an underscore: `_reply`
+
+warning: unused variable: `pid`
+  --> src/daemon.rs:81:14
+   |
+81 |         Some(pid) => {
+   |              ^^^ help: if this is intentional, prefix it with an underscore: `_pid`
+
+warning: unused variable: `config`
+   --> src/server_mode.rs:577:29
+    |
+577 | ..._enabled(config: &electro_cor...
+    |             ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: unused variable: `config`
+   --> src/server_mode.rs:605:5
+    |
+605 |     config: &electro_core::types...
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+Some errors have detailed explanations: E0061, E0308, E0425, E0428, E0432, E0433, E0599.
+For more information about an error, try `rustc --explain E0061`.
+warning: `electro` (bin "electro") generated 59 warnings
+error: could not compile `electro` (bin "electro") due to 131 previous errors; 59 warnings emitted

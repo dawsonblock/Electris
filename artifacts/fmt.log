@@ -1,0 +1,3144 @@
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/blueprint.rs:11:
+ //! provide ambient breadcrumbs; Blueprints provide full procedures.
+ 
+ use chrono::{DateTime, Utc};
+[31m-use serde::{Deserialize, Serialize};
+(B[m use electro_core::types::message::{ChatMessage, ContentPart, MessageContent, Role};
+ use electro_core::{Memory, MemoryEntryType, SearchOpts};
+[32m+use serde::{Deserialize, Serialize};
+(B[m use tracing::{debug, info, warn};
+ 
+ // ---------------------------------------------------------------------------
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/delegation.rs:14:
+ use std::sync::atomic::{AtomicUsize, Ordering};
+ use std::time::Duration;
+ 
+[31m-use serde::{Deserialize, Serialize};
+(B[m use electro_core::types::error::ElectroError;
+[32m+use serde::{Deserialize, Serialize};
+(B[m use tracing::{debug, info, warn};
+ use uuid::Uuid;
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:6:
+ //! calls and runs them concurrently with configurable concurrency limits.
+ 
+ use std::collections::HashSet;
+[31m-use url::Url;
+(B[m use std::sync::Arc;
+[32m+use url::Url;
+(B[m 
+[31m-use futures::stream::{FuturesUnordered, StreamExt};
+(B[m[32m+use electro_core::audit::CapabilityDecisionRecord;
+(B[m[32m+use electro_core::policy::{FileAccessPolicy, PolicyDecision, PolicyEngine};
+(B[m use electro_core::types::error::ElectroError;
+ use electro_core::types::session::SessionContext;
+ use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:16:
+[31m-use electro_core::audit::CapabilityDecisionRecord;
+(B[m[31m-use electro_core::policy::{FileAccessPolicy, PolicyEngine, PolicyDecision};
+(B[m[32m+use futures::stream::{FuturesUnordered, StreamExt};
+(B[m use tokio::sync::Semaphore;
+ use tracing::{debug, info, warn};
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:375:
+ 
+     // Validate sandbox declarations against workspace scope
+     if let Err(e) = validate_sandbox(tool.as_ref(), session) {
+[31m-        let record = CapabilityDecisionRecord::denied(tool_name, &session.session_id, "sandbox_baseline", &electro_core::policy::DenialReason::PathEscape);
+(B[m[32m+        let record = CapabilityDecisionRecord::denied(
+(B[m[32m+            tool_name,
+(B[m[32m+            &session.session_id,
+(B[m[32m+            "sandbox_baseline",
+(B[m[32m+            &electro_core::policy::DenialReason::PathEscape,
+(B[m[32m+        );
+(B[m         tracing::warn!(audit = %serde_json::to_string(&record).unwrap(), "Capability denied (sandbox layout)");
+         return Err(e);
+     }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:382:
+ 
+     // Validate runtime arguments against workspace scope and authoritative capability policy
+     if let Err(e) = validate_arguments(tool_name, &arguments, session, tool.as_ref()) {
+[31m-        let record = CapabilityDecisionRecord::denied(tool_name, &session.session_id, "arguments", &electro_core::policy::DenialReason::UndeclaredFileOp); // Placeholder reason for now
+(B[m[32m+        let record = CapabilityDecisionRecord::denied(
+(B[m[32m+            tool_name,
+(B[m[32m+            &session.session_id,
+(B[m[32m+            "arguments",
+(B[m[32m+            &electro_core::policy::DenialReason::UndeclaredFileOp,
+(B[m[32m+        ); // Placeholder reason for now
+(B[m         tracing::warn!(audit = %serde_json::to_string(&record).unwrap(), "Capability denied (arguments violation)");
+         return Err(e);
+     }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:389:
+[31m-    
+(B[m[32m+
+(B[m     // Log the allow decision
+     let record = CapabilityDecisionRecord::allowed(tool_name, &session.session_id, "execute");
+     tracing::info!(audit = %serde_json::to_string(&record).unwrap(), "Capability allowed");
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:446:
+             if let Some(serde_json::Value::String(path_str)) = map.get(*key) {
+                 let requested_path = std::path::Path::new(path_str);
+                 // Use resolve_safe_path for authoritative validation
+[31m-                let abs_req = match electro_core::path_policy::resolve_safe_path(&session.workspace_path, requested_path) {
+(B[m[32m+                let abs_req = match electro_core::path_policy::resolve_safe_path(
+(B[m[32m+                    &session.workspace_path,
+(B[m[32m+                    requested_path,
+(B[m[32m+                ) {
+(B[m                     Ok(p) => p,
+[31m-                    Err(e) => return Err(ElectroError::SandboxViolation(format!("Path validation failed: {}", e))),
+(B[m[32m+                    Err(e) => {
+(B[m[32m+                        return Err(ElectroError::SandboxViolation(format!(
+(B[m[32m+                            "Path validation failed: {}",
+(B[m[32m+                            e
+(B[m[32m+                        )))
+(B[m[32m+                    }
+(B[m                 };
+ 
+                 // Authoritative policy test: are we allowed to access files at all?
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:467:
+                         FileAccessPolicy::Write(p) => p,
+                         FileAccessPolicy::ReadWrite(p) => p,
+                     };
+[31m-                    
+(B[m[32m+
+(B[m                     if granted_path_str == "*" {
+                         allowed = true;
+                         break;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:476:
+                     let granted_path = std::path::Path::new(granted_path_str);
+                     // Use resolve_safe_path to get a clean, absolute version of the granted path
+                     // Note: it's okay if granted_path is "*" or a relative path
+[31m-                    if let Ok(abs_granted) = electro_core::path_policy::resolve_safe_path(&session.workspace_path, granted_path) {
+(B[m[32m+                    if let Ok(abs_granted) = electro_core::path_policy::resolve_safe_path(
+(B[m[32m+                        &session.workspace_path,
+(B[m[32m+                        granted_path,
+(B[m[32m+                    ) {
+(B[m                         if abs_req.starts_with(&abs_granted) {
+                             allowed = true;
+                             break;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:534:
+             PolicyDecision::Allow => {
+                 if let serde_json::Value::Object(map) = arguments {
+                     if let Some(serde_json::Value::String(action)) = map.get("action") {
+[31m-                        if let electro_core::policy::BrowserPolicy::Allowed { eval_js, session_persistence } = policy.browser_access {
+(B[m[32m+                        if let electro_core::policy::BrowserPolicy::Allowed {
+(B[m[32m+                            eval_js,
+(B[m[32m+                            session_persistence,
+(B[m[32m+                        } = policy.browser_access
+(B[m[32m+                        {
+(B[m                             if action == "evaluate" && !eval_js {
+                                 return Err(ElectroError::SandboxViolation(format!(
+                                     "Policy rejection: Tool '{}' attempted to evaluate JavaScript without a policy grant. JS evaluation requires explicit executor override.",
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:541:
+                                     tool_name
+                                 )));
+                             }
+[31m-                            if (action == "save_session" || action == "restore_session") && !session_persistence {
+(B[m[32m+                            if (action == "save_session" || action == "restore_session")
+(B[m[32m+                                && !session_persistence
+(B[m[32m+                            {
+(B[m                                 return Err(ElectroError::SandboxViolation(format!(
+                                     "Policy rejection: Tool '{}' attempted to persist or restore a browser session without a policy grant. Default profiles are ephemeral.",
+                                     tool_name
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:563:
+     Ok(())
+ }
+ 
+[31m-fn validate_public_url_argument(tool_name: &str, raw_url: &str, policy: &electro_core::net_policy::NetworkPolicy) -> Result<(), ElectroError> {
+(B[m[32m+fn validate_public_url_argument(
+(B[m[32m+    tool_name: &str,
+(B[m[32m+    raw_url: &str,
+(B[m[32m+    policy: &electro_core::net_policy::NetworkPolicy,
+(B[m[32m+) -> Result<(), ElectroError> {
+(B[m     if policy == &electro_core::net_policy::NetworkPolicy::Unrestricted {
+         return Ok(());
+     }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:605:
+         )));
+     }
+ 
+[31m-    if let electro_core::net_policy::NetworkPolicy::PublicWeb { allowlist: Some(ref domains) } = policy {
+(B[m[32m+    if let electro_core::net_policy::NetworkPolicy::PublicWeb {
+(B[m[32m+        allowlist: Some(ref domains),
+(B[m[32m+    } = policy
+(B[m[32m+    {
+(B[m         if domains.is_empty() {
+             return Ok(());
+         }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:669:
+         }
+ 
+         let path = std::path::Path::new(path_str);
+[31m-        electro_core::path_policy::resolve_safe_path(workspace, path)
+(B[m[31m-            .map_err(|e| ElectroError::SandboxViolation(format!("Sandbox declaration validation failed: {}", e)))?;
+(B[m[32m+        electro_core::path_policy::resolve_safe_path(workspace, path).map_err(|e| {
+(B[m[32m+            ElectroError::SandboxViolation(format!("Sandbox declaration validation failed: {}", e))
+(B[m[32m+        })?;
+(B[m     }
+ 
+     Ok(())
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:680:
+ mod tests {
+     use super::*;
+     use async_trait::async_trait;
+[31m-    use std::sync::atomic::{AtomicUsize, Ordering};
+(B[m     use electro_core::policy::CapabilityPolicy;
+     use electro_test_utils::{make_session, MockTool};
+[32m+    use std::sync::atomic::{AtomicUsize, Ordering};
+(B[m 
+     // ── Test helpers ────────────────────────────────────────────────────
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:732:
+         }
+         fn declarations(&self) -> CapabilityPolicy {
+             CapabilityPolicy {
+[31m-                file_access: vec![electro_core::policy::FileAccessPolicy::ReadWrite("*".to_string())],
+(B[m[32m+                file_access: vec![electro_core::policy::FileAccessPolicy::ReadWrite(
+(B[m[32m+                    "*".to_string(),
+(B[m[32m+                )],
+(B[m                 network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+                 shell_access: electro_core::policy::ShellPolicy::Blocked,
+                 browser_access: electro_core::policy::BrowserPolicy::Blocked,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:776:
+                 file_access: Vec::new(),
+                 network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+                 shell_access: electro_core::policy::ShellPolicy::Blocked,
+[31m-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m[32m+                browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m             }
+         }
+         async fn execute(
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:808:
+         }
+         fn declarations(&self) -> CapabilityPolicy {
+             CapabilityPolicy {
+[31m-                file_access: vec![electro_core::policy::FileAccessPolicy::ReadWrite("*".to_string())],
+(B[m[32m+                file_access: vec![electro_core::policy::FileAccessPolicy::ReadWrite(
+(B[m[32m+                    "*".to_string(),
+(B[m[32m+                )],
+(B[m                 network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+                 shell_access: electro_core::policy::ShellPolicy::Blocked,
+                 browser_access: electro_core::policy::BrowserPolicy::Blocked,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:869:
+             file_access: vec![FileAccessPolicy::Read("subdir".to_string())],
+             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+             shell_access: electro_core::policy::ShellPolicy::Blocked,
+[31m-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m[32m+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m         });
+ 
+         let session = SessionContext {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:895:
+             file_access: vec![FileAccessPolicy::Write("/etc/passwd".to_string())],
+             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+             shell_access: electro_core::policy::ShellPolicy::Blocked,
+[31m-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m[32m+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m         });
+ 
+         let session = SessionContext {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:925:
+             file_access: vec![FileAccessPolicy::Read("../../etc/shadow".to_string())],
+             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+             shell_access: electro_core::policy::ShellPolicy::Blocked,
+[31m-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m[32m+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m         });
+ 
+         let session = SessionContext {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:972:
+             file_access: vec![FileAccessPolicy::Read("../../../etc/passwd".to_string())],
+             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+             shell_access: electro_core::policy::ShellPolicy::Blocked,
+[31m-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m[32m+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m         });
+ 
+         let session = SessionContext {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:998:
+             file_access: vec![FileAccessPolicy::ReadWrite("/".to_string())],
+             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+             shell_access: electro_core::policy::ShellPolicy::Blocked,
+[31m-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m[32m+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m         });
+ 
+         let session = SessionContext {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:1025:
+             file_access: vec![FileAccessPolicy::Read("src/lib".to_string())],
+             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+             shell_access: electro_core::policy::ShellPolicy::Blocked,
+[31m-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m[32m+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m         });
+ 
+         let session = SessionContext {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:1055:
+             ],
+             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+             shell_access: electro_core::policy::ShellPolicy::Blocked,
+[31m-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m[32m+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m         });
+ 
+         let session = SessionContext {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:1084:
+             ],
+             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+             shell_access: electro_core::policy::ShellPolicy::Blocked,
+[31m-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m[32m+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m         });
+ 
+         let session = SessionContext {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/executor.rs:1600:
+     #[tokio::test]
+     async fn parallel_multiple_different_tools() {
+         let decl_policy = electro_core::policy::CapabilityPolicy {
+[31m-            file_access: vec![electro_core::policy::FileAccessPolicy::ReadWrite("*".to_string())],
+(B[m[32m+            file_access: vec![electro_core::policy::FileAccessPolicy::ReadWrite(
+(B[m[32m+                "*".to_string(),
+(B[m[32m+            )],
+(B[m             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+             shell_access: electro_core::policy::ShellPolicy::Blocked,
+             browser_access: electro_core::policy::BrowserPolicy::Blocked,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/history_pruning.rs:28:
+ 
+ use std::collections::HashSet;
+ 
+[31m-use serde::{Deserialize, Serialize};
+(B[m use electro_core::types::message::{ChatMessage, ContentPart, MessageContent, Role};
+[32m+use serde::{Deserialize, Serialize};
+(B[m use tracing::{debug, warn};
+ 
+ // ---------------------------------------------------------------------------
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/learning.rs:5:
+ //! injected into future context to avoid repeating mistakes.
+ 
+ use chrono::{DateTime, Utc};
+[31m-use serde::{Deserialize, Serialize};
+(B[m use electro_core::types::message::{ChatMessage, ContentPart, MessageContent, Role};
+[32m+use serde::{Deserialize, Serialize};
+(B[m 
+ /// A single learning extracted from a completed task.
+ #[derive(Debug, Clone, Serialize, Deserialize)]
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/llm_classifier.rs:8:
+ //! - **Stop**: user wants the agent to stop, cancel, or abandon the current task.
+ //!   Short acknowledgement in `chat_text`. Caller should interrupt any active task.
+ 
+[31m-use serde::{Deserialize, Serialize};
+(B[m use electro_core::types::config::ElectroMode;
+ use electro_core::types::error::ElectroError;
+ use electro_core::types::message::{
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/llm_classifier.rs:16:
+ };
+ use electro_core::types::optimization::ExecutionProfile;
+ use electro_core::Provider;
+[32m+use serde::{Deserialize, Serialize};
+(B[m use tracing::{debug, info, warn};
+ 
+ /// Classification result from the LLM.
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/model_router.rs:3:
+ //! fast/cheap model; complex tasks (architecture, debugging) use the
+ //! most capable model. Classification is entirely rule-based (no LLM call).
+ 
+[31m-use serde::{Deserialize, Serialize};
+(B[m use electro_core::types::message::{ChatMessage, ContentPart, MessageContent, Role};
+ use electro_core::types::optimization::ExecutionProfile;
+[32m+use serde::{Deserialize, Serialize};
+(B[m use tracing::{debug, info};
+ 
+ // ── Read-only / simple tool names ────────────────────────────────────────
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/proactive.rs:6:
+ //! cooldowns prevent runaway automation.
+ 
+ use chrono::{DateTime, Utc};
+[32m+use electro_core::types::error::ElectroError;
+(B[m use serde::{Deserialize, Serialize};
+ use std::path::PathBuf;
+ use std::sync::atomic::{AtomicUsize, Ordering};
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/proactive.rs:12:
+ use std::sync::Mutex;
+ use std::time::Duration;
+[31m-use electro_core::types::error::ElectroError;
+(B[m use tracing::{debug, info, warn};
+ use uuid::Uuid;
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/prompt_optimizer.rs:471:
+ #[cfg(test)]
+ mod tests {
+     use super::*;
+[31m-    use std::path::PathBuf;
+(B[m     use electro_test_utils::MockTool;
+[32m+    use std::path::PathBuf;
+(B[m 
+     fn workspace() -> PathBuf {
+         PathBuf::from("/tmp/electro-test")
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/prompt_patches.rs:6:
+ //! prompt. Users can review and approve/reject patches.
+ 
+ use chrono::{DateTime, Utc};
+[31m-use serde::{Deserialize, Serialize};
+(B[m use electro_core::types::error::ElectroError;
+ use electro_core::types::message::{ChatMessage, ContentPart, MessageContent, Role};
+[32m+use serde::{Deserialize, Serialize};
+(B[m use uuid::Uuid;
+ 
+ // ---------------------------------------------------------------------------
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/prompted_tool_calling.rs:23:
+ //! 5. If invalid JSON or no tool_call field: treat the entire original text
+ //!    as a plain-text response.
+ 
+[31m-use serde_json::Value;
+(B[m use electro_core::types::message::ToolDefinition;
+[32m+use serde_json::Value;
+(B[m 
+ /// Result of parsing a model response in prompted-tool-calling mode.
+ #[derive(Debug, Clone)]
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/recovery.rs:6:
+ use std::sync::Mutex;
+ 
+ use chrono::{DateTime, Duration, Utc};
+[31m-use serde::{Deserialize, Serialize};
+(B[m use electro_core::types::error::ElectroError;
+[32m+use serde::{Deserialize, Serialize};
+(B[m use tracing::{debug, info, warn};
+ 
+ use crate::task_queue::{TaskEntry, TaskQueue, TaskStatus};
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/runtime.rs:591:
+                         info!(
+                             "V2: Fallback classified as Complex + hive enabled → routing to swarm"
+                         );
+[31m-                        return Err(ElectroError::HiveRoute(msg.text.clone().unwrap_or_default()));
+(B[m[32m+                        return Err(ElectroError::HiveRoute(
+(B[m[32m+                            msg.text.clone().unwrap_or_default(),
+(B[m[32m+                        ));
+(B[m                     }
+ 
+                     let profile = complexity.execution_profile();
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/runtime.rs:1698:
+ 
+     // LLM decided this task isn't worth a blueprint
+     if text.trim().eq_ignore_ascii_case("skip") {
+[31m-        return Err(ElectroError::Provider("LLM declined blueprint: SKIP".into()));
+(B[m[32m+        return Err(ElectroError::Provider(
+(B[m[32m+            "LLM declined blueprint: SKIP".into(),
+(B[m[32m+        ));
+(B[m     }
+ 
+     let mut bp = crate::blueprint::parse_blueprint(&text)
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/streaming.rs:18:
+ use std::sync::Arc;
+ use std::time::{Duration, Instant};
+ 
+[31m-use serde::{Deserialize, Serialize};
+(B[m use electro_core::types::error::ElectroError;
+ use electro_core::types::message::OutboundMessage;
+ use electro_core::Channel;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/streaming.rs:25:
+[32m+use serde::{Deserialize, Serialize};
+(B[m use tracing::{debug, info, warn};
+ 
+ // ---------------------------------------------------------------------------
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/task_decomposition.rs:12:
+ 
+ use std::collections::{BTreeMap, BTreeSet, HashMap, VecDeque};
+ 
+[31m-use serde::{Deserialize, Serialize};
+(B[m use electro_core::types::error::ElectroError;
+[32m+use serde::{Deserialize, Serialize};
+(B[m use tracing::{debug, warn};
+ 
+ // ---------------------------------------------------------------------------
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent/src/task_queue.rs:3:
+ //! current status, and a checkpoint of the session state (serialized history).
+ 
+ use chrono::{DateTime, Utc};
+[32m+use electro_core::types::error::ElectroError;
+(B[m use serde::{Deserialize, Serialize};
+ use sqlx::sqlite::{SqlitePool, SqlitePoolOptions};
+[31m-use electro_core::types::error::ElectroError;
+(B[m use tracing::{debug, info};
+ use uuid::Uuid;
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-channels/src/discord.rs:76:
+         ElectroError::Channel(format!("Failed to create ~/.electro directory: {e}"))
+     })?;
+     let path = paths::discord_allowlist_file();
+[31m-    let content = toml::to_string_pretty(data)
+(B[m[31m-        .map_err(|e| ElectroError::Channel(format!("Failed to serialize Discord allowlist: {e}")))?;
+(B[m[32m+    let content = toml::to_string_pretty(data).map_err(|e| {
+(B[m[32m+        ElectroError::Channel(format!("Failed to serialize Discord allowlist: {e}"))
+(B[m[32m+    })?;
+(B[m     std::fs::write(&path, content).map_err(|e| {
+         ElectroError::Channel(format!("Failed to write Discord allowlist file: {e}"))
+     })?;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-channels/src/file_transfer.rs:1:
+ //! Shared file transfer utilities for all channels.
+ 
+ use bytes::Bytes;
+[31m-use std::path::{Path, PathBuf};
+(B[m use electro_core::types::error::ElectroError;
+ use electro_core::types::file::{FileData, OutboundFile, ReceivedFile};
+[32m+use std::path::{Path, PathBuf};
+(B[m 
+ /// Save a received file to the workspace directory.
+ ///
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-channels/src/file_transfer.rs:26:
+ 
+     let dest = workspace.join(&safe_name);
+ 
+[31m-    tokio::fs::write(&dest, &file.data)
+(B[m[31m-        .await
+(B[m[31m-        .map_err(|e| ElectroError::FileTransfer(format!("Failed to write file {safe_name}: {e}")))?;
+(B[m[32m+    tokio::fs::write(&dest, &file.data).await.map_err(|e| {
+(B[m[32m+        ElectroError::FileTransfer(format!("Failed to write file {safe_name}: {e}"))
+(B[m[32m+    })?;
+(B[m 
+     tracing::info!(path = %dest.display(), size = file.size, "Saved received file");
+     Ok(dest)
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-channels/src/lib.rs:28:
+ #[cfg(feature = "slack")]
+ pub use slack::SlackChannel;
+ 
+[31m-use std::path::PathBuf;
+(B[m use electro_core::types::config::ChannelConfig;
+ use electro_core::types::error::ElectroError;
+ use electro_core::Channel;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-channels/src/lib.rs:35:
+[32m+use std::path::PathBuf;
+(B[m 
+ /// Factory function to create a channel by name.
+ ///
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-codex-oauth/src/callback_server.rs:4:
+ //! authorization code. Shuts down immediately after receiving the code.
+ 
+ use axum::{extract::Query, response::Html, routing::get, Router};
+[32m+use electro_core::types::error::ElectroError;
+(B[m use serde::Deserialize;
+ use std::net::TcpListener;
+[31m-use electro_core::types::error::ElectroError;
+(B[m use tokio::sync::oneshot;
+ 
+ /// Query parameters from the OAuth callback redirect.
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-codex-oauth/src/lib.rs:56:
+ }
+ 
+ /// Browser-based login: opens browser + local callback server.
+[31m-async fn login_browser(pkce: &pkce::PkceChallenge, state: &str) -> Result<TokenStore, ElectroError> {
+(B[m[32m+async fn login_browser(
+(B[m[32m+    pkce: &pkce::PkceChallenge,
+(B[m[32m+    state: &str,
+(B[m[32m+) -> Result<TokenStore, ElectroError> {
+(B[m     // Find port and build redirect_uri before starting server
+     let port = find_available_port()?;
+     let redirect_uri = format!("http://localhost:{}/auth/callback", port);
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-codex-oauth/src/responses_provider.rs:8:
+ //! - Different streaming event types
+ 
+ use async_trait::async_trait;
+[31m-use futures::stream::BoxStream;
+(B[m[31m-use futures::StreamExt;
+(B[m[31m-use std::sync::Arc;
+(B[m use electro_core::types::error::ElectroError;
+ use electro_core::types::message::*;
+ use electro_core::Provider;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-codex-oauth/src/responses_provider.rs:17:
+[32m+use futures::stream::BoxStream;
+(B[m[32m+use futures::StreamExt;
+(B[m[32m+use std::sync::Arc;
+(B[m 
+ use crate::token_store::TokenStore;
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-codex-oauth/src/token_store.rs:4:
+ //! and are auto-refreshed using the refresh token. A Mutex ensures only one
+ //! refresh happens at a time (prevents `refresh_token_reused` errors).
+ 
+[32m+use electro_core::paths;
+(B[m[32m+use electro_core::types::error::ElectroError;
+(B[m use serde::{Deserialize, Serialize};
+ use std::path::PathBuf;
+ use std::time::{SystemTime, UNIX_EPOCH};
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-codex-oauth/src/token_store.rs:10:
+[31m-use electro_core::paths;
+(B[m[31m-use electro_core::types::error::ElectroError;
+(B[m use tokio::sync::Mutex;
+ 
+ /// OAuth token set — stored in ~/.electro/oauth.json
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/audit.rs:1:
+[31m-use serde::{Deserialize, Serialize};
+(B[m use crate::policy::DenialReason;
+[32m+use serde::{Deserialize, Serialize};
+(B[m 
+ /// An immutable record of a capability decision made by the PolicyEngine.
+ #[derive(Debug, Clone, Serialize, Deserialize)]
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/audit.rs:18:
+ }
+ 
+ impl CapabilityDecisionRecord {
+[31m-    pub fn allowed(tool_name: impl Into<String>, session_id: impl Into<String>, action: impl Into<String>) -> Self {
+(B[m[32m+    pub fn allowed(
+(B[m[32m+        tool_name: impl Into<String>,
+(B[m[32m+        session_id: impl Into<String>,
+(B[m[32m+        action: impl Into<String>,
+(B[m[32m+    ) -> Self {
+(B[m         Self {
+             tool_name: tool_name.into(),
+             session_id: session_id.into(),
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/audit.rs:25:
+[31m-            timestamp: std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis() as u64,
+(B[m[32m+            timestamp: std::time::SystemTime::now()
+(B[m[32m+                .duration_since(std::time::UNIX_EPOCH)
+(B[m[32m+                .unwrap()
+(B[m[32m+                .as_millis() as u64,
+(B[m             action: action.into(),
+             decision: DecisionOutCome::Allowed,
+         }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/audit.rs:29:
+     }
+ 
+[31m-    pub fn denied(tool_name: impl Into<String>, session_id: impl Into<String>, action: impl Into<String>, reason: &DenialReason) -> Self {
+(B[m[32m+    pub fn denied(
+(B[m[32m+        tool_name: impl Into<String>,
+(B[m[32m+        session_id: impl Into<String>,
+(B[m[32m+        action: impl Into<String>,
+(B[m[32m+        reason: &DenialReason,
+(B[m[32m+    ) -> Self {
+(B[m         Self {
+             tool_name: tool_name.into(),
+             session_id: session_id.into(),
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/audit.rs:35:
+[31m-            timestamp: std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis() as u64,
+(B[m[32m+            timestamp: std::time::SystemTime::now()
+(B[m[32m+                .duration_since(std::time::UNIX_EPOCH)
+(B[m[32m+                .unwrap()
+(B[m[32m+                .as_millis() as u64,
+(B[m             action: action.into(),
+[31m-            decision: DecisionOutCome::Denied { reason: reason.to_string() },
+(B[m[32m+            decision: DecisionOutCome::Denied {
+(B[m[32m+                reason: reason.to_string(),
+(B[m[32m+            },
+(B[m         }
+     }
+ }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/config/credentials.rs:143:
+         if p != "http" && p != "https" {
+             match p.as_str() {
+                 "anthropic" | "openai" | "gemini" | "grok" | "xai" | "openrouter" | "minimax"
+[31m-                | "zai" | "zhipu" | "ollama" if key.len() >= 8 && !is_placeholder_key(key) => {
+(B[m[32m+                | "zai" | "zhipu" | "ollama"
+(B[m[32m+                    if key.len() >= 8 && !is_placeholder_key(key) =>
+(B[m[32m+                {
+(B[m                     return Some(DetectedCredential {
+                         provider: match p.as_str() {
+                             "anthropic" => "anthropic",
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/config/loader.rs:4:
+ use std::path::{Path, PathBuf};
+ 
+ fn read_config_file(path: &Path) -> Result<String, ElectroError> {
+[31m-    std::fs::read_to_string(path).map_err(|e| {
+(B[m[31m-        ElectroError::Config(format!("Failed to read {}: {}", path.display(), e))
+(B[m[31m-    })
+(B[m[32m+    std::fs::read_to_string(path)
+(B[m[32m+        .map_err(|e| ElectroError::Config(format!("Failed to read {}: {}", path.display(), e)))
+(B[m }
+ 
+ fn parse_config_str<T>(expanded: &str, source_label: &str) -> Result<T, ElectroError>
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/lib.rs:1:
+ pub mod audit;
+[31m-pub mod path_policy;
+(B[m[31m-pub mod net_policy;
+(B[m pub mod config;
+[32m+pub mod net_policy;
+(B[m pub mod orchestrator_impl;
+[32m+pub mod path_policy;
+(B[m[32m+pub mod paths;
+(B[m pub mod policy;
+ pub mod tenant_impl;
+ pub mod traits;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/lib.rs:9:
+ pub mod types;
+[31m-pub mod paths;
+(B[m 
+ pub use traits::*;
+ pub use types::*;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/net_policy.rs:8:
+     Blocked,
+     /// Egress is restricted exclusively to public web addresses (no RFC1918/localhost).
+     /// If an allowlist is provided, the target must also end in one of the permitted domains.
+[31m-    PublicWeb {
+(B[m[31m-        allowlist: Option<Vec<String>>,
+(B[m[31m-    },
+(B[m[32m+    PublicWeb { allowlist: Option<Vec<String>> },
+(B[m     /// Anything is allowed (typically reserved for highly trusted internal components).
+     Unrestricted,
+ }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/orchestrator_impl.rs:22:
+ #[async_trait]
+ pub trait DockerClient: Send + Sync {
+     /// POST /containers/create — returns the container ID on success.
+[31m-    async fn create_container(&self, spec: &ContainerCreateRequest) -> Result<String, ElectroError>;
+(B[m[32m+    async fn create_container(&self, spec: &ContainerCreateRequest)
+(B[m[32m+        -> Result<String, ElectroError>;
+(B[m 
+     /// POST /containers/{id}/start
+     async fn start_container(&self, id: &str) -> Result<(), ElectroError>;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/orchestrator_impl.rs:875:
+         );
+         config.insert("max_instances".to_string(), "5".to_string());
+ 
+[31m-        let err = create_orchestrator("docker", &config).err().unwrap().to_string();
+(B[m[32m+        let err = create_orchestrator("docker", &config)
+(B[m[32m+            .err()
+(B[m[32m+            .unwrap()
+(B[m[32m+            .to_string();
+(B[m         assert!(err.contains("disabled"));
+     }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/orchestrator_impl.rs:886:
+     #[tokio::test]
+     async fn test_factory_docker_defaults() {
+         let config = HashMap::new();
+[31m-        let err = create_orchestrator("docker", &config).err().unwrap().to_string();
+(B[m[32m+        let err = create_orchestrator("docker", &config)
+(B[m[32m+            .err()
+(B[m[32m+            .unwrap()
+(B[m[32m+            .to_string();
+(B[m         assert!(err.contains("disabled"));
+     }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/orchestrator_impl.rs:897:
+     #[tokio::test]
+     async fn test_factory_kubernetes() {
+         let config = HashMap::new();
+[31m-        let err = create_orchestrator("kubernetes", &config).err().unwrap().to_string();
+(B[m[32m+        let err = create_orchestrator("kubernetes", &config)
+(B[m[32m+            .err()
+(B[m[32m+            .unwrap()
+(B[m[32m+            .to_string();
+(B[m         assert!(err.contains("disabled"));
+     }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/path_policy.rs:1:
+[31m-use std::path::{Path, PathBuf};
+(B[m use crate::types::error::ElectroError;
+[32m+use std::path::{Path, PathBuf};
+(B[m 
+ /// Resolve a user-provided path relative to a root, ensuring it does not escape.
+ ///
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/path_policy.rs:9:
+ /// - Rejection of `..` or symbolic link escapes.
+ pub fn resolve_safe_path(root: &Path, user_path: &Path) -> Result<PathBuf, ElectroError> {
+     // 1. Canonicalize the root to handle symlinks in the base path
+[31m-    let root = root.canonicalize().map_err(|e| {
+(B[m[31m-        ElectroError::Policy(format!("Failed to resolve workspace root: {e}"))
+(B[m[31m-    })?;
+(B[m[32m+    let root = root
+(B[m[32m+        .canonicalize()
+(B[m[32m+        .map_err(|e| ElectroError::Policy(format!("Failed to resolve workspace root: {e}")))?;
+(B[m 
+     // 2. Resolve the absolute path
+     let absolute_path = if user_path.is_absolute() {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/path_policy.rs:23:
+     // 3. Canonicalize the final path (handles all .. and symlinks)
+     // Note: The file or directory must exist for canonicalize() to work on some OSs.
+     // If it doesn't exist, we can't fully trust canonicalize.
+[31m-    // However, for Hardening Phase 6, we require existing paths or we handle 
+(B[m[32m+    // However, for Hardening Phase 6, we require existing paths or we handle
+(B[m     // the "next-to-be-created" case by checking the parent.
+[31m-    
+(B[m[32m+
+(B[m     let resolved = match absolute_path.canonicalize() {
+         Ok(p) => p,
+         Err(_) => {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/path_policy.rs:36:
+                 })?;
+                 canon_parent.join(absolute_path.file_name().unwrap_or_default())
+             } else {
+[31m-                return Err(ElectroError::Policy("Cannot resolve path with no parent".into()));
+(B[m[32m+                return Err(ElectroError::Policy(
+(B[m[32m+                    "Cannot resolve path with no parent".into(),
+(B[m[32m+                ));
+(B[m             }
+         }
+     };
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/path_policy.rs:63:
+     fn test_resolve_safe_path_basic() {
+         let dir = tempdir().unwrap();
+         let root = dir.path().canonicalize().unwrap();
+[31m-        
+(B[m[32m+
+(B[m         // Simple relative
+         let p = resolve_safe_path(&root, Path::new("test.txt")).unwrap();
+         assert!(p.starts_with(&root));
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/path_policy.rs:74:
+     fn test_resolve_safe_path_escape() {
+         let dir = tempdir().unwrap();
+         let root = dir.path().canonicalize().unwrap();
+[31m-        
+(B[m[32m+
+(B[m         // Parent escape
+         let res = resolve_safe_path(&root, Path::new("../outside.txt"));
+         assert!(res.is_err());
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/path_policy.rs:84:
+     fn test_resolve_safe_path_absolute_outside() {
+         let dir = tempdir().unwrap();
+         let root = dir.path().canonicalize().unwrap();
+[31m-        
+(B[m[32m+
+(B[m         let res = resolve_safe_path(&root, Path::new("/etc/passwd"));
+         assert!(res.is_err());
+     }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/path_policy.rs:95:
+         let root = dir.path().canonicalize().unwrap();
+         let outside = tempdir().unwrap();
+         let outside_path = outside.path().canonicalize().unwrap();
+[31m-        
+(B[m[32m+
+(B[m         // Create a symlink pointing outside
+         let link_target = outside_path.join("secret.txt");
+         fs::write(&link_target, "secret").unwrap();
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/path_policy.rs:102:
+[31m-        
+(B[m[32m+
+(B[m         let link_path = root.join("malleable_link");
+         #[cfg(unix)]
+         std::os::unix::fs::symlink(&link_target, &link_path).unwrap();
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/path_policy.rs:106:
+[31m-        
+(B[m[32m+
+(B[m         // Resolving the link should fail prefix check
+         let res = resolve_safe_path(&root, Path::new("malleable_link"));
+         assert!(res.is_err());
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/policy.rs:1:
+[31m-use std::path::PathBuf;
+(B[m use serde::{Deserialize, Serialize};
+[32m+use std::path::PathBuf;
+(B[m 
+ /// The unified capability policy schema that defines a tool's permissions.
+ /// Every dangerous action must map to one of these categories.
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/traits/memory.rs:97:
+     async fn store(&self, entry: MemoryEntry) -> Result<(), ElectroError>;
+ 
+     /// Hybrid search: vector similarity + keyword matching
+[31m-    async fn search(&self, query: &str, opts: SearchOpts) -> Result<Vec<MemoryEntry>, ElectroError>;
+(B[m[32m+    async fn search(&self, query: &str, opts: SearchOpts)
+(B[m[32m+        -> Result<Vec<MemoryEntry>, ElectroError>;
+(B[m 
+     /// Get a specific memory entry by ID
+     async fn get(&self, id: &str) -> Result<Option<MemoryEntry>, ElectroError>;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/traits/provider.rs:10:
+     fn name(&self) -> &str;
+ 
+     /// Send a completion request and get a full response
+[31m-    async fn complete(&self, request: CompletionRequest)
+(B[m[31m-        -> Result<CompletionResponse, ElectroError>;
+(B[m[32m+    async fn complete(
+(B[m[32m+        &self,
+(B[m[32m+        request: CompletionRequest,
+(B[m[32m+    ) -> Result<CompletionResponse, ElectroError>;
+(B[m 
+     /// Send a completion request and get a streaming response
+     async fn stream(
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/traits/tool.rs:1:
+[31m-use crate::types::error::ElectroError;
+(B[m use crate::policy::CapabilityPolicy;
+[32m+use crate::types::error::ElectroError;
+(B[m use async_trait::async_trait;
+ use serde::{Deserialize, Serialize};
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core/src/traits/tool.rs:50:
+     fn declarations(&self) -> CapabilityPolicy;
+ 
+     /// Execute the tool with given input
+[31m-    async fn execute(&self, input: ToolInput, ctx: &ToolContext)
+(B[m[31m-        -> Result<ToolOutput, ElectroError>;
+(B[m[32m+    async fn execute(
+(B[m[32m+        &self,
+(B[m[32m+        input: ToolInput,
+(B[m[32m+        ctx: &ToolContext,
+(B[m[32m+    ) -> Result<ToolOutput, ElectroError>;
+(B[m 
+     /// Consume image data produced by the last execution.
+     /// Called by the runtime after execute() to inject vision data into the
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-filestore/src/lib.rs:28:
+ /// Supported backends:
+ /// - `"local"` — uses `config.path` as the base directory (defaults to `"./files"`).
+ /// - `"s3"` — requires the `s3` feature and a `config.bucket`.
+[31m-pub async fn create_filestore(config: &FileStoreConfig) -> Result<Box<dyn FileStore>, ElectroError> {
+(B[m[32m+pub async fn create_filestore(
+(B[m[32m+    config: &FileStoreConfig,
+(B[m[32m+) -> Result<Box<dyn FileStore>, ElectroError> {
+(B[m     match config.backend.as_str() {
+         "local" => {
+             let path = config.path.as_deref().unwrap_or("./files");
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-filestore/src/local.rs:2:
+ 
+ use async_trait::async_trait;
+ use bytes::Bytes;
+[31m-use futures::stream::BoxStream;
+(B[m[31m-use futures::StreamExt;
+(B[m[31m-use std::path::{Path, PathBuf};
+(B[m use electro_core::error::ElectroError;
+ use electro_core::file::FileMetadata;
+ use electro_core::FileStore;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-filestore/src/local.rs:11:
+[32m+use futures::stream::BoxStream;
+(B[m[32m+use futures::StreamExt;
+(B[m[32m+use std::path::{Path, PathBuf};
+(B[m use tokio::fs;
+ use tracing::{debug, info, warn};
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-filestore/src/local.rs:22:
+         ElectroError::FileTransfer(format!("Path {} has no parent directory", path.display()))
+     })?;
+     fs::create_dir_all(parent).await.map_err(|e| {
+[31m-        ElectroError::FileTransfer(format!("Failed to create directory {}: {e}", parent.display()))
+(B[m[32m+        ElectroError::FileTransfer(format!(
+(B[m[32m+            "Failed to create directory {}: {e}",
+(B[m[32m+            parent.display()
+(B[m[32m+        ))
+(B[m     })?;
+ 
+     let tmp_path = parent.join(format!(
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-filestore/src/local.rs:29:
+         ".{}.tmp-{}",
+[31m-        path.file_name().and_then(|n| n.to_str()).unwrap_or("electro-upload"),
+(B[m[32m+        path.file_name()
+(B[m[32m+            .and_then(|n| n.to_str())
+(B[m[32m+            .unwrap_or("electro-upload"),
+(B[m         std::process::id()
+     ));
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-filestore/src/local.rs:34:
+     fs::write(&tmp_path, data).await.map_err(|e| {
+[31m-        ElectroError::FileTransfer(format!("Failed to write temporary file {}: {e}", tmp_path.display()))
+(B[m[32m+        ElectroError::FileTransfer(format!(
+(B[m[32m+            "Failed to write temporary file {}: {e}",
+(B[m[32m+            tmp_path.display()
+(B[m[32m+        ))
+(B[m     })?;
+ 
+     if let Err(e) = fs::rename(&tmp_path, path).await {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-filestore/src/local.rs:272:
+             }
+ 
+             let mut entries = fs::read_dir(&current).await.map_err(|e| {
+[31m-                ElectroError::FileTransfer(format!("Failed to read directory {}: {e}", current.display()))
+(B[m[32m+                ElectroError::FileTransfer(format!(
+(B[m[32m+                    "Failed to read directory {}: {e}",
+(B[m[32m+                    current.display()
+(B[m[32m+                ))
+(B[m             })?;
+ 
+             while let Some(entry) = entries.next_entry().await.map_err(|e| {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-filestore/src/s3.rs:10:
+ use aws_sdk_s3::primitives::ByteStream;
+ use aws_sdk_s3::Client;
+ use bytes::Bytes;
+[31m-use futures::stream::BoxStream;
+(B[m[31m-use futures::StreamExt;
+(B[m[31m-use std::time::Duration;
+(B[m use electro_core::error::ElectroError;
+ use electro_core::file::FileMetadata;
+ use electro_core::types::config::FileStoreConfig;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-filestore/src/s3.rs:19:
+ use electro_core::FileStore;
+[32m+use futures::stream::BoxStream;
+(B[m[32m+use futures::StreamExt;
+(B[m[32m+use std::time::Duration;
+(B[m use tracing::{debug, info};
+ 
+ /// An S3-compatible file store (AWS S3, Cloudflare R2, MinIO, etc.).
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-gateway/src/dashboard.rs:426:
+     use axum::Router;
+     use tower::ServiceExt;
+ 
+[31m-    use serde_json::Value;
+(B[m     use electro_agent::AgentRuntime;
+     use electro_core::types::config::GatewayConfig;
+     use electro_test_utils::{MockChannel, MockMemory, MockProvider};
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-gateway/src/dashboard.rs:433:
+[32m+    use serde_json::Value;
+(B[m 
+     use crate::session::SessionManager;
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-gateway/src/server.rs:98:
+ 
+     /// Start the server using the provided listener.
+     pub async fn serve(&self, listener: TcpListener) -> Result<(), ElectroError> {
+[31m-        let addr = listener.local_addr().map(|a| a.to_string()).unwrap_or_default();
+(B[m[32m+        let addr = listener
+(B[m[32m+            .local_addr()
+(B[m[32m+            .map(|a| a.to_string())
+(B[m[32m+            .unwrap_or_default();
+(B[m         info!(addr = %addr, "Starting SkyGate server");
+ 
+         let router = self.build_router();
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-hive/src/pheromone.rs:266:
+                     "DELETE FROM hive_pheromones WHERE id IN ({})",
+                     placeholders.join(",")
+                 );
+[31m-                sqlx::query(&sql)
+(B[m[31m-                    .execute(&self.pool)
+(B[m[31m-                    .await
+(B[m[31m-                    .map_err(|e| ElectroError::Internal(format!("PheromoneField gc delete: {e}")))?;
+(B[m[32m+                sqlx::query(&sql).execute(&self.pool).await.map_err(|e| {
+(B[m[32m+                    ElectroError::Internal(format!("PheromoneField gc delete: {e}"))
+(B[m[32m+                })?;
+(B[m             }
+             debug!(removed = count, "Pheromone GC sweep");
+         }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-mcp/src/bridge.rs:5:
+ 
+ use crate::client::McpClient;
+ use async_trait::async_trait;
+[31m-use std::sync::Arc;
+(B[m[31m-use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
+(B[m use electro_core::policy::CapabilityPolicy;
+[32m+use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
+(B[m[32m+use std::sync::Arc;
+(B[m 
+ use tracing::{debug, warn};
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-mcp/src/bridge.rs:68:
+             file_access: vec![],
+             network_access: electro_core::net_policy::NetworkPolicy::Unrestricted, // MCP tools may access any network
+             shell_access: electro_core::policy::ShellPolicy::Blocked,
+[31m-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m[32m+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m         }
+     }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-mcp/src/client.rs:2:
+ //! initialize handshake, tool discovery, tool invocation, ping.
+ 
+ use crate::transport::Transport;
+[31m-use std::sync::Arc;
+(B[m use electro_core::types::error::ElectroError;
+[32m+use std::sync::Arc;
+(B[m use tracing::{debug, info};
+ 
+ /// Information about a single tool exposed by an MCP server.
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-mcp/src/jsonrpc.rs:81:
+     }
+ 
+     /// Extract the result value, or return the error as a ElectroError.
+[31m-    pub fn into_result(self) -> Result<serde_json::Value, electro_core::types::error::ElectroError> {
+(B[m[32m+    pub fn into_result(
+(B[m[32m+        self,
+(B[m[32m+    ) -> Result<serde_json::Value, electro_core::types::error::ElectroError> {
+(B[m         if let Some(err) = self.error {
+             Err(electro_core::types::error::ElectroError::Tool(format!(
+                 "MCP error {}: {}",
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-mcp/src/manager.rs:13:
+ use crate::transport::http::HttpTransport;
+ use crate::transport::stdio::StdioTransport;
+ use crate::transport::Transport;
+[32m+use electro_core::types::error::ElectroError;
+(B[m[32m+use electro_core::Tool;
+(B[m use std::collections::HashMap;
+ use std::sync::atomic::{AtomicBool, Ordering};
+ use std::sync::Arc;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-mcp/src/manager.rs:19:
+ use std::time::Duration;
+[31m-use electro_core::types::error::ElectroError;
+(B[m[31m-use electro_core::Tool;
+(B[m use tokio::sync::RwLock;
+ use tracing::{error, info, warn};
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-mcp/src/mcp_manage.rs:5:
+ //! - "remove": Disconnect and remove an MCP server
+ //! - "restart": Restart a crashed or misbehaving server
+ 
+[31m-
+(B[m use crate::manager::McpManager;
+ use async_trait::async_trait;
+[31m-use std::sync::Arc;
+(B[m[31m-use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
+(B[m use electro_core::policy::CapabilityPolicy;
+[32m+use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
+(B[m[32m+use std::sync::Arc;
+(B[m 
+ use tracing::info;
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-mcp/src/mcp_manage.rs:85:
+             }
+ 
+             // 'add' action intentionally unavailable in this build
+[31m-
+(B[m             "remove" => {
+                 let name = match args.get("name").and_then(|v| v.as_str()) {
+                     Some(n) if !n.is_empty() => n,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-mcp/src/mcp_manage.rs:142:
+             }
+ 
+             _ => Ok(ToolOutput {
+[31m-                content: format!(
+(B[m[31m-                    "Unknown action '{}'. Use: list, remove, restart.",
+(B[m[31m-                    action
+(B[m[31m-                ),
+(B[m[32m+                content: format!("Unknown action '{}'. Use: list, remove, restart.", action),
+(B[m                 is_error: true,
+             }),
+         }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-mcp/src/mcp_manage.rs:180:
+         assert!(!output.is_error);
+         assert!(output.content.contains("No MCP servers configured"));
+     }
+[31m-
+(B[m 
+     #[tokio::test]
+     async fn mcp_manage_unknown_action() {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-mcp/src/transport/http.rs:6:
+ use crate::jsonrpc::{JsonRpcNotification, JsonRpcRequest, JsonRpcResponse};
+ use crate::transport::Transport;
+ use async_trait::async_trait;
+[32m+use electro_core::types::error::ElectroError;
+(B[m use std::collections::HashMap;
+ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+ use std::sync::Arc;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-mcp/src/transport/http.rs:12:
+ use std::time::Duration;
+[31m-use electro_core::types::error::ElectroError;
+(B[m use tokio::sync::RwLock;
+ use tracing::{debug, warn};
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-mcp/src/transport/mod.rs:46:
+         _method: &str,
+         _params: Option<serde_json::Value>,
+     ) -> Result<JsonRpcResponse, ElectroError> {
+[31m-        Err(ElectroError::Tool("MCP server is not connected".to_string()))
+(B[m[32m+        Err(ElectroError::Tool(
+(B[m[32m+            "MCP server is not connected".to_string(),
+(B[m[32m+        ))
+(B[m     }
+ 
+     async fn notify(
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-mcp/src/transport/mod.rs:54:
+         _method: &str,
+         _params: Option<serde_json::Value>,
+     ) -> Result<(), ElectroError> {
+[31m-        Err(ElectroError::Tool("MCP server is not connected".to_string()))
+(B[m[32m+        Err(ElectroError::Tool(
+(B[m[32m+            "MCP server is not connected".to_string(),
+(B[m[32m+        ))
+(B[m     }
+ 
+     fn is_alive(&self) -> bool {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-mcp/src/transport/stdio.rs:14:
+ };
+ use crate::transport::Transport;
+ use async_trait::async_trait;
+[32m+use electro_core::types::error::ElectroError;
+(B[m use std::collections::HashMap;
+ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+ use std::sync::Arc;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-mcp/src/transport/stdio.rs:20:
+ use std::time::Duration;
+[31m-use electro_core::types::error::ElectroError;
+(B[m use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+ use tokio::process::{Child, Command};
+ use tokio::sync::{oneshot, Mutex};
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-memory/src/failover.rs:7:
+ //! cached entries back to the primary.
+ 
+ use async_trait::async_trait;
+[32m+use electro_core::error::ElectroError;
+(B[m[32m+use electro_core::{Memory, MemoryEntry, SearchOpts};
+(B[m use serde::{Deserialize, Serialize};
+ use std::collections::HashMap;
+ use std::sync::Arc;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-memory/src/failover.rs:13:
+[31m-use electro_core::error::ElectroError;
+(B[m[31m-use electro_core::{Memory, MemoryEntry, SearchOpts};
+(B[m use tokio::sync::RwLock;
+ use tracing::{debug, error, info, warn};
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-memory/src/failover.rs:322:
+         }
+     }
+ 
+[31m-    async fn search(&self, query: &str, opts: SearchOpts) -> Result<Vec<MemoryEntry>, ElectroError> {
+(B[m[32m+    async fn search(
+(B[m[32m+        &self,
+(B[m[32m+        query: &str,
+(B[m[32m+        opts: SearchOpts,
+(B[m[32m+    ) -> Result<Vec<MemoryEntry>, ElectroError> {
+(B[m         match self.primary.search(query, opts.clone()).await {
+             Ok(mut results) => {
+                 self.record_success().await;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-memory/src/failover.rs:497:
+ mod tests {
+     use super::*;
+     use chrono::Utc;
+[31m-    use std::sync::atomic::{AtomicBool, Ordering};
+(B[m     use electro_core::MemoryEntryType;
+[32m+    use std::sync::atomic::{AtomicBool, Ordering};
+(B[m 
+     // -- Test helpers -------------------------------------------------------
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-memory/src/markdown.rs:6:
+ 
+ use async_trait::async_trait;
+ use chrono::Utc;
+[31m-use std::path::{Path, PathBuf};
+(B[m use electro_core::error::ElectroError;
+ use electro_core::{Memory, MemoryEntry, MemoryEntryType, SearchOpts};
+[32m+use std::path::{Path, PathBuf};
+(B[m use tokio::fs;
+ use tracing::{debug, info};
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-memory/src/markdown.rs:216:
+         Ok(())
+     }
+ 
+[31m-    async fn search(&self, query: &str, opts: SearchOpts) -> Result<Vec<MemoryEntry>, ElectroError> {
+(B[m[32m+    async fn search(
+(B[m[32m+        &self,
+(B[m[32m+        query: &str,
+(B[m[32m+        opts: SearchOpts,
+(B[m[32m+    ) -> Result<Vec<MemoryEntry>, ElectroError> {
+(B[m         let mut entries = self.all_entries().await?;
+ 
+         // Apply filters.
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-memory/src/search.rs:3:
+ //! For v0.1 this implements keyword-only scoring with a simple TF-IDF-like
+ //! relevance model. Vector similarity can be layered in later.
+ 
+[31m-use std::collections::HashMap;
+(B[m use electro_core::MemoryEntry;
+[32m+use std::collections::HashMap;
+(B[m 
+ /// Compute keyword relevance scores and return entries sorted by descending score.
+ ///
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-memory/src/sqlite.rs:1:
+ //! SQLite-backed memory implementation.
+ 
+ use async_trait::async_trait;
+[31m-use sqlx::sqlite::{SqlitePool, SqlitePoolOptions};
+(B[m[31m-use std::time::Duration;
+(B[m use electro_core::error::ElectroError;
+ use electro_core::{
+     LambdaMemoryEntry, LambdaMemoryType, Memory, MemoryEntry, MemoryEntryType, SearchOpts,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-memory/src/sqlite.rs:9:
+ };
+[32m+use sqlx::sqlite::{SqlitePool, SqlitePoolOptions};
+(B[m[32m+use std::time::Duration;
+(B[m use tokio::time::{sleep, timeout};
+ use tracing::{debug, info, warn};
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-memory/src/sqlite.rs:20:
+     ))
+ }
+ 
+[31m-
+(B[m fn current_unix_secs() -> u64 {
+     match std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH) {
+         Ok(duration) => duration.as_secs(),
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-memory/src/sqlite.rs:54:
+     pub async fn new(database_url: &str) -> Result<Self, ElectroError> {
+         let pool = timeout(
+             DB_TIMEOUT,
+[31m-            SqlitePoolOptions::new().max_connections(5).connect(database_url),
+(B[m[32m+            SqlitePoolOptions::new()
+(B[m[32m+                .max_connections(5)
+(B[m[32m+                .connect(database_url),
+(B[m         )
+         .await
+         .map_err(|_| db_timeout_error())?
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-memory/src/sqlite.rs:86:
+             .map_err(|e| ElectroError::Memory(format!("Failed to create tables: {e}")))?;
+ 
+             // Index for session lookups.
+[31m-            sqlx::query("CREATE INDEX IF NOT EXISTS idx_memory_session ON memory_entries(session_id)")
+(B[m[31m-                .execute(&self.pool)
+(B[m[31m-                .await
+(B[m[31m-                .map_err(|e| ElectroError::Memory(format!("Failed to create index: {e}")))?;
+(B[m[32m+            sqlx::query(
+(B[m[32m+                "CREATE INDEX IF NOT EXISTS idx_memory_session ON memory_entries(session_id)",
+(B[m[32m+            )
+(B[m[32m+            .execute(&self.pool)
+(B[m[32m+            .await
+(B[m[32m+            .map_err(|e| ElectroError::Memory(format!("Failed to create index: {e}")))?;
+(B[m 
+             // ── λ-Memory tables ───────────────────────────────────────────
+             sqlx::query(
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-memory/src/sqlite.rs:114:
+             .await
+             .map_err(|e| ElectroError::Memory(format!("Failed to create lambda_memories: {e}")))?;
+ 
+[31m-            sqlx::query("CREATE INDEX IF NOT EXISTS idx_lm_importance ON lambda_memories(importance)")
+(B[m[31m-                .execute(&self.pool)
+(B[m[31m-                .await
+(B[m[31m-                .map_err(|e| ElectroError::Memory(format!("Failed to create lambda index: {e}")))?;
+(B[m[32m+            sqlx::query(
+(B[m[32m+                "CREATE INDEX IF NOT EXISTS idx_lm_importance ON lambda_memories(importance)",
+(B[m[32m+            )
+(B[m[32m+            .execute(&self.pool)
+(B[m[32m+            .await
+(B[m[32m+            .map_err(|e| ElectroError::Memory(format!("Failed to create lambda index: {e}")))?;
+(B[m 
+             sqlx::query(
+                 "CREATE INDEX IF NOT EXISTS idx_lm_last_accessed ON lambda_memories(last_accessed)",
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-memory/src/sqlite.rs:126:
+             .await
+             .map_err(|e| ElectroError::Memory(format!("Failed to create lambda index: {e}")))?;
+ 
+[31m-            sqlx::query("CREATE INDEX IF NOT EXISTS idx_lm_explicit ON lambda_memories(explicit_save)")
+(B[m[31m-                .execute(&self.pool)
+(B[m[31m-                .await
+(B[m[31m-                .map_err(|e| ElectroError::Memory(format!("Failed to create lambda index: {e}")))?;
+(B[m[32m+            sqlx::query(
+(B[m[32m+                "CREATE INDEX IF NOT EXISTS idx_lm_explicit ON lambda_memories(explicit_save)",
+(B[m[32m+            )
+(B[m[32m+            .execute(&self.pool)
+(B[m[32m+            .await
+(B[m[32m+            .map_err(|e| ElectroError::Memory(format!("Failed to create lambda index: {e}")))?;
+(B[m 
+             // FTS5 virtual table for BM25 search on summary/essence/tags.
+             // content='' makes it an external content table (we manage sync ourselves).
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-memory/src/sqlite.rs:218:
+         Ok(())
+     }
+ 
+[31m-    async fn search(&self, query: &str, opts: SearchOpts) -> Result<Vec<MemoryEntry>, ElectroError> {
+(B[m[32m+    async fn search(
+(B[m[32m+        &self,
+(B[m[32m+        query: &str,
+(B[m[32m+        opts: SearchOpts,
+(B[m[32m+    ) -> Result<Vec<MemoryEntry>, ElectroError> {
+(B[m         // Split multi-word queries into individual word matches (AND logic).
+         // Each word is matched against both content AND id fields.
+         // This handles cases like "cat name" matching "cat's name" in content.
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-memory/src/sqlite.rs:259:
+ 
+         let rows: Vec<MemoryRow> = timeout(DB_TIMEOUT, q.fetch_all(&self.pool))
+             .await
+[31m-            .map_err(|_| {
+(B[m[31m-                db_timeout_error()
+(B[m[31m-            })?
+(B[m[32m+            .map_err(|_| db_timeout_error())?
+(B[m             .map_err(|e| ElectroError::Memory(format!("Search failed: {e}")))?;
+ 
+         rows.into_iter().map(row_to_entry).collect()
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-memory/src/sqlite_usage.rs:1:
+ //! SQLite-backed usage store implementation.
+ 
+ use async_trait::async_trait;
+[31m-use sqlx::sqlite::{SqlitePool, SqlitePoolOptions};
+(B[m use electro_core::error::ElectroError;
+ use electro_core::{UsageRecord, UsageStore, UsageSummary};
+[32m+use sqlx::sqlite::{SqlitePool, SqlitePoolOptions};
+(B[m use tracing::info;
+ 
+ /// SQLite-backed persistence for per-turn usage records.
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-memory/src/sqlite_usage.rs:172:
+         .bind(enabled as i64)
+         .execute(&self.pool)
+         .await
+[31m-        .map_err(|e| ElectroError::Memory(format!("Failed to set usage display preference: {e}")))?;
+(B[m[32m+        .map_err(|e| {
+(B[m[32m+            ElectroError::Memory(format!("Failed to set usage display preference: {e}"))
+(B[m[32m+        })?;
+(B[m         Ok(())
+     }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-observable/src/lib.rs:49:
+ /// - If `config.otel_enabled` is `true` **and** `config.otel_endpoint` is
+ ///   `Some(endpoint)`, returns an [`OtelExporter`] targeting that endpoint.
+ /// - Otherwise returns a plain in-process [`MetricsCollector`].
+[31m-pub fn create_observable(config: &ObservabilityConfig) -> Result<Box<dyn Observable>, ElectroError> {
+(B[m[32m+pub fn create_observable(
+(B[m[32m+    config: &ObservabilityConfig,
+(B[m[32m+) -> Result<Box<dyn Observable>, ElectroError> {
+(B[m     if config.otel_enabled {
+         if let Some(ref endpoint) = config.otel_endpoint {
+             let exporter = OtelExporter::new(endpoint)?;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-observable/src/otel.rs:110:
+                 ComponentHealth {
+                     name: "otlp_exporter".to_string(),
+                     status: HealthState::Degraded,
+[31m-                    message: Some(format!("Configured endpoint: {} (export transport not implemented)", self.endpoint)),
+(B[m[32m+                    message: Some(format!(
+(B[m[32m+                        "Configured endpoint: {} (export transport not implemented)",
+(B[m[32m+                        self.endpoint
+(B[m[32m+                    )),
+(B[m                 },
+             ],
+         })
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-providers/src/anthropic.rs:1:
+ use async_trait::async_trait;
+[31m-use futures::stream::BoxStream;
+(B[m[31m-use reqwest::Client;
+(B[m[31m-use serde::Deserialize;
+(B[m[31m-use std::sync::atomic::{AtomicUsize, Ordering};
+(B[m use electro_core::types::error::ElectroError;
+ use electro_core::types::message::{
+     ChatMessage, CompletionRequest, CompletionResponse, ContentPart, MessageContent, Role,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-providers/src/anthropic.rs:9:
+     StreamChunk, ToolDefinition, Usage,
+ };
+ use electro_core::Provider;
+[32m+use futures::stream::BoxStream;
+(B[m[32m+use reqwest::Client;
+(B[m[32m+use serde::Deserialize;
+(B[m[32m+use std::sync::atomic::{AtomicUsize, Ordering};
+(B[m use tracing::{debug, error, info};
+ 
+ /// Anthropic Messages API provider with key rotation.
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-providers/src/openai_compat.rs:1:
+ use async_trait::async_trait;
+[31m-use futures::stream::BoxStream;
+(B[m[31m-use futures::StreamExt;
+(B[m[31m-use reqwest::Client;
+(B[m[31m-use serde::Deserialize;
+(B[m[31m-use std::collections::HashMap;
+(B[m[31m-use std::sync::atomic::{AtomicUsize, Ordering};
+(B[m use electro_core::types::error::ElectroError;
+ use electro_core::types::message::{
+     ChatMessage, CompletionRequest, CompletionResponse, ContentPart, MessageContent, Role,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-providers/src/openai_compat.rs:11:
+     StreamChunk, ToolDefinition, Usage,
+ };
+ use electro_core::Provider;
+[32m+use futures::stream::BoxStream;
+(B[m[32m+use futures::StreamExt;
+(B[m[32m+use reqwest::Client;
+(B[m[32m+use serde::Deserialize;
+(B[m[32m+use std::collections::HashMap;
+(B[m[32m+use std::sync::atomic::{AtomicUsize, Ordering};
+(B[m use tracing::{debug, error, info};
+ 
+ /// OpenAI-compatible provider with key rotation.
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-providers/src/openai_compat.rs:598:
+         for (k, v) in &self.extra_headers {
+             req = req.header(k.as_str(), v.as_str());
+         }
+[31m-        let response = req
+(B[m[31m-            .json(&body)
+(B[m[31m-            .send()
+(B[m[31m-            .await
+(B[m[31m-            .map_err(|e| ElectroError::Provider(format!("OpenAI-compat request failed: {e}")))?;
+(B[m[32m+        let response =
+(B[m[32m+            req.json(&body).send().await.map_err(|e| {
+(B[m[32m+                ElectroError::Provider(format!("OpenAI-compat request failed: {e}"))
+(B[m[32m+            })?;
+(B[m 
+         let status = response.status();
+         if !status.is_success() {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-skills/src/lib.rs:6:
+ 
+ use std::path::{Path, PathBuf};
+ 
+[31m-use serde::Deserialize;
+(B[m use electro_core::error::ElectroError;
+ use electro_core::paths;
+[32m+use serde::Deserialize;
+(B[m use tokio::fs;
+ 
+ /// A parsed skill loaded from a `.md` file.
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-test-utils/src/lib.rs:9:
+ use futures::stream::BoxStream;
+ use tokio::sync::Mutex;
+ 
+[32m+use electro_core::policy::CapabilityPolicy;
+(B[m use electro_core::types::config::*;
+ use electro_core::types::error::ElectroError;
+ use electro_core::types::message::*;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-test-utils/src/lib.rs:17:
+     Channel, FileTransfer, Memory, MemoryEntry, MemoryEntryType, Provider, SearchOpts, Tool,
+     ToolContext, ToolInput, ToolOutput,
+ };
+[31m-use electro_core::policy::CapabilityPolicy;
+(B[m 
+ // ---------------------------------------------------------------------------
+ // MockProvider
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-test-utils/src/lib.rs:173:
+         Ok(())
+     }
+ 
+[31m-    async fn search(&self, query: &str, opts: SearchOpts) -> Result<Vec<MemoryEntry>, ElectroError> {
+(B[m[32m+    async fn search(
+(B[m[32m+        &self,
+(B[m[32m+        query: &str,
+(B[m[32m+        opts: SearchOpts,
+(B[m[32m+    ) -> Result<Vec<MemoryEntry>, ElectroError> {
+(B[m         let entries = self.entries.lock().await;
+         let results: Vec<MemoryEntry> = entries
+             .iter()
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-test-utils/src/lib.rs:319:
+                 file_access: Vec::new(),
+                 network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+                 shell_access: electro_core::policy::ShellPolicy::Blocked,
+[31m-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m[32m+                browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m             },
+             output: ToolOutput {
+                 content: "mock output".to_string(),
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/browser.rs:41:
+ };
+ use chromiumoxide::cdp::browser_protocol::page::AddScriptToEvaluateOnNewDocumentParams;
+ use chromiumoxide::page::Page;
+[32m+use electro_core::paths;
+(B[m[32m+use electro_core::policy::{CapabilityPolicy, FileAccessPolicy};
+(B[m[32m+use electro_core::types::error::ElectroError;
+(B[m[32m+use electro_core::{Tool, ToolContext, ToolInput, ToolOutput, ToolOutputImage, Vault};
+(B[m use futures::StreamExt;
+ use serde::{Deserialize, Serialize};
+[31m-use electro_core::types::error::ElectroError;
+(B[m[31m-use electro_core::{
+(B[m[31m-    Tool, ToolContext, ToolInput, ToolOutput, ToolOutputImage, Vault};
+(B[m[31m-use electro_core::paths;
+(B[m[31m-use electro_core::policy::{CapabilityPolicy, FileAccessPolicy,
+(B[m[31m-};
+(B[m use tokio::sync::Mutex;
+ use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/browser.rs:829:
+         if !remote_browser {
+             // ── Profile Strategy ──────────────────────────────────────────
+             // Local fallback keeps the old clean-by-default profile behavior.
+[31m-            let inherit_browser_session = std::env::var("ELECTRO_INHERIT_BROWSER_SESSION").unwrap_or_default() == "1";
+(B[m[32m+            let inherit_browser_session =
+(B[m[32m+                std::env::var("ELECTRO_INHERIT_BROWSER_SESSION").unwrap_or_default() == "1";
+(B[m             let clean_browser = !inherit_browser_session;
+ 
+             let work_profile = dirs::data_dir()
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/browser.rs:1037:
+         let safe_name = sanitize_session_name(session_name);
+         let path = sessions_dir.join(format!("{}.json", safe_name));
+ 
+[31m-        if !std::fs::exists(&path).map_err(|e| ElectroError::Tool(format!("Failed to check session file {}: {}", path.display(), e)))? {
+(B[m[32m+        if !std::fs::exists(&path).map_err(|e| {
+(B[m[32m+            ElectroError::Tool(format!(
+(B[m[32m+                "Failed to check session file {}: {}",
+(B[m[32m+                path.display(),
+(B[m[32m+                e
+(B[m[32m+            ))
+(B[m[32m+        })? {
+(B[m             return Err(ElectroError::Tool(format!(
+                 "Session '{}' not found at {}",
+                 safe_name,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/browser.rs:1099:
+     }
+ }
+ 
+[31m-
+(B[m fn atomic_write_session_file(path: &std::path::Path, contents: &str) -> Result<(), ElectroError> {
+     let parent = path.parent().ok_or_else(|| {
+[31m-        ElectroError::Tool(format!("Session path {} has no parent directory", path.display()))
+(B[m[32m+        ElectroError::Tool(format!(
+(B[m[32m+            "Session path {} has no parent directory",
+(B[m[32m+            path.display()
+(B[m[32m+        ))
+(B[m     })?;
+     std::fs::create_dir_all(parent).map_err(|e| {
+[31m-        ElectroError::Tool(format!("Failed to create sessions directory {}: {}", parent.display(), e))
+(B[m[32m+        ElectroError::Tool(format!(
+(B[m[32m+            "Failed to create sessions directory {}: {}",
+(B[m[32m+            parent.display(),
+(B[m[32m+            e
+(B[m[32m+        ))
+(B[m     })?;
+ 
+     #[cfg(unix)]
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/browser.rs:1123:
+ 
+     let tmp_path = parent.join(format!(
+         ".{}.tmp-{}",
+[31m-        path.file_name().and_then(|n| n.to_str()).unwrap_or("session"),
+(B[m[32m+        path.file_name()
+(B[m[32m+            .and_then(|n| n.to_str())
+(B[m[32m+            .unwrap_or("session"),
+(B[m         std::process::id()
+     ));
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/browser.rs:1161:
+     let electro_home = paths::ensure_electro_home()?;
+     let dir = electro_home.join(SESSIONS_DIR);
+     std::fs::create_dir_all(&dir).map_err(|e| {
+[31m-        ElectroError::Tool(format!("Failed to create sessions directory {}: {}", dir.display(), e))
+(B[m[32m+        ElectroError::Tool(format!(
+(B[m[32m+            "Failed to create sessions directory {}: {}",
+(B[m[32m+            dir.display(),
+(B[m[32m+            e
+(B[m[32m+        ))
+(B[m     })?;
+ 
+     #[cfg(unix)]
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/browser.rs:1204:
+     load_domain_allowlist_from_env(PUBLIC_WEB_ALLOWLIST_ENV)
+ }
+ 
+[31m-
+(B[m /// Sanitize a session name to a safe filename (alphanumeric, dots, dashes, underscores).
+ fn sanitize_session_name(name: &str) -> String {
+     let sanitized: String = name
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/browser.rs:3141:
+         rt.block_on(async {
+             let tool = BrowserTool::new();
+             let decl = tool.declarations();
+[31m-            assert!(matches!(decl.network_access, electro_core::net_policy::NetworkPolicy::PublicWeb { .. }));
+(B[m[31m-            assert_eq!(decl.shell_access, electro_core::policy::ShellPolicy::Blocked);
+(B[m[32m+            assert!(matches!(
+(B[m[32m+                decl.network_access,
+(B[m[32m+                electro_core::net_policy::NetworkPolicy::PublicWeb { .. }
+(B[m[32m+            ));
+(B[m[32m+            assert_eq!(
+(B[m[32m+                decl.shell_access,
+(B[m[32m+                electro_core::policy::ShellPolicy::Blocked
+(B[m[32m+            );
+(B[m         });
+     }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/browser_pool.rs:16:
+ 
+ use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
+ 
+[31m-use crate::browser_runtime::{browser_isolation_mode, browser_uses_remote, connect_or_launch_browser, ensure_browser_runtime_policy};
+(B[m[32m+use crate::browser_runtime::{
+(B[m[32m+    browser_isolation_mode, browser_uses_remote, connect_or_launch_browser,
+(B[m[32m+    ensure_browser_runtime_policy,
+(B[m[32m+};
+(B[m use std::sync::Arc;
+ 
+ use chromiumoxide::browser::{Browser, BrowserConfig};
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/browser_pool.rs:120:
+             .build()
+             .map_err(|e| ElectroError::Tool(format!("BrowserPool config: {e}")))?;
+ 
+[31m-        let (mut browser, mut handler) = connect_or_launch_browser(config, "browser pool")
+(B[m[31m-            .await?;
+(B[m[32m+        let (mut browser, mut handler) = connect_or_launch_browser(config, "browser pool").await?;
+(B[m         info!(mode = %browser_isolation_mode(), "BrowserPool runtime ready");
+ 
+         // Capture the Chrome process PID for child-process cleanup on shutdown.
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/browser_runtime.rs:22:
+ }
+ 
+ pub fn browser_isolation_mode() -> String {
+[31m-    let raw = std::env::var(BROWSER_ISOLATION_MODE_ENV)
+(B[m[31m-        .unwrap_or_else(|_| "remote".to_string());
+(B[m[32m+    let raw = std::env::var(BROWSER_ISOLATION_MODE_ENV).unwrap_or_else(|_| "remote".to_string());
+(B[m     let trimmed = raw.trim().to_ascii_lowercase();
+     if trimmed.is_empty() {
+         "remote".to_string()
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/browser_runtime.rs:33:
+ }
+ 
+ pub fn browser_uses_remote() -> bool {
+[31m-    !matches!(browser_isolation_mode().as_str(), "local" | "legacy-local" | "host")
+(B[m[32m+    !matches!(
+(B[m[32m+        browser_isolation_mode().as_str(),
+(B[m[32m+        "local" | "legacy-local" | "host"
+(B[m[32m+    )
+(B[m }
+ 
+ pub fn browser_remote_url() -> String {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/browser_runtime.rs:49:
+ 
+ pub fn browser_proxy_required_for_local() -> bool {
+     match std::env::var(BROWSER_PROXY_REQUIRED_ENV) {
+[31m-        Ok(v) => !matches!(v.trim().to_ascii_lowercase().as_str(), "0" | "false" | "no" | "off"),
+(B[m[32m+        Ok(v) => !matches!(
+(B[m[32m+            v.trim().to_ascii_lowercase().as_str(),
+(B[m[32m+            "0" | "false" | "no" | "off"
+(B[m[32m+        ),
+(B[m         Err(_) => true,
+     }
+ }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/browser_runtime.rs:112:
+         tracing::info!(context = context, remote = %url, mode = %browser_isolation_mode(), "Connecting to isolated remote browser");
+ 
+         let http_url = if url.starts_with("ws://") || url.starts_with("wss://") {
+[31m-            url.replace("ws://", "http://").replace("wss://", "https://")
+(B[m[32m+            url.replace("ws://", "http://")
+(B[m[32m+                .replace("wss://", "https://")
+(B[m         } else {
+             url.clone()
+         };
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/browser_runtime.rs:119:
+         let health_url = format!("{}/json/version", http_url.trim_end_matches('/'));
+         let client = build_standard_client(&electro_core::net_policy::NetworkPolicy::Unrestricted)
+[31m-            .map_err(|e| ElectroError::Tool(format!("Failed to build health check client: {}", e)))?;
+(B[m[32m+            .map_err(|e| {
+(B[m[32m+                ElectroError::Tool(format!("Failed to build health check client: {}", e))
+(B[m[32m+            })?;
+(B[m 
+         if let Err(e) = client.get(&health_url).send().await {
+             return Err(ElectroError::Tool(format!(
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/browser_session.rs:21:
+ //! 3. `handle_input()` — user sends number (click) or text (type) or "done"
+ //! 4. `capture_session()` — extract cookies + storage, encrypt, store in vault
+ 
+[31m-use crate::browser_runtime::{browser_isolation_mode, browser_uses_remote, connect_or_launch_browser, ensure_browser_runtime_policy};
+(B[m[32m+use crate::browser_runtime::{
+(B[m[32m+    browser_isolation_mode, browser_uses_remote, connect_or_launch_browser,
+(B[m[32m+    ensure_browser_runtime_policy,
+(B[m[32m+};
+(B[m use crate::network_guard::{
+     enforce_host_allowlist, ensure_resolved_host_is_public, load_domain_allowlist_from_env,
+     validate_public_url,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/browser_session.rs:38:
+ };
+ use chromiumoxide::cdp::browser_protocol::page::CaptureScreenshotFormat;
+ use chromiumoxide::page::Page;
+[31m-use serde::{Deserialize, Serialize};
+(B[m use electro_core::types::error::ElectroError;
+ use electro_core::Vault;
+[32m+use serde::{Deserialize, Serialize};
+(B[m use zeroize::Zeroizing;
+ 
+ // ── Constants ────────────────────────────────────────────────────────
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/browser_session.rs:176:
+             .map(|u| u.to_string())
+             .unwrap_or_default();
+         if !current_url.is_empty() {
+[31m-            let final_url = validate_public_url(&current_url)
+(B[m[31m-                .map_err(|msg| ElectroError::Tool(format!("Interactive browser session ended on blocked URL: {}", msg)))?;
+(B[m[32m+            let final_url = validate_public_url(&current_url).map_err(|msg| {
+(B[m[32m+                ElectroError::Tool(format!(
+(B[m[32m+                    "Interactive browser session ended on blocked URL: {}",
+(B[m[32m+                    msg
+(B[m[32m+                ))
+(B[m[32m+            })?;
+(B[m             ensure_resolved_host_is_public(&final_url)
+                 .await
+[31m-                .map_err(|msg| ElectroError::Tool(format!("Interactive browser session final URL resolution blocked: {}", msg)))?;
+(B[m[32m+                .map_err(|msg| {
+(B[m[32m+                    ElectroError::Tool(format!(
+(B[m[32m+                        "Interactive browser session final URL resolution blocked: {}",
+(B[m[32m+                        msg
+(B[m[32m+                    ))
+(B[m[32m+                })?;
+(B[m             if let Some(final_host) = final_url.host_str() {
+[31m-                enforce_host_allowlist(final_host, &allowlist, "interactive browser session final host")
+(B[m[31m-                    .map_err(ElectroError::Tool)?;
+(B[m[32m+                enforce_host_allowlist(
+(B[m[32m+                    final_host,
+(B[m[32m+                    &allowlist,
+(B[m[32m+                    "interactive browser session final host",
+(B[m[32m+                )
+(B[m[32m+                .map_err(ElectroError::Tool)?;
+(B[m             }
+         }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/browser_session.rs:251:
+         }
+ 
+         if !remote_browser {
+[31m-            let inherit_browser_session = std::env::var("ELECTRO_INHERIT_BROWSER_SESSION").unwrap_or_default() == "1";
+(B[m[31m-            let force_clean_browser = std::env::var("ELECTRO_CLEAN_BROWSER").unwrap_or_default() == "1";
+(B[m[32m+            let inherit_browser_session =
+(B[m[32m+                std::env::var("ELECTRO_INHERIT_BROWSER_SESSION").unwrap_or_default() == "1";
+(B[m[32m+            let force_clean_browser =
+(B[m[32m+                std::env::var("ELECTRO_CLEAN_BROWSER").unwrap_or_default() == "1";
+(B[m 
+             let work_profile = dirs::data_dir()
+                 .unwrap_or_else(|| std::path::PathBuf::from("."))
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/browser_session.rs:274:
+             .build()
+             .map_err(|e| ElectroError::Tool(format!("Browser config: {}", e)))?;
+ 
+[31m-        let (browser, mut handler) = connect_or_launch_browser(config, "interactive browser session")
+(B[m[31m-            .await?;
+(B[m[32m+        let (browser, mut handler) =
+(B[m[32m+            connect_or_launch_browser(config, "interactive browser session").await?;
+(B[m 
+         // CDP handler — continue on WS errors (chromiumoxide 0.7 compat)
+         tokio::spawn(async move { while handler.next().await.is_some() {} });
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/browser_session.rs:741:
+             service: self.service.clone(),
+         };
+ 
+[31m-        let json = serde_json::to_vec(&state)
+(B[m[31m-            .map_err(|e| ElectroError::Tool(format!("Session state serialization failed: {}", e)))?;
+(B[m[32m+        let json = serde_json::to_vec(&state).map_err(|e| {
+(B[m[32m+            ElectroError::Tool(format!("Session state serialization failed: {}", e))
+(B[m[32m+        })?;
+(B[m 
+         let vault_key = format!("web_session:{}", self.service);
+         vault.store_secret(&vault_key, &json).await?;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/check_messages.rs:11:
+ use std::sync::{Arc, Mutex};
+ 
+ use async_trait::async_trait;
+[32m+use electro_core::policy::CapabilityPolicy;
+(B[m use electro_core::types::error::ElectroError;
+ use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
+[31m-use electro_core::policy::CapabilityPolicy;
+(B[m 
+[31m-
+(B[m /// Shared pending-message queue. Maps chat_id → list of message texts.
+ pub type PendingMessages = Arc<Mutex<HashMap<String, Vec<String>>>>;
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/check_messages.rs:56:
+             file_access: Vec::new(),
+             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+             shell_access: electro_core::policy::ShellPolicy::Blocked,
+[31m-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m[32m+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m         }
+     }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/custom_tools.rs:7:
+ //! A `ScriptToolAdapter` wraps each script as a native `Tool` trait implementation.
+ 
+ use async_trait::async_trait;
+[32m+use electro_core::paths;
+(B[m[32m+use electro_core::policy::CapabilityPolicy;
+(B[m[32m+use electro_core::types::error::ElectroError;
+(B[m[32m+use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
+(B[m use serde::{Deserialize, Serialize};
+ use std::path::{Path, PathBuf};
+ use std::sync::atomic::{AtomicBool, Ordering};
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/custom_tools.rs:13:
+ use std::sync::Arc;
+[31m-use electro_core::types::error::ElectroError;
+(B[m[31m-use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
+(B[m[31m-use electro_core::policy::CapabilityPolicy;
+(B[m[31m-use electro_core::paths;
+(B[m 
+ use tracing::{debug, info, warn};
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/custom_tools.rs:21:
+ fn custom_tools_enabled() -> bool {
+     #[cfg(test)]
+[31m-    { return true; }
+(B[m[32m+    {
+(B[m[32m+        return true;
+(B[m[32m+    }
+(B[m 
+     matches!(
+         std::env::var("ELECTRO_ENABLE_CUSTOM_TOOLS")
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/custom_tools.rs:32:
+     )
+ }
+ 
+[31m-
+(B[m /// Metadata for a custom script tool, stored as `{name}.json`.
+ #[derive(Debug, Clone, Serialize, Deserialize)]
+ pub struct ScriptToolMeta {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/custom_tools.rs:103:
+             file_access: vec![],
+             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+             shell_access: electro_core::policy::ShellPolicy::Allowed,
+[31m-browser_access: electro_core::policy::BrowserPolicy::Blocked, // scripts require shell
+(B[m[32m+            browser_access: electro_core::policy::BrowserPolicy::Blocked, // scripts require shell
+(B[m         }
+     }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/custom_tools.rs:154:
+         #[cfg(unix)]
+         {
+             use std::os::unix::fs::PermissionsExt;
+[31m-            let _ = std::fs::set_permissions(&workspace_script_path, std::fs::Permissions::from_mode(0o755));
+(B[m[32m+            let _ = std::fs::set_permissions(
+(B[m[32m+                &workspace_script_path,
+(B[m[32m+                std::fs::Permissions::from_mode(0o755),
+(B[m[32m+            );
+(B[m         }
+ 
+         let parsed = crate::shell::ParsedCommand {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/custom_tools.rs:167:
+ 
+         let result = match backend_res {
+             Ok(crate::shell::ResolvedBackend::Host) => {
+[31m-                crate::shell::run_host_command(&parsed, 30, _ctx, Some(input_json.into_bytes())).await
+(B[m[32m+                crate::shell::run_host_command(&parsed, 30, _ctx, Some(input_json.into_bytes()))
+(B[m[32m+                    .await
+(B[m             }
+[31m-            Ok(backend @ (crate::shell::ResolvedBackend::Docker | crate::shell::ResolvedBackend::Podman)) => {
+(B[m[31m-                crate::shell::run_container_command(backend, &policy, &parsed, 30, _ctx, Some(input_json.into_bytes())).await
+(B[m[32m+            Ok(
+(B[m[32m+                backend @ (crate::shell::ResolvedBackend::Docker
+(B[m[32m+                | crate::shell::ResolvedBackend::Podman),
+(B[m[32m+            ) => {
+(B[m[32m+                crate::shell::run_container_command(
+(B[m[32m+                    backend,
+(B[m[32m+                    &policy,
+(B[m[32m+                    &parsed,
+(B[m[32m+                    30,
+(B[m[32m+                    _ctx,
+(B[m[32m+                    Some(input_json.into_bytes()),
+(B[m[32m+                )
+(B[m[32m+                .await
+(B[m             }
+[31m-            Err(e) => {
+(B[m[31m-                Ok(ToolOutput { content: e, is_error: true })
+(B[m[31m-            }
+(B[m[32m+            Err(e) => Ok(ToolOutput {
+(B[m[32m+                content: e,
+(B[m[32m+                is_error: true,
+(B[m[32m+            }),
+(B[m         };
+ 
+         // Clean up the temporary script
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/custom_tools.rs:575:
+         assert!(!output.is_error);
+         assert!(output.content.contains("Hello from script!"));
+     }
+[31m-
+(B[m[31m-
+(B[m }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/file.rs:1:
+ //! File tool — read, write, and list files within the session workspace.
+ 
+ use async_trait::async_trait;
+[32m+use electro_core::policy::{CapabilityPolicy, FileAccessPolicy};
+(B[m use electro_core::types::error::ElectroError;
+ use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
+[31m-use electro_core::policy::{CapabilityPolicy, FileAccessPolicy};
+(B[m 
+[31m-
+(B[m /// Maximum file read size (32 KB — keeps tool output within token budget).
+ const MAX_READ_SIZE: usize = 32 * 1024;
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/file.rs:62:
+             .ok_or_else(|| ElectroError::Tool("Missing required parameter: path".into()))?;
+ 
+         let user_path = std::path::Path::new(path_str);
+[31m-        let path = match electro_core::path_policy::resolve_safe_path(&ctx.workspace_path, user_path) {
+(B[m[31m-            Ok(p) => p,
+(B[m[31m-            Err(e) => {
+(B[m[31m-                return Ok(ToolOutput {
+(B[m[31m-                    content: format!("Path error: {e}"),
+(B[m[31m-                    is_error: true,
+(B[m[31m-                });
+(B[m[31m-            }
+(B[m[31m-        };
+(B[m[32m+        let path =
+(B[m[32m+            match electro_core::path_policy::resolve_safe_path(&ctx.workspace_path, user_path) {
+(B[m[32m+                Ok(p) => p,
+(B[m[32m+                Err(e) => {
+(B[m[32m+                    return Ok(ToolOutput {
+(B[m[32m+                        content: format!("Path error: {e}"),
+(B[m[32m+                        is_error: true,
+(B[m[32m+                    });
+(B[m[32m+                }
+(B[m[32m+            };
+(B[m 
+         match tokio::fs::read_to_string(&path).await {
+             Ok(mut content) => {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/file.rs:160:
+             .ok_or_else(|| ElectroError::Tool("Missing required parameter: content".into()))?;
+ 
+         let user_path = std::path::Path::new(path_str);
+[31m-        let path = match electro_core::path_policy::resolve_safe_path(&ctx.workspace_path, user_path) {
+(B[m[31m-            Ok(p) => p,
+(B[m[31m-            Err(e) => {
+(B[m[31m-                return Ok(ToolOutput {
+(B[m[31m-                    content: format!("Path error: {e}"),
+(B[m[31m-                    is_error: true,
+(B[m[31m-                });
+(B[m[31m-            }
+(B[m[31m-        };
+(B[m[32m+        let path =
+(B[m[32m+            match electro_core::path_policy::resolve_safe_path(&ctx.workspace_path, user_path) {
+(B[m[32m+                Ok(p) => p,
+(B[m[32m+                Err(e) => {
+(B[m[32m+                    return Ok(ToolOutput {
+(B[m[32m+                        content: format!("Path error: {e}"),
+(B[m[32m+                        is_error: true,
+(B[m[32m+                    });
+(B[m[32m+                }
+(B[m[32m+            };
+(B[m 
+         if let Some(parent) = path.parent() {
+             if let Err(e) = tokio::fs::create_dir_all(parent).await {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/file.rs:245:
+             .unwrap_or(".");
+ 
+         let user_path = std::path::Path::new(path_str);
+[31m-        let path = match electro_core::path_policy::resolve_safe_path(&ctx.workspace_path, user_path) {
+(B[m[31m-            Ok(p) => p,
+(B[m[31m-            Err(e) => {
+(B[m[31m-                return Ok(ToolOutput {
+(B[m[31m-                    content: format!("Path error: {e}"),
+(B[m[31m-                    is_error: true,
+(B[m[31m-                });
+(B[m[31m-            }
+(B[m[31m-        };
+(B[m[32m+        let path =
+(B[m[32m+            match electro_core::path_policy::resolve_safe_path(&ctx.workspace_path, user_path) {
+(B[m[32m+                Ok(p) => p,
+(B[m[32m+                Err(e) => {
+(B[m[32m+                    return Ok(ToolOutput {
+(B[m[32m+                        content: format!("Path error: {e}"),
+(B[m[32m+                        is_error: true,
+(B[m[32m+                    });
+(B[m[32m+                }
+(B[m[32m+            };
+(B[m 
+         match tokio::fs::read_dir(&path).await {
+             Ok(mut entries) => {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/git.rs:1:
+ //! Git tool — typed git operations via tokio::process::Command.
+ 
+ use async_trait::async_trait;
+[32m+use electro_core::policy::CapabilityPolicy;
+(B[m use electro_core::types::error::ElectroError;
+ use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
+[31m-use electro_core::policy::CapabilityPolicy;
+(B[m 
+[31m-
+(B[m /// Default command timeout in seconds (git ops can be slow).
+ const DEFAULT_TIMEOUT_SECS: u64 = 60;
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/git.rs:306:
+         // git operations run inside the container sandbox when available.
+         // Falls back to direct host execution only when no container runtime
+         // is present, and logs a warning so operators are aware.
+[31m-        let parsed = crate::shell::ParsedCommand::new(
+(B[m[31m-            "git".to_string(),
+(B[m[31m-            cmd_args.clone(),
+(B[m[31m-        );
+(B[m[32m+        let parsed = crate::shell::ParsedCommand::new("git".to_string(), cmd_args.clone());
+(B[m         let policy = crate::shell::load_policy();
+ 
+         match crate::shell::resolve_backend(&policy).await {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/git.rs:424:
+     fn test_declarations_has_shell_access() {
+         let tool = GitTool::new();
+         let decl = tool.declarations();
+[31m-        assert_eq!(decl.shell_access, electro_core::policy::ShellPolicy::Allowed);
+(B[m[32m+        assert_eq!(
+(B[m[32m+            decl.shell_access,
+(B[m[32m+            electro_core::policy::ShellPolicy::Allowed
+(B[m[32m+        );
+(B[m         assert!(decl.file_access.is_empty());
+[31m-        assert!(matches!(decl.network_access, electro_core::net_policy::NetworkPolicy::Blocked));
+(B[m[32m+        assert!(matches!(
+(B[m[32m+            decl.network_access,
+(B[m[32m+            electro_core::net_policy::NetworkPolicy::Blocked
+(B[m[32m+        ));
+(B[m     }
+ 
+     #[test]
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/key_manage.rs:7:
+ use std::sync::Arc;
+ 
+ use async_trait::async_trait;
+[32m+use electro_core::policy::CapabilityPolicy;
+(B[m use electro_core::types::error::ElectroError;
+ use electro_core::{SetupLinkGenerator, Tool, ToolContext, ToolInput, ToolOutput};
+[31m-use electro_core::policy::CapabilityPolicy;
+(B[m 
+[31m-
+(B[m pub struct KeyManageTool {
+     link_generator: Option<Arc<dyn SetupLinkGenerator>>,
+ }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/key_manage.rs:58:
+             file_access: Vec::new(),
+             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+             shell_access: electro_core::policy::ShellPolicy::Blocked,
+[31m-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m[32m+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m         }
+     }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/key_manage.rs:230:
+         assert_eq!(tool.name(), "key_manage");
+         assert!(tool.description().contains("API key"));
+         let decl = tool.declarations();
+[31m-        assert_eq!(decl.shell_access, electro_core::policy::ShellPolicy::Blocked);
+(B[m[32m+        assert_eq!(
+(B[m[32m+            decl.shell_access,
+(B[m[32m+            electro_core::policy::ShellPolicy::Blocked
+(B[m[32m+        );
+(B[m         assert!(decl.file_access.is_empty());
+[31m-        assert!(matches!(decl.network_access, electro_core::net_policy::NetworkPolicy::Blocked));
+(B[m[32m+        assert!(matches!(
+(B[m[32m+            decl.network_access,
+(B[m[32m+            electro_core::net_policy::NetworkPolicy::Blocked
+(B[m[32m+        ));
+(B[m     }
+ }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/lambda_recall.rs:6:
+ //! naturally appears as hot in subsequent turns.
+ 
+ use async_trait::async_trait;
+[31m-use std::sync::Arc;
+(B[m use electro_core::error::ElectroError;
+[31m-use electro_core::{Memory, Tool, ToolContext, ToolInput, ToolOutput};
+(B[m use electro_core::policy::CapabilityPolicy;
+[32m+use electro_core::{Memory, Tool, ToolContext, ToolInput, ToolOutput};
+(B[m[32m+use std::sync::Arc;
+(B[m 
+[31m-
+(B[m pub struct LambdaRecallTool {
+     memory: Arc<dyn Memory>,
+ }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/lambda_recall.rs:54:
+             file_access: Vec::new(),
+             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+             shell_access: electro_core::policy::ShellPolicy::Blocked,
+[31m-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m[32m+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m         }
+     }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/lib.rs:45:
+ pub use usage_audit::UsageAuditTool;
+ pub use web_fetch::WebFetchTool;
+ 
+[31m-use std::sync::Arc;
+(B[m use electro_core::types::config::ToolsConfig;
+ use electro_core::{Channel, Memory, SetupLinkGenerator, Tool, UsageStore, Vault};
+[32m+use std::sync::Arc;
+(B[m 
+ /// Create tools based on the configuration flags.
+ /// Pass an optional channel for file transfer tools, an optional
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/lib.rs:257:
+             electro_core::types::error::ElectroError::Tool(format!("Browser config failed: {}", e))
+         })?;
+ 
+[31m-    let (browser, mut handler) = crate::browser_runtime::connect_or_launch_browser(
+(B[m[31m-        config,
+(B[m[31m-        "interactive browser session",
+(B[m[31m-    )
+(B[m[31m-    .await?;
+(B[m[32m+    let (browser, mut handler) =
+(B[m[32m+        crate::browser_runtime::connect_or_launch_browser(config, "interactive browser session")
+(B[m[32m+            .await?;
+(B[m 
+     // Spawn handler in background — continue on WS errors (chromiumoxide 0.7
+     // can't deserialize some CDP messages from newer Chrome, but the connection
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/memory_manage.rs:16:
+ use std::sync::Arc;
+ 
+ use async_trait::async_trait;
+[32m+use electro_core::policy::CapabilityPolicy;
+(B[m use electro_core::types::error::ElectroError;
+ use electro_core::{
+[31m-    Memory, MemoryEntry, MemoryEntryType, SearchOpts, Tool, ToolContext,
+(B[m[31m-    ToolInput, ToolOutput,
+(B[m[32m+    Memory, MemoryEntry, MemoryEntryType, SearchOpts, Tool, ToolContext, ToolInput, ToolOutput,
+(B[m };
+[31m-use electro_core::policy::CapabilityPolicy;
+(B[m 
+ pub struct MemoryManageTool {
+     memory: Arc<dyn Memory>,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/memory_manage.rs:532:
+             file_access: Vec::new(),
+             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+             shell_access: electro_core::policy::ShellPolicy::Blocked,
+[31m-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m[32m+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m         }
+     }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/memory_manage.rs:569:
+ #[cfg(test)]
+ mod tests {
+     use super::*;
+[31m-    use std::path::PathBuf;
+(B[m     use electro_test_utils::MockMemory;
+[32m+    use std::path::PathBuf;
+(B[m 
+     fn test_ctx() -> ToolContext {
+         ToolContext {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/mode_switch.rs:5:
+ use std::sync::Arc;
+ 
+ use async_trait::async_trait;
+[32m+use electro_core::policy::CapabilityPolicy;
+(B[m use electro_core::types::config::ElectroMode;
+ use electro_core::types::error::ElectroError;
+ use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/mode_switch.rs:11:
+[31m-use electro_core::policy::CapabilityPolicy;
+(B[m 
+ use tokio::sync::RwLock;
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/mode_switch.rs:58:
+             file_access: Vec::new(),
+             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+             shell_access: electro_core::policy::ShellPolicy::Blocked,
+[31m-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m[32m+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m         }
+     }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/network_guard.rs:6:
+ //! - optional operator allowlist via environment variable
+ //! - DNS resolution must stay on public addresses
+ 
+[31m-use url::Url;
+(B[m pub use electro_core::net_policy::host_address_is_blocked_for_public_web as host_is_blocked;
+[32m+use url::Url;
+(B[m 
+ pub use electro_core::net_policy::host_matches_allow_entry;
+ pub use electro_core::net_policy::PUBLIC_WEB_ALLOWLIST_ENV;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/network_guard.rs:86:
+         .map_err(|e| format!("Failed to build reqwest client: {}", e))
+ }
+ 
+[31m-
+(B[m pub fn validate_public_url(raw: &str) -> Result<Url, String> {
+     let url = Url::parse(raw).map_err(|e| format!("Invalid URL: {}", e))?;
+     match url.scheme() {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/network_guard.rs:139:
+     }
+ 
+     if !found {
+[31m-        return Err(format!("Failed to resolve host '{}': no addresses returned.", host));
+(B[m[32m+        return Err(format!(
+(B[m[32m+            "Failed to resolve host '{}': no addresses returned.",
+(B[m[32m+            host
+(B[m[32m+        ));
+(B[m     }
+ 
+     Ok(())
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/send_file.rs:4:
+ use std::sync::Arc;
+ 
+ use async_trait::async_trait;
+[32m+use electro_core::policy::{CapabilityPolicy, FileAccessPolicy};
+(B[m use electro_core::types::error::ElectroError;
+ use electro_core::types::file::{FileData, OutboundFile};
+[31m-use electro_core::{
+(B[m[31m-    Channel, Tool, ToolContext, ToolInput, ToolOutput};
+(B[m[31m-use electro_core::policy::{CapabilityPolicy, FileAccessPolicy,
+(B[m[31m-};
+(B[m[32m+use electro_core::{Channel, Tool, ToolContext, ToolInput, ToolOutput};
+(B[m 
+ /// Maximum file size to send (50 MB — Telegram's upload limit).
+ const MAX_SEND_SIZE: usize = 50 * 1024 * 1024;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/send_file.rs:62:
+             file_access: vec![FileAccessPolicy::Read(".".into())],
+             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+             shell_access: electro_core::policy::ShellPolicy::Blocked,
+[31m-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m[32m+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m         }
+     }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/send_message.rs:5:
+ use std::sync::Arc;
+ 
+ use async_trait::async_trait;
+[32m+use electro_core::policy::CapabilityPolicy;
+(B[m use electro_core::types::error::ElectroError;
+ use electro_core::types::message::OutboundMessage;
+[31m-use electro_core::{    Channel, Tool, ToolContext, ToolInput, ToolOutput,
+(B[m[31m-};
+(B[m[31m-use electro_core::policy::CapabilityPolicy;
+(B[m[32m+use electro_core::{Channel, Tool, ToolContext, ToolInput, ToolOutput};
+(B[m 
+ pub struct SendMessageTool {
+     channel: Arc<dyn Channel>,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/send_message.rs:56:
+             file_access: Vec::new(),
+             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+             shell_access: electro_core::policy::ShellPolicy::Blocked,
+[31m-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m[32m+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m         }
+     }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/shell.rs:11:
+ use std::process::Stdio;
+ 
+ use async_trait::async_trait;
+[32m+use electro_core::policy::CapabilityPolicy;
+(B[m use electro_core::types::error::ElectroError;
+ use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
+[31m-use electro_core::policy::CapabilityPolicy;
+(B[m 
+[31m-
+(B[m /// Default command timeout in seconds.
+ const DEFAULT_TIMEOUT_SECS: u64 = 30;
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/shell.rs:29:
+ const DEFAULT_TMPFS_MB: u64 = 64;
+ 
+ const HOST_BLOCKED_PROGRAMS: &[&str] = &[
+[31m-    "sh",
+(B[m[31m-    "bash",
+(B[m[31m-    "dash",
+(B[m[31m-    "zsh",
+(B[m[31m-    "fish",
+(B[m[31m-    "ash",
+(B[m[31m-    "busybox",
+(B[m[31m-    "env",
+(B[m[31m-    "sudo",
+(B[m[31m-    "su",
+(B[m[31m-    "doas",
+(B[m[32m+    "sh", "bash", "dash", "zsh", "fish", "ash", "busybox", "env", "sudo", "su", "doas",
+(B[m ];
+ 
+[31m-const BLOCKED_META_SEQUENCES: &[&str] = &[
+(B[m[31m-    "&&",
+(B[m[31m-    "||",
+(B[m[31m-    ";",
+(B[m[31m-    "|",
+(B[m[31m-    ">",
+(B[m[31m-    "<",
+(B[m[31m-    "`",
+(B[m[31m-    "$(",
+(B[m[31m-    "\n",
+(B[m[31m-    "\r",
+(B[m[31m-];
+(B[m[32m+const BLOCKED_META_SEQUENCES: &[&str] = &["&&", "||", ";", "|", ">", "<", "`", "$(", "\n", "\r"];
+(B[m 
+ #[derive(Default)]
+ pub struct ShellTool;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/shell.rs:278:
+             if command_available("docker").await {
+                 Ok(ResolvedBackend::Docker)
+             } else {
+[31m-                Err("ELECTRO_SHELL_BACKEND=docker but the docker CLI is not available on PATH.".to_string())
+(B[m[32m+                Err(
+(B[m[32m+                    "ELECTRO_SHELL_BACKEND=docker but the docker CLI is not available on PATH."
+(B[m[32m+                        .to_string(),
+(B[m[32m+                )
+(B[m             }
+         }
+         ShellBackend::Podman => {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/shell.rs:285:
+             if command_available("podman").await {
+                 Ok(ResolvedBackend::Podman)
+             } else {
+[31m-                Err("ELECTRO_SHELL_BACKEND=podman but the podman CLI is not available on PATH.".to_string())
+(B[m[32m+                Err(
+(B[m[32m+                    "ELECTRO_SHELL_BACKEND=podman but the podman CLI is not available on PATH."
+(B[m[32m+                        .to_string(),
+(B[m[32m+                )
+(B[m             }
+         }
+         ShellBackend::Host => {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/shell.rs:388:
+     is_interactive: bool,
+ ) -> Vec<String> {
+     let workspace_mount = canonical_workspace(workspace_path);
+[31m-    let network_mode = if policy.allow_network { "bridge" } else { "none" };
+(B[m[32m+    let network_mode = if policy.allow_network {
+(B[m[32m+        "bridge"
+(B[m[32m+    } else {
+(B[m[32m+        "none"
+(B[m[32m+    };
+(B[m     let cpu_limit = format!("{:.2}", policy.cpu_limit);
+     let mount_arg = format!(
+         "type=bind,src={},dst=/workspace,rw",
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/shell.rs:395:
+         workspace_mount.to_string_lossy()
+     );
+[31m-    let tmpfs_arg = format!(
+(B[m[31m-        "/tmp:rw,noexec,nosuid,nodev,size={}m",
+(B[m[31m-        policy.tmpfs_mb
+(B[m[31m-    );
+(B[m[32m+    let tmpfs_arg = format!("/tmp:rw,noexec,nosuid,nodev,size={}m", policy.tmpfs_mb);
+(B[m 
+     let mut args = vec![
+         "run".to_string(),
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/shell.rs:404:
+         "--rm".to_string(),
+[31m-        if is_interactive { "-i".to_string() } else { "--pull".to_string() }, // replacing --pull with -i if stdin enabled for simplicity of injecting interactive. wait, docker run -i --rm --pull never works.
+(B[m[32m+        if is_interactive {
+(B[m[32m+            "-i".to_string()
+(B[m[32m+        } else {
+(B[m[32m+            "--pull".to_string()
+(B[m[32m+        }, // replacing --pull with -i if stdin enabled for simplicity of injecting interactive. wait, docker run -i --rm --pull never works.
+(B[m     ];
+     if is_interactive {
+         args.push("--pull".to_string());
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/shell.rs:496:
+ 
+     let mut child = match command.spawn() {
+         Ok(c) => c,
+[31m-        Err(e) => return Ok(ToolOutput {
+(B[m[31m-            content: format!("Failed to execute command via host runner: {}", e),
+(B[m[31m-            is_error: true,
+(B[m[31m-        }),
+(B[m[32m+        Err(e) => {
+(B[m[32m+            return Ok(ToolOutput {
+(B[m[32m+                content: format!("Failed to execute command via host runner: {}", e),
+(B[m[32m+                is_error: true,
+(B[m[32m+            })
+(B[m[32m+        }
+(B[m     };
+ 
+     if let Some(data) = stdin_data {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/shell.rs:527:
+     stdin_data: Option<Vec<u8>>,
+ ) -> Result<ToolOutput, ElectroError> {
+     let engine = container_engine_name(backend);
+[31m-    let args = build_container_args(backend, policy, &ctx.workspace_path, parsed, stdin_data.is_some());
+(B[m[32m+    let args = build_container_args(
+(B[m[32m+        backend,
+(B[m[32m+        policy,
+(B[m[32m+        &ctx.workspace_path,
+(B[m[32m+        parsed,
+(B[m[32m+        stdin_data.is_some(),
+(B[m[32m+    );
+(B[m 
+     let mut command = tokio::process::Command::new(engine);
+     command
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/shell.rs:542:
+ 
+     let mut child = match command.spawn() {
+         Ok(c) => c,
+[31m-        Err(e) => return Ok(ToolOutput {
+(B[m[31m-            content: format!("Failed to execute command via {} runner: {}", engine, e),
+(B[m[31m-            is_error: true,
+(B[m[31m-        }),
+(B[m[32m+        Err(e) => {
+(B[m[32m+            return Ok(ToolOutput {
+(B[m[32m+                content: format!("Failed to execute command via {} runner: {}", engine, e),
+(B[m[32m+                is_error: true,
+(B[m[32m+            })
+(B[m[32m+        }
+(B[m     };
+ 
+     if let Some(data) = stdin_data {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/shell.rs:609:
+             Ok(ToolOutput { content, is_error })
+         }
+         Ok(Err(e)) => Ok(ToolOutput {
+[31m-            content: format!("Failed to execute command via {} runner: {}", runner_label, e),
+(B[m[32m+            content: format!(
+(B[m[32m+                "Failed to execute command via {} runner: {}",
+(B[m[32m+                runner_label, e
+(B[m[32m+            ),
+(B[m             is_error: true,
+         }),
+         Err(_) => Ok(ToolOutput {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/shell.rs:654:
+             file_access: Vec::new(),
+             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+             shell_access: electro_core::policy::ShellPolicy::Allowed,
+[31m-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m[32m+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m         }
+     }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/shell.rs:793:
+ 
+     #[test]
+     fn host_program_validation_blocks_shell_launchers() {
+[31m-        let parsed = ParsedCommand::new("bash".to_string(), vec!["-lc".to_string(), "echo hi".to_string()]);
+(B[m[32m+        let parsed = ParsedCommand::new(
+(B[m[32m+            "bash".to_string(),
+(B[m[32m+            vec!["-lc".to_string(), "echo hi".to_string()],
+(B[m[32m+        );
+(B[m         let err = validate_host_program(&parsed).unwrap_err();
+         assert!(err.to_string().contains("blocks launcher"));
+     }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/shell.rs:800:
+ }
+[31m-
+(B[m 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/usage_audit.rs:8:
+ use std::sync::Arc;
+ 
+ use async_trait::async_trait;
+[32m+use electro_core::policy::CapabilityPolicy;
+(B[m use electro_core::types::error::ElectroError;
+ use electro_core::{Tool, ToolContext, ToolInput, ToolOutput, UsageStore};
+[31m-use electro_core::policy::CapabilityPolicy;
+(B[m 
+[31m-
+(B[m pub struct UsageAuditTool {
+     store: Arc<dyn UsageStore>,
+ }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/usage_audit.rs:175:
+             file_access: Vec::new(),
+             network_access: electro_core::net_policy::NetworkPolicy::Blocked,
+             shell_access: electro_core::policy::ShellPolicy::Blocked,
+[31m-browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m[32m+            browser_access: electro_core::policy::BrowserPolicy::Blocked,
+(B[m         }
+     }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/usage_audit.rs:210:
+ #[cfg(test)]
+ mod tests {
+     use super::*;
+[32m+    use electro_core::{UsageRecord, UsageSummary};
+(B[m     use std::path::PathBuf;
+     use std::sync::Mutex;
+[31m-    use electro_core::{UsageRecord, UsageSummary};
+(B[m 
+     /// Mock UsageStore for testing.
+     struct MockUsageStore {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/web_fetch.rs:5:
+     load_domain_allowlist_from_env, validate_public_url, PUBLIC_WEB_ALLOWLIST_ENV,
+ };
+ use async_trait::async_trait;
+[32m+use electro_core::policy::CapabilityPolicy;
+(B[m use electro_core::types::error::ElectroError;
+ use electro_core::{Tool, ToolContext, ToolInput, ToolOutput};
+[31m-use electro_core::policy::CapabilityPolicy;
+(B[m 
+[31m-
+(B[m /// Default request timeout in seconds.
+ /// Maximum response body size (32 KB — keeps tool output within token budget).
+ const MAX_RESPONSE_SIZE: usize = 32 * 1024;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools/src/web_fetch.rs:32:
+         Self { client }
+     }
+ }
+[31m-
+(B[m 
+ #[async_trait]
+ impl Tool for WebFetchTool {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-vault/src/local.rs:13:
+ use tokio::sync::RwLock;
+ 
+ async fn path_exists(path: &std::path::Path) -> Result<bool, ElectroError> {
+[31m-    tokio::fs::try_exists(path).await.map_err(|e| {
+(B[m[31m-        ElectroError::Vault(format!("failed to check path {}: {e}", path.display()))
+(B[m[31m-    })
+(B[m[32m+    tokio::fs::try_exists(path)
+(B[m[32m+        .await
+(B[m[32m+        .map_err(|e| ElectroError::Vault(format!("failed to check path {}: {e}", path.display())))
+(B[m }
+ 
+ async fn write_bytes_atomic(path: &std::path::Path, bytes: &[u8]) -> Result<(), ElectroError> {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-vault/src/local.rs:23:
+         ElectroError::Vault(format!("path {} has no parent directory", path.display()))
+     })?;
+     tokio::fs::create_dir_all(parent).await.map_err(|e| {
+[31m-        ElectroError::Vault(format!("failed to create parent directory {}: {e}", parent.display()))
+(B[m[32m+        ElectroError::Vault(format!(
+(B[m[32m+            "failed to create parent directory {}: {e}",
+(B[m[32m+            parent.display()
+(B[m[32m+        ))
+(B[m     })?;
+ 
+     let tmp_path = parent.join(format!(
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-vault/src/local.rs:33:
+     ));
+ 
+     tokio::fs::write(&tmp_path, bytes).await.map_err(|e| {
+[31m-        ElectroError::Vault(format!("failed to write temporary file {}: {e}", tmp_path.display()))
+(B[m[32m+        ElectroError::Vault(format!(
+(B[m[32m+            "failed to write temporary file {}: {e}",
+(B[m[32m+            tmp_path.display()
+(B[m[32m+        ))
+(B[m     })?;
+ 
+     #[cfg(unix)]
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/crates/electro-vault/tests/vault_integration.rs:40:
+         .await
+         .unwrap();
+ 
+[31m-    let result = resolve(&vault, "vault://electro/nonexistent").await.unwrap();
+(B[m[32m+    let result = resolve(&vault, "vault://electro/nonexistent")
+(B[m[32m+        .await
+(B[m[32m+        .unwrap();
+(B[m     assert!(result.is_none());
+ }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/bootstrap.rs:1:
+[31m-use std::sync::Arc;
+(B[m use async_trait::async_trait;
+[31m-use electro_core::config::credentials::load_credentials_file;
+(B[m use electro_core::config::credentials::is_placeholder_key;
+[32m+use electro_core::config::credentials::load_credentials_file;
+(B[m use electro_core::Channel;
+[32m+use std::sync::Arc;
+(B[m 
+ /// Wraps any Channel to censor known API keys from outbound messages.
+ /// This is the hardcoded last-line-of-defense filter — the system prompt
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/daemon.rs:1:
+[31m-use std::path::PathBuf;
+(B[m use electro_core::paths;
+[32m+use std::path::PathBuf;
+(B[m 
+ /// Get the path to the PID file: `~/.electro/electro.pid`
+ pub fn pid_file_path() -> Option<PathBuf> {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/daemon.rs:73:
+             }
+             #[cfg(not(any(unix, windows)))]
+             {
+[31m-                Err(format!("Process termination not implemented for this platform"))
+(B[m[32m+                Err(format!(
+(B[m[32m+                    "Process termination not implemented for this platform"
+(B[m[32m+                ))
+(B[m             }
+         }
+         Some(pid) => {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/daemon.rs:123:
+     // Re-exec ourselves as a detached child
+     let exe = std::env::current_exe().expect("cannot resolve own executable path");
+     let mut args: Vec<String> = std::env::args().collect();
+[31m-    
+(B[m[32m+
+(B[m     // Remove --daemon / -d flag so the child runs in foreground
+     args.retain(|a| a != "--daemon" && a != "-d");
+[31m-    
+(B[m[32m+
+(B[m     // Remove --log and its value too
+     let mut skip_next = false;
+     args.retain(|a| {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/daemon.rs:149:
+         .append(true)
+         .open(&log_path)
+         .map_err(|e| format!("Cannot open log file {}: {}", log_path.display(), e))?;
+[31m-    
+(B[m[31m-    let log_err = log_file.try_clone().map_err(|e| format!("Cannot clone log file handle: {}", e))?;
+(B[m[32m+
+(B[m[32m+    let log_err = log_file
+(B[m[32m+        .try_clone()
+(B[m[32m+        .map_err(|e| format!("Cannot clone log file handle: {}", e))?;
+(B[m 
+     let child = std::process::Command::new(exe)
+         .args(&args[1..]) // skip argv[0]
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/main.rs:7:
+ use async_trait::async_trait;
+ use base64::Engine as _;
+ use clap::Parser;
+[31m-use futures::FutureExt;
+(B[m use electro_core::config::credentials::{
+     credentials_path, detect_api_key, is_placeholder_key, load_active_provider_keys,
+     load_credentials_file, load_saved_credentials, save_credentials,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/main.rs:14:
+ };
+[32m+use electro_core::paths;
+(B[m use electro_core::types::model_registry::{
+     available_models_for_provider, default_model, is_vision_model,
+ };
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/main.rs:18:
+[31m-use electro_core::paths;
+(B[m use electro_core::Channel;
+[32m+use futures::FutureExt;
+(B[m use tokio::sync::Mutex;
+ 
+ // Extracted modules
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/main.rs:30:
+ 
+ // Re-export commonly used items
+ use bootstrap::{censor_secrets, SecretCensorChannel};
+[31m-use cli::{format_user_error, handle_model_command, list_configured_providers, remove_provider, Cli, Commands, ConfigCommands, SkillCommands};
+(B[m[32m+use cli::{
+(B[m[32m+    format_user_error, handle_model_command, list_configured_providers, remove_provider, Cli,
+(B[m[32m+    Commands, ConfigCommands, SkillCommands,
+(B[m[32m+};
+(B[m use daemon::{is_process_alive, pid_file_path, read_pid_file, remove_pid_file, write_pid_file};
+[31m-use onboarding::{build_system_prompt, decrypt_otk_blob, onboarding_message_with_link, send_with_retry, validate_provider_key, ONBOARDING_REFERENCE};
+(B[m[32m+use onboarding::{
+(B[m[32m+    build_system_prompt, decrypt_otk_blob, onboarding_message_with_link, send_with_retry,
+(B[m[32m+    validate_provider_key, ONBOARDING_REFERENCE,
+(B[m[32m+};
+(B[m 
+ #[cfg(feature = "codex-oauth")]
+ use cli::AuthCommands;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/main.rs:377:
+         Arc::new(electro_memory::SqliteUsageStore::new(&memory_url).await?);
+ 
+     // ── Vault (encrypted credential store) ───────────────
+[31m-    let vault: Option<Arc<dyn electro_core::Vault>> = match electro_vault::LocalVault::new()
+(B[m[31m-        .await
+(B[m[31m-    {
+(B[m[32m+    let vault: Option<Arc<dyn electro_core::Vault>> = match electro_vault::LocalVault::new().await {
+(B[m         Ok(v) => {
+             tracing::info!("Vault initialized (CLI)");
+             Some(Arc::new(v) as Arc<dyn electro_core::Vault>)
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/main.rs:396:
+     let censored_cli: Arc<dyn Channel> = Arc::new(SecretCensorChannel {
+         inner: cli_arc.clone(),
+     });
+[31m-    let shared_mode: electro_tools::SharedMode =
+(B[m[31m-        Arc::new(tokio::sync::RwLock::new(config.mode));
+(B[m[32m+    let shared_mode: electro_tools::SharedMode = Arc::new(tokio::sync::RwLock::new(config.mode));
+(B[m     let shared_memory_strategy: Arc<
+         tokio::sync::RwLock<electro_core::types::config::MemoryStrategy>,
+     > = Arc::new(tokio::sync::RwLock::new(
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/main.rs:404:
+         electro_core::types::config::MemoryStrategy::Lambda,
+     ));
+[31m-    
+(B[m[32m+
+(B[m     #[cfg(feature = "browser")]
+     let (mut tools_template, cli_browser_ref) = electro_tools::create_tools_with_browser(
+         &config.tools,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/main.rs:478:
+                     (valid, burl)
+                 })
+                 .unwrap_or_else(|| (vec![key.clone()], None));
+[31m-            let effective_base_url =
+(B[m[31m-                saved_base_url.or_else(|| config.provider.base_url.clone());
+(B[m[32m+            let effective_base_url = saved_base_url.or_else(|| config.provider.base_url.clone());
+(B[m             let provider_config = electro_core::types::config::ProviderConfig {
+                 name: Some(pname.clone()),
+                 api_key: Some(key.clone()),
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/main.rs:488:
+                 base_url: effective_base_url,
+                 extra_headers: config.provider.extra_headers.clone(),
+             };
+[31m-            
+(B[m[32m+
+(B[m             match create_provider(&provider_config, &pname, &model).await {
+                 Ok(provider) => {
+                     let system_prompt = Some(build_system_prompt());
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/main.rs:570:
+             }
+         }
+     }
+[31m-    
+(B[m[32m+
+(B[m     if agent_opt.is_none() {
+         println!("No API key configured — running in onboarding mode.");
+         let otk = setup_tokens.generate("cli").await;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/main.rs:586:
+         eprintln!("CLI channel receiver unavailable");
+         return Ok(());
+     };
+[31m-    
+(B[m[32m+
+(B[m     // ── Restore CLI conversation history from memory backend ──
+     let cli_history_key = "chat_history:cli".to_string();
+     let mut history: Vec<electro_core::types::message::ChatMessage> =
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/main.rs:744:
+                 Ok(api_key_text) => {
+                     if let Some(cred) = detect_api_key(&api_key_text) {
+                         let model = default_model(cred.provider).to_string();
+[31m-                        let effective_base_url =
+(B[m[31m-                            cred.base_url.clone().or_else(|| base_url.clone());
+(B[m[32m+                        let effective_base_url = cred.base_url.clone().or_else(|| base_url.clone());
+(B[m                         let test_config = electro_core::types::config::ProviderConfig {
+                             name: Some(cred.provider.to_string()),
+                             api_key: Some(cred.api_key.clone()),
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/main.rs:783:
+                                     .with_v2_optimizations(v2_opt)
+                                     .with_parallel_phases(pp_opt)
+                                     .with_shared_mode(shared_mode.clone())
+[31m-                                    .with_shared_memory_strategy(
+(B[m[31m-                                        shared_memory_strategy.clone(),
+(B[m[31m-                                    ),
+(B[m[32m+                                    .with_shared_memory_strategy(shared_memory_strategy.clone()),
+(B[m                                 );
+                                 println!(
+                                     "\nAPI key securely received and verified! Configured {} with model {}.",
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/main.rs:975:
+                             timestamp: chrono::Utc::now(),
+                         };
+                         match non_hive
+[31m-                            .process_message(
+(B[m[31m-                                &re_msg,
+(B[m[31m-                                &mut session,
+(B[m[31m-                                None,
+(B[m[31m-                                None,
+(B[m[31m-                                None,
+(B[m[31m-                                None,
+(B[m[31m-                                None,
+(B[m[31m-                            )
+(B[m[32m+                            .process_message(&re_msg, &mut session, None, None, None, None, None)
+(B[m                             .await
+                         {
+                             Ok((reply, _usage)) => {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/main.rs:1080:
+         #[serde(default)]
+         enabled: bool,
+     }
+[31m-    std::fs::read_to_string(paths::config_file()).ok()
+(B[m[32m+    std::fs::read_to_string(paths::config_file())
+(B[m[32m+        .ok()
+(B[m         .or_else(|| std::fs::read_to_string("electro.toml").ok())
+         .and_then(|c| toml::from_str::<HC>(&c).ok())
+         .map(|c| c.hive.enabled)
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/main.rs:1101:
+         )));
+     }
+ 
+[31m-    Ok(Arc::from(electro_providers::create_provider(provider_config)?))
+(B[m[32m+    Ok(Arc::from(electro_providers::create_provider(
+(B[m[32m+        provider_config,
+(B[m[32m+    )?))
+(B[m }
+ 
+ async fn run_update() -> Result<()> {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/main.rs:1115:
+     match git_check {
+         Ok(out) if out.status.success() => {}
+         _ => {
+[31m-            eprintln!("Error: Not a git repository. Run `electro update` from the cloned repo directory.");
+(B[m[32m+            eprintln!(
+(B[m[32m+                "Error: Not a git repository. Run `electro update` from the cloned repo directory."
+(B[m[32m+            );
+(B[m             std::process::exit(1);
+         }
+     }
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/main.rs:1299:
+         }
+         AuthCommands::Status => {
+             if !electro_codex_oauth::TokenStore::exists() {
+[31m-                println!("Not authenticated. Run `electro auth login` to connect your ChatGPT account.");
+(B[m[32m+                println!(
+(B[m[32m+                    "Not authenticated. Run `electro auth login` to connect your ChatGPT account."
+(B[m[32m+                );
+(B[m                 return Ok(());
+             }
+             match electro_codex_oauth::TokenStore::load() {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/onboarding.rs:1:
+[31m-use std::sync::Arc;
+(B[m use base64::Engine;
+[31m-use electro_core::config::credentials::{
+(B[m[31m-    is_placeholder_key, load_credentials_file,
+(B[m[31m-};
+(B[m[32m+use electro_core::config::credentials::{is_placeholder_key, load_credentials_file};
+(B[m use electro_core::types::model_registry::default_model;
+[32m+use std::sync::Arc;
+(B[m 
+ /// Validate a provider key by making a minimal API call.
+ /// Returns Ok(provider_arc) if the key works, Err(message) if not.
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:8:
+ use futures::FutureExt;
+ use tokio::sync::Mutex;
+ 
+[31m-use electro_core::Channel;
+(B[m use crate::admin::is_admin_user;
+ use crate::bootstrap::{censor_secrets, SecretCensorChannel};
+[31m-use crate::cli::{format_user_error, handle_model_command, list_configured_providers, remove_provider};
+(B[m[31m-use crate::daemon::{is_process_alive, pid_file_path, read_pid_file, remove_pid_file, write_pid_file};
+(B[m[31m-use crate::onboarding::{build_system_prompt, decrypt_otk_blob, onboarding_message_with_link, send_with_retry, validate_provider_key, ONBOARDING_REFERENCE};
+(B[m[32m+use crate::cli::{
+(B[m[32m+    format_user_error, handle_model_command, list_configured_providers, remove_provider,
+(B[m[32m+};
+(B[m[32m+use crate::daemon::{
+(B[m[32m+    is_process_alive, pid_file_path, read_pid_file, remove_pid_file, write_pid_file,
+(B[m[32m+};
+(B[m[32m+use crate::onboarding::{
+(B[m[32m+    build_system_prompt, decrypt_otk_blob, onboarding_message_with_link, send_with_retry,
+(B[m[32m+    validate_provider_key, ONBOARDING_REFERENCE,
+(B[m[32m+};
+(B[m[32m+use electro_core::Channel;
+(B[m 
+ /// Main server start function (non-daemon mode)
+ pub async fn start_server(
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:46:
+                     .name
+                     .clone()
+                     .unwrap_or_else(|| "anthropic".to_string());
+[31m-                let model = config
+(B[m[31m-                    .provider
+(B[m[31m-                    .model
+(B[m[31m-                    .clone()
+(B[m[31m-                    .unwrap_or_else(|| electro_core::types::model_registry::default_model(&name).to_string());
+(B[m[32m+                let model = config.provider.model.clone().unwrap_or_else(|| {
+(B[m[32m+                    electro_core::types::model_registry::default_model(&name).to_string()
+(B[m[32m+                });
+(B[m                 Some((name, key.clone(), model))
+             } else {
+                 electro_core::config::credentials::load_saved_credentials()
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:77:
+     let mut channels: Vec<Arc<dyn electro_core::Channel>> = Vec::new();
+     let mut primary_channel: Option<Arc<dyn electro_core::Channel>> = None;
+     // Receivers collected here; piped into msg_tx once the unified channel exists
+[31m-    let mut channel_receivers: Vec<tokio::sync::mpsc::Receiver<electro_core::types::message::InboundMessage>> = Vec::new();
+(B[m[32m+    let mut channel_receivers: Vec<
+(B[m[32m+        tokio::sync::mpsc::Receiver<electro_core::types::message::InboundMessage>,
+(B[m[32m+    > = Vec::new();
+(B[m 
+     // Auto-inject Telegram config from env var when no config entry exists.
+     // This enables zero-config VPS deployments: just set TELEGRAM_BOT_TOKEN.
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:185:
+     let setup_tokens = electro_gateway::SetupTokenStore::new();
+ 
+     // ── Pending raw key pastes (from /addkey unsafe) ────
+[31m-    let pending_raw_keys: Arc<Mutex<HashSet<String>>> =
+(B[m[31m-        Arc::new(Mutex::new(HashSet::new()));
+(B[m[32m+    let pending_raw_keys: Arc<Mutex<HashSet<String>>> = Arc::new(Mutex::new(HashSet::new()));
+(B[m 
+     // ── Active login sessions (OTK Prowl — per-chat interactive browser sessions) ────
+     #[cfg(feature = "browser")]
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:200:
+     tracing::info!("Usage store initialized");
+ 
+     // ── Vault (encrypted credential store) ───────────────
+[31m-    let vault: Option<Arc<dyn electro_core::Vault>> = match electro_vault::LocalVault::new()
+(B[m[31m-        .await
+(B[m[31m-    {
+(B[m[32m+    let vault: Option<Arc<dyn electro_core::Vault>> = match electro_vault::LocalVault::new().await {
+(B[m         Ok(v) => {
+             tracing::info!("Vault initialized");
+             Some(Arc::new(v) as Arc<dyn electro_core::Vault>)
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:217:
+     let censored_channel: Option<Arc<dyn electro_core::Channel>> = primary_channel
+         .clone()
+         .map(|ch| Arc::new(SecretCensorChannel { inner: ch }) as Arc<dyn electro_core::Channel>);
+[31m-    let shared_mode: electro_tools::SharedMode =
+(B[m[31m-        Arc::new(tokio::sync::RwLock::new(config.mode));
+(B[m[32m+    let shared_mode: electro_tools::SharedMode = Arc::new(tokio::sync::RwLock::new(config.mode));
+(B[m     let shared_memory_strategy: Arc<
+         tokio::sync::RwLock<electro_core::types::config::MemoryStrategy>,
+     > = Arc::new(tokio::sync::RwLock::new(
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:297:
+         // Filter out placeholder/invalid keys at startup
+         if !electro_core::config::credentials::is_placeholder_key(key) {
+             // Load all keys and saved base_url for this provider
+[31m-            let (all_keys, saved_base_url) = electro_core::config::credentials::load_active_provider_keys()
+(B[m[31m-                .map(|(_, keys, _, burl)| {
+(B[m[31m-                    let valid: Vec<String> = keys
+(B[m[31m-                        .into_iter()
+(B[m[31m-                        .filter(|k| !electro_core::config::credentials::is_placeholder_key(k))
+(B[m[31m-                        .collect();
+(B[m[31m-                    (valid, burl)
+(B[m[31m-                })
+(B[m[31m-                .unwrap_or_else(|| (vec![key.clone()], None));
+(B[m[31m-            let effective_base_url =
+(B[m[31m-                saved_base_url.or_else(|| config.provider.base_url.clone());
+(B[m[32m+            let (all_keys, saved_base_url) =
+(B[m[32m+                electro_core::config::credentials::load_active_provider_keys()
+(B[m[32m+                    .map(|(_, keys, _, burl)| {
+(B[m[32m+                        let valid: Vec<String> = keys
+(B[m[32m+                            .into_iter()
+(B[m[32m+                            .filter(|k| !electro_core::config::credentials::is_placeholder_key(k))
+(B[m[32m+                            .collect();
+(B[m[32m+                        (valid, burl)
+(B[m[32m+                    })
+(B[m[32m+                    .unwrap_or_else(|| (vec![key.clone()], None));
+(B[m[32m+            let effective_base_url = saved_base_url.or_else(|| config.provider.base_url.clone());
+(B[m             let provider_config = electro_core::types::config::ProviderConfig {
+                 name: Some(pname.clone()),
+                 api_key: Some(key.clone()),
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:317:
+                 extra_headers: config.provider.extra_headers.clone(),
+             };
+             // Create provider — route to Codex OAuth if configured
+[31m-            let provider: Arc<dyn electro_core::Provider> = create_provider(&provider_config, pname, model).await?;
+(B[m[32m+            let provider: Arc<dyn electro_core::Provider> =
+(B[m[32m+                create_provider(&provider_config, pname, model).await?;
+(B[m             let agent = Arc::new(
+                 electro_agent::AgentRuntime::with_limits(
+                     provider.clone(),
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:509:
+         #[cfg(feature = "browser")]
+         browser_tool_ref,
+         vault,
+[31m-    ).await;
+(B[m[32m+    )
+(B[m[32m+    .await;
+(B[m 
+     // ── Start gateway + block ──────────────────────────
+     println!("ELECTRO gateway starting...");
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:522:
+             agent,
+             config.gateway.clone(),
+         ));
+[31m-        
+(B[m[32m+
+(B[m         let listener = gateway.bind().await?;
+[31m-        println!("  Gateway: http://{}:{}", config.gateway.host, config.gateway.port);
+(B[m         println!(
+[32m+            "  Gateway: http://{}:{}",
+(B[m[32m+            config.gateway.host, config.gateway.port
+(B[m[32m+        );
+(B[m[32m+        println!(
+(B[m             "  Health: http://{}:{}/health",
+             config.gateway.host, config.gateway.port
+         );
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:577:
+     }
+ 
+     // Try to find config file
+[31m-    let config_content = std::fs::read_to_string(electro_core::paths::electro_home().join("config.toml")).ok()
+(B[m[31m-        .or_else(|| std::fs::read_to_string("electro.toml").ok());
+(B[m[32m+    let config_content =
+(B[m[32m+        std::fs::read_to_string(electro_core::paths::electro_home().join("config.toml"))
+(B[m[32m+            .ok()
+(B[m[32m+            .or_else(|| std::fs::read_to_string("electro.toml").ok());
+(B[m 
+     if let Some(content) = config_content {
+         toml::from_str::<HiveCheck>(&content)
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:589:
+     }
+ }
+ 
+[31m-async fn load_hive_config(config: &electro_core::types::config::ElectroConfig) -> electro_hive::HiveConfig {
+(B[m[31m-    let config_content = std::fs::read_to_string(electro_core::paths::electro_home().join("config.toml")).ok()
+(B[m[31m-        .or_else(|| std::fs::read_to_string("electro.toml").ok());
+(B[m[32m+async fn load_hive_config(
+(B[m[32m+    config: &electro_core::types::config::ElectroConfig,
+(B[m[32m+) -> electro_hive::HiveConfig {
+(B[m[32m+    let config_content =
+(B[m[32m+        std::fs::read_to_string(electro_core::paths::electro_home().join("config.toml"))
+(B[m[32m+            .ok()
+(B[m[32m+            .or_else(|| std::fs::read_to_string("electro.toml").ok());
+(B[m 
+     if let Some(content) = config_content {
+         #[derive(serde::Deserialize, Default)]
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:621:
+         )));
+     }
+ 
+[31m-    Ok(Arc::from(electro_providers::create_provider(provider_config)?))
+(B[m[32m+    Ok(Arc::from(electro_providers::create_provider(
+(B[m[32m+        provider_config,
+(B[m[32m+    )?))
+(B[m }
+ 
+ /// Tracks the active task state for a single chat.
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:642:
+     memory: Arc<dyn electro_core::Memory>,
+     tools: Vec<Arc<dyn electro_core::Tool>>,
+     custom_tool_registry: Arc<electro_tools::CustomToolRegistry>,
+[31m-    #[cfg(feature = "mcp")]
+(B[m[31m-    mcp_manager: Arc<electro_mcp::McpManager>,
+(B[m[32m+    #[cfg(feature = "mcp")] mcp_manager: Arc<electro_mcp::McpManager>,
+(B[m     config: electro_core::types::config::ElectroConfig,
+     pending_messages: electro_tools::PendingMessages,
+     setup_tokens: electro_gateway::SetupTokenStore,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:650:
+     pending_raw_keys: Arc<Mutex<HashSet<String>>>,
+[31m-    #[cfg(feature = "browser")]
+(B[m[31m-    login_sessions: Arc<Mutex<HashMap<String, electro_tools::browser_session::InteractiveBrowseSession>>>,
+(B[m[32m+    #[cfg(feature = "browser")] login_sessions: Arc<
+(B[m[32m+        Mutex<HashMap<String, electro_tools::browser_session::InteractiveBrowseSession>>,
+(B[m[32m+    >,
+(B[m     usage_store: Arc<dyn electro_core::UsageStore>,
+     hive_instance: Option<Arc<electro_hive::Hive>>,
+     shared_mode: electro_tools::SharedMode,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:657:
+     workspace_path: std::path::PathBuf,
+     personality_locked: bool,
+     tenant_manager: Arc<electro_core::tenant_impl::TenantManager>,
+[31m-    #[cfg(feature = "browser")]
+(B[m[31m-    browser_tool_ref: Option<Arc<electro_tools::BrowserTool>>,
+(B[m[32m+    #[cfg(feature = "browser")] browser_tool_ref: Option<Arc<electro_tools::BrowserTool>>,
+(B[m     vault: Option<Arc<dyn electro_core::Vault>>,
+ ) {
+     if let Some(sender) = primary_channel {
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:711:
+                         }
+ 
+                         // /stop is the only hardcoded instant-kill.
+[31m-                        let is_slash_stop = inbound.text.as_deref()
+(B[m[32m+                        let is_slash_stop = inbound
+(B[m[32m+                            .text
+(B[m[32m+                            .as_deref()
+(B[m                             .map(|t| t.trim().eq_ignore_ascii_case("/stop"))
+                             .unwrap_or(false);
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:745:
+                             let icpt_task = slot.current_task.clone();
+                             let icpt_agent_state = agent_state_clone.clone();
+                             tokio::spawn(async move {
+[31m-                                let task_desc = icpt_task.lock()
+(B[m[31m-                                    .map(|t| t.clone())
+(B[m[31m-                                    .unwrap_or_default();
+(B[m[32m+                                let task_desc =
+(B[m[32m+                                    icpt_task.lock().map(|t| t.clone()).unwrap_or_default();
+(B[m 
+                                 // Get provider + model from the active agent
+                                 let agent_guard = icpt_agent_state.read().await;
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:754:
+[31m-                                let Some(agent) = agent_guard.as_ref() else { return; };
+(B[m[32m+                                let Some(agent) = agent_guard.as_ref() else {
+(B[m[32m+                                    return;
+(B[m[32m+                                };
+(B[m                                 let provider = agent.provider_arc();
+                                 let model = agent.model().to_string();
+                                 drop(agent_guard);
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:799:
+                                         text = text.replace("[CANCEL]", "").trim().to_string();
+ 
+                                         if !text.is_empty() {
+[31m-                                            let reply = electro_core::types::message::OutboundMessage {
+(B[m[31m-                                                chat_id: icpt_chat_id.clone(),
+(B[m[31m-                                                text,
+(B[m[31m-                                                reply_to: Some(icpt_msg_id),
+(B[m[31m-                                                parse_mode: None,
+(B[m[31m-                                            };
+(B[m[32m+                                            let reply =
+(B[m[32m+                                                electro_core::types::message::OutboundMessage {
+(B[m[32m+                                                    chat_id: icpt_chat_id.clone(),
+(B[m[32m+                                                    text,
+(B[m[32m+                                                    reply_to: Some(icpt_msg_id),
+(B[m[32m+                                                    parse_mode: None,
+(B[m[32m+                                                };
+(B[m                                             let _ = icpt_sender.send_message(reply).await;
+                                         }
+ 
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:945:
+     memory: &Arc<dyn electro_core::Memory>,
+     tools_template: &[Arc<dyn electro_core::Tool>],
+     custom_registry: &Arc<electro_tools::CustomToolRegistry>,
+[31m-    #[cfg(feature = "mcp")]
+(B[m[31m-    mcp_mgr: &Arc<electro_mcp::McpManager>,
+(B[m[32m+    #[cfg(feature = "mcp")] mcp_mgr: &Arc<electro_mcp::McpManager>,
+(B[m     max_turns: usize,
+     max_ctx: usize,
+     max_rounds: usize,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:959:
+     pending_clone: &electro_tools::PendingMessages,
+     setup_tokens_clone: &electro_gateway::SetupTokenStore,
+     pending_raw_keys_clone: &Arc<Mutex<HashSet<String>>>,
+[31m-    #[cfg(feature = "browser")]
+(B[m[31m-    login_sessions_clone: &Arc<Mutex<HashMap<String, electro_tools::browser_session::InteractiveBrowseSession>>>,
+(B[m[32m+    #[cfg(feature = "browser")] login_sessions_clone: &Arc<
+(B[m[32m+        Mutex<HashMap<String, electro_tools::browser_session::InteractiveBrowseSession>>,
+(B[m[32m+    >,
+(B[m     usage_store_clone: &Arc<dyn electro_core::UsageStore>,
+     hive_clone: &Option<Arc<electro_hive::Hive>>,
+     shared_mode: electro_tools::SharedMode,
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:967:
+     shared_memory_strategy: Arc<tokio::sync::RwLock<electro_core::types::config::MemoryStrategy>>,
+     _personality_locked: bool,
+[31m-    #[cfg(feature = "browser")]
+(B[m[31m-    browser_ref_worker: &Option<Arc<electro_tools::BrowserTool>>,
+(B[m[31m-    #[cfg(feature = "browser")]
+(B[m[31m-    vault: &Option<Arc<dyn electro_core::Vault>>,
+(B[m[32m+    #[cfg(feature = "browser")] browser_ref_worker: &Option<Arc<electro_tools::BrowserTool>>,
+(B[m[32m+    #[cfg(feature = "browser")] vault: &Option<Arc<dyn electro_core::Vault>>,
+(B[m ) -> ChatSlot {
+     let (chat_tx, mut chat_rx) =
+         tokio::sync::mpsc::channel::<electro_core::types::message::InboundMessage>(4);
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:977:
+     let interrupt = Arc::new(AtomicBool::new(false));
+     let is_heartbeat = Arc::new(AtomicBool::new(false));
+     let is_busy = Arc::new(AtomicBool::new(false));
+[31m-    let current_task: Arc<std::sync::Mutex<String>> = Arc::new(std::sync::Mutex::new(String::new()));
+(B[m[32m+    let current_task: Arc<std::sync::Mutex<String>> =
+(B[m[32m+        Arc::new(std::sync::Mutex::new(String::new()));
+(B[m     let cancel_token = tokio_util::sync::CancellationToken::new();
+     let is_busy_clone = is_busy.clone();
+     let current_task_clone = current_task.clone();
+Diff in /Users/dawsonblock/Downloads/Electro-main 2/src/server_mode.rs:1014:
+         let history_key = format!("chat_history:{}", worker_chat_id);
+         let mut persistent_history: Vec<electro_core::types::message::ChatMessage> =
+             match memory.get(&history_key).await {
+[31m-                Ok(Some(entry)) => {
+(B[m[31m-                    match serde_json::from_str(&entry.content) {
+(B[m[31m-                        Ok(h) => {
+(B[m[31m-                            tracing::info!(
+(B[m[31m-                                chat_id = %worker_chat_id,
+(B[m[31m-                                messages = %Vec::<electro_core::types::message::ChatMessage>::len(&h),
+(B[m[31m-                                "Restored conversation history from memory"
+(B[m[31m-                            );
+(B[m[31m-                            h
+(B[m[31m-                        }
+(B[m[31m-                        Err(e) => {
+(B[m[31m-                            tracing::warn!(
+(B[m[31m-                                chat_id = %worker_chat_id,
+(B[m[31m-                                error = %e,
+(B[m[31m-                                "Failed to deserialize saved history, starting fresh"
+(B[m[31m-                            );
+(B[m[31m-                            Vec::new()
+(B[m[31m-                        }
+(B[m[32m+                Ok(Some(entry)) => match serde_json::from_str(&entry.content) {
+(B[m[32m+                    Ok(h) => {
+(B[m[32m+                        tracing::info!(
+(B[m[32m+                            chat_id = %worker_chat_id,
+(B[m[32m+                            messages = %Vec::<electro_core::types::message::ChatMessage>::len(&h),
+(B[m[32m+                            "Restored conversation history from memory"
+(B[m[32m+                        );
+(B[m[32m+                        h
+(B[m                     }
+[31m-                }
+(B[m[32m+                    Err(e) => {
+(B[m[32m+                        tracing::warn!(
+(B[m[32m+                            chat_id = %worker_chat_id,
+(B[m[32m+                            error = %e,
+(B[m[32m+                            "Failed to deserialize saved history, starting fresh"
+(B[m[32m+                        );
+(B[m[32m+                        Vec::new()
+(B[m[32m+                    }
+(B[m[32m+                },
+(B[m                 Ok(None) => Vec::new(),
+                 Err(e) => {
+                     tracing::warn!(

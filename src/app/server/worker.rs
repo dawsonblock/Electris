@@ -1,0 +1,1026 @@
+use crate::app::server::commands::handle_slash_command;
+use crate::app::server::dispatcher::state::WorkerState;
+use crate::app::server::slot::ChatSlot;
+use electro_core::types::message::{
+    ChatMessage, ContentPart, InboundMessage, MessageContent, OutboundMessage, Role,
+};
+use electro_core::types::session::SessionContext;
+use electro_core::{Channel, Memory, Tool, UsageStore, Vault};
+use electro_observable::{METRIC_TASK_COMPLETIONS, METRIC_TOOL_ERRORS, METRIC_TOOL_EXECUTIONS};
+use electro_runtime::{ExecutionTarget, OutboundEvent, RuntimeHandle};
+use std::collections::{HashMap, HashSet};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+use tokio::sync::{Mutex, RwLock};
+
+pub enum WorkerOutcome {
+    Success { response: String },
+    Timeout,
+    Cancelled,
+    Failed { error: String },
+}
+
+fn emit_outbound_event(runtime: &RuntimeHandle, event: OutboundEvent) {
+    if let Err(error) = runtime.emit_outbound_event(event) {
+        tracing::debug!(
+            ?error,
+            "Skipping outbound event broadcast without subscribers"
+        );
+    }
+}
+
+fn should_send_direct_reply(channel: &str) -> bool {
+    channel != "cli"
+}
+
+async fn emit_tool_results_from_history(
+    runtime: &RuntimeHandle,
+    request_id: &str,
+    history: &[ChatMessage],
+    start_idx: usize,
+) {
+    let mut tool_names: HashMap<String, String> = HashMap::new();
+    let mut tool_results = Vec::new();
+
+    for message in history.iter().skip(start_idx) {
+        if let MessageContent::Parts(parts) = &message.content {
+            for part in parts {
+                match part {
+                    ContentPart::ToolUse { id, name, .. } => {
+                        tool_names.insert(id.clone(), name.clone());
+                    }
+                    ContentPart::ToolResult {
+                        tool_use_id,
+                        content,
+                        is_error,
+                    } if matches!(message.role, Role::Tool) => {
+                        tool_results.push((tool_use_id.clone(), content.clone(), *is_error));
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+
+    for (tool_use_id, content, is_error) in tool_results {
+        let tool_name = tool_names
+            .get(&tool_use_id)
+            .cloned()
+            .unwrap_or_else(|| "unknown".to_string());
+        emit_outbound_event(
+            runtime,
+            OutboundEvent::ToolResult {
+                request_id: request_id.to_string(),
+                tool: tool_name.clone(),
+                success: !is_error,
+                content,
+            },
+        );
+
+        let labels = [("tool", tool_name.as_str())];
+        runtime
+            .increment_counter(METRIC_TOOL_EXECUTIONS, &labels)
+            .await;
+        if is_error {
+            runtime.increment_counter(METRIC_TOOL_ERRORS, &labels).await;
+        }
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn create_chat_worker(
+    worker_chat_id: &str,
+    sender: &Arc<dyn Channel>,
+    runtime: &RuntimeHandle,
+    memory: &Arc<dyn Memory>,
+    tools_template: &[Arc<dyn Tool>],
+    _custom_registry: &Arc<electro_tools::CustomToolRegistry>,
+    #[cfg(feature = "mcp")] _mcp_mgr: &Arc<electro_mcp::McpManager>,
+    _max_turns: usize,
+    _max_ctx: usize,
+    _max_rounds: usize,
+    max_task_duration: u64,
+    _max_spend: f64,
+    _v2_opt: bool,
+    _pp_opt: bool,
+    _base_url: &Option<String>,
+    ws_path: &std::path::Path,
+    pending_clone: &electro_tools::PendingMessages,
+    setup_tokens_clone: &electro_gateway::SetupTokenStore,
+    pending_raw_keys_clone: &Arc<Mutex<HashSet<String>>>,
+    #[cfg(feature = "browser")] login_sessions_clone: &Arc<
+        Mutex<HashMap<String, electro_tools::browser_session::InteractiveBrowseSession>>,
+    >,
+    _usage_store_clone: &Arc<dyn UsageStore>,
+    _hive_clone: &Option<Arc<electro_hive::Hive>>,
+    personality_locked: bool,
+    #[cfg(feature = "browser")] browser_ref_worker: &Option<Arc<electro_tools::BrowserTool>>,
+    vault: &Option<Arc<dyn Vault>>,
+) -> ChatSlot {
+    let (chat_tx, mut chat_rx) = tokio::sync::mpsc::channel::<InboundMessage>(4);
+    let interrupt = Arc::new(AtomicBool::new(false));
+    let is_heartbeat = Arc::new(AtomicBool::new(false));
+    let current_task = Arc::new(std::sync::Mutex::new(String::new()));
+    let cancel_token = Arc::new(Mutex::new(tokio_util::sync::CancellationToken::new()));
+    let state = Arc::new(RwLock::new(WorkerState::Idle));
+    let last_active = Arc::new(Mutex::new(Instant::now()));
+
+    let worker_chat_id = worker_chat_id.to_string();
+    let sender = sender.clone();
+    let memory = memory.clone();
+    let runtime = runtime.clone();
+    let current_task_worker = current_task.clone();
+    let interrupt_worker = interrupt.clone();
+    let is_heartbeat_worker = is_heartbeat.clone();
+    let cancel_token_worker = cancel_token.clone();
+    let state_worker = state.clone();
+    let last_active_worker = last_active.clone();
+    let tools_template = tools_template.to_vec();
+    let ws_path = ws_path.to_path_buf();
+    let pending_messages = pending_clone.clone();
+    let setup_tokens = setup_tokens_clone.clone();
+    let pending_raw_keys = pending_raw_keys_clone.clone();
+    #[cfg(feature = "browser")]
+    let login_sessions = login_sessions_clone.clone();
+    #[cfg(feature = "browser")]
+    let browser_ref = browser_ref_worker.clone();
+    let vault = vault.clone();
+
+    tokio::spawn(async move {
+        let history_key = format!("chat_history:{}", worker_chat_id);
+        let mut persistent_history: Vec<ChatMessage> = match memory.get(&history_key).await {
+            Ok(Some(entry)) => serde_json::from_str(&entry.content).unwrap_or_default(),
+            _ => Vec::new(),
+        };
+
+        while let Some(msg) = chat_rx.recv().await {
+            is_heartbeat_worker.store(msg.channel == "heartbeat", Ordering::Relaxed);
+            *last_active_worker.lock().await = Instant::now();
+
+            tracing::info!(
+                chat_id = %msg.chat_id,
+                request_id = %msg.id,
+                channel = %msg.channel,
+                "worker request dequeued"
+            );
+
+            if handle_slash_command(
+                &msg,
+                &sender,
+                &runtime,
+                &memory,
+                &persistent_history,
+                &tools_template,
+                &setup_tokens,
+                &pending_raw_keys,
+                #[cfg(feature = "browser")]
+                &login_sessions,
+                #[cfg(feature = "browser")]
+                &browser_ref,
+                &vault,
+                personality_locked,
+            )
+            .await
+            {
+                *state_worker.write().await = WorkerState::Idle;
+                is_heartbeat_worker.store(false, Ordering::Relaxed);
+                continue;
+            }
+
+            let Some(agent) = runtime.agent().await else {
+                emit_outbound_event(
+                    &runtime,
+                    OutboundEvent::Failed {
+                        request_id: msg.id.clone(),
+                        error: "Agent offline. Configure credentials to start processing messages."
+                            .to_string(),
+                    },
+                );
+                if should_send_direct_reply(&msg.channel) {
+                    let _ = sender
+                        .send_message(OutboundMessage {
+                            chat_id: msg.chat_id.clone(),
+                            text: "Agent offline. Configure credentials to start processing messages."
+                                .to_string(),
+                            reply_to: Some(msg.id.clone()),
+                            parse_mode: None,
+                        })
+                        .await;
+                }
+                *state_worker.write().await = WorkerState::Failed;
+                is_heartbeat_worker.store(false, Ordering::Relaxed);
+                continue;
+            };
+
+            interrupt_worker.store(false, Ordering::Relaxed);
+            if let Ok(mut task) = current_task_worker.lock() {
+                *task = msg.text.clone().unwrap_or_default();
+            }
+
+            let permit = runtime.executor.acquire().await;
+            runtime
+                .increment_counter("electro.runtime.requests.started", &[])
+                .await;
+            runtime
+                .record_metric(
+                    "electro.runtime.executions.active",
+                    (runtime.runtime_config.max_concurrency.saturating_sub(runtime.executor.available()))
+                        as f64,
+                    &[],
+                )
+                .await;
+
+            let request_id = msg.id.clone();
+            let request_started_at = Instant::now();
+            emit_outbound_event(
+                &runtime,
+                OutboundEvent::Started {
+                    request_id: request_id.clone(),
+                },
+            );
+
+            if let ExecutionTarget::Remote(worker_id) = runtime.router.route(&msg) {
+                runtime
+                    .increment_counter("electro.runtime.route.remote", &[])
+                    .await;
+                let remote_input = msg.text.clone().unwrap_or_default();
+                let remote_history_start = persistent_history.len();
+                match runtime
+                    .run_remote(
+                        request_id.clone(),
+                        remote_input,
+                        worker_id.clone(),
+                        msg.channel.clone(),
+                        msg.chat_id.clone(),
+                        msg.user_id.clone(),
+                        persistent_history.clone(),
+                    )
+                    .await
+                {
+                    Ok(response) => {
+                        emit_tool_results_from_history(
+                            &runtime,
+                            &request_id,
+                            &response.history,
+                            remote_history_start,
+                        )
+                        .await;
+                        persistent_history = response.history.clone();
+                        if let Ok(history_json) = serde_json::to_string(&persistent_history) {
+                            let _ = memory
+                                .store(electro_core::MemoryEntry {
+                                    id: history_key.clone(),
+                                    content: history_json,
+                                    metadata: serde_json::json!({
+                                        "chat_id": worker_chat_id,
+                                        "channel": msg.channel,
+                                    }),
+                                    timestamp: chrono::Utc::now(),
+                                    session_id: Some(worker_chat_id.clone()),
+                                    entry_type: electro_core::MemoryEntryType::Conversation,
+                                })
+                                .await;
+                        }
+
+                        if let Some(error) = response.error.clone() {
+                            runtime
+                                .increment_counter("electro.runtime.requests.remote_failed", &[])
+                                .await;
+                            runtime
+                                .observe_histogram(
+                                    "electro.runtime.request.latency_ms",
+                                    request_started_at.elapsed().as_secs_f64() * 1000.0,
+                                    &[("route", "remote")],
+                                )
+                                .await;
+                            emit_outbound_event(
+                                &runtime,
+                                OutboundEvent::Failed {
+                                    request_id: request_id.clone(),
+                                    error: error.clone(),
+                                },
+                            );
+                            if should_send_direct_reply(&msg.channel) {
+                                let _ = sender
+                                    .send_message(OutboundMessage {
+                                        chat_id: msg.chat_id.clone(),
+                                        text: format!("Error: {error}"),
+                                        reply_to: Some(msg.id.clone()),
+                                        parse_mode: None,
+                                    })
+                                    .await;
+                            }
+                            *state_worker.write().await = WorkerState::Failed;
+                            if let Ok(mut task) = current_task_worker.lock() {
+                                task.clear();
+                            }
+                            let mut cancel_slot = cancel_token_worker.lock().await;
+                            cancel_slot.cancel();
+                            *cancel_slot = tokio_util::sync::CancellationToken::new();
+                            drop(cancel_slot);
+                            *last_active_worker.lock().await = Instant::now();
+                            drop(permit);
+                            runtime
+                                .record_metric(
+                                    "electro.runtime.executions.active",
+                                    (runtime
+                                        .runtime_config
+                                        .max_concurrency
+                                        .saturating_sub(runtime.executor.available())) as f64,
+                                    &[],
+                                )
+                                .await;
+                            is_heartbeat_worker.store(false, Ordering::Relaxed);
+                            continue;
+                        }
+
+                        runtime
+                            .increment_counter(METRIC_TASK_COMPLETIONS, &[])
+                            .await;
+                        runtime
+                            .increment_counter("electro.runtime.requests.remote_success", &[])
+                            .await;
+                        runtime
+                            .observe_histogram(
+                                "electro.runtime.request.latency_ms",
+                                request_started_at.elapsed().as_secs_f64() * 1000.0,
+                                &[("route", "remote")],
+                            )
+                            .await;
+                        if should_send_direct_reply(&msg.channel) {
+                            let _ = sender
+                                .send_message(OutboundMessage {
+                                    chat_id: msg.chat_id.clone(),
+                                    text: response.output.clone(),
+                                    reply_to: Some(msg.id.clone()),
+                                    parse_mode: None,
+                                })
+                                .await;
+                        }
+                        emit_outbound_event(
+                            &runtime,
+                            OutboundEvent::Completed {
+                                request_id: request_id.clone(),
+                                content: response.output.clone(),
+                            },
+                        );
+                        *state_worker.write().await = WorkerState::Idle;
+                        if let Ok(mut task) = current_task_worker.lock() {
+                            task.clear();
+                        }
+                        let mut cancel_slot = cancel_token_worker.lock().await;
+                        cancel_slot.cancel();
+                        *cancel_slot = tokio_util::sync::CancellationToken::new();
+                        drop(cancel_slot);
+                        *last_active_worker.lock().await = Instant::now();
+                        drop(permit);
+                        runtime
+                            .record_metric(
+                                "electro.runtime.executions.active",
+                                (runtime
+                                    .runtime_config
+                                    .max_concurrency
+                                    .saturating_sub(runtime.executor.available())) as f64,
+                                &[],
+                            )
+                            .await;
+                        is_heartbeat_worker.store(false, Ordering::Relaxed);
+                        continue;
+                    }
+                    Err(error) => {
+                        runtime
+                            .increment_counter("electro.runtime.requests.remote_fallback", &[])
+                            .await;
+                        tracing::warn!(
+                            request_id = %request_id,
+                            worker = %worker_id,
+                            error = %error,
+                            "remote execution failed; falling back to local"
+                        );
+                    }
+                }
+            }
+
+            runtime
+                .increment_counter("electro.runtime.route.local", &[])
+                .await;
+
+            let request_cancel = tokio_util::sync::CancellationToken::new();
+            let mut cancel_slot = cancel_token_worker.lock().await;
+            cancel_slot.cancel();
+            *cancel_slot = request_cancel.clone();
+            drop(cancel_slot);
+            *state_worker.write().await = WorkerState::Running {
+                request_id: request_id.clone(),
+            };
+            tracing::info!(
+                chat_id = %msg.chat_id,
+                request_id = %request_id,
+                "worker request started"
+            );
+
+            let mut session_ctx = SessionContext {
+                session_id: worker_chat_id.clone(),
+                channel: msg.channel.clone(),
+                chat_id: msg.chat_id.clone(),
+                user_id: msg.user_id.clone(),
+                history: persistent_history.clone(),
+                workspace_path: ws_path.clone(),
+                tool_timeout_secs: runtime.runtime_config.tool_timeout_secs,
+                tool_policy: electro_tools::policy::ToolPolicy::for_workspace(ws_path.clone()),
+            };
+            let history_start = session_ctx.history.len();
+
+            let (status_tx, mut status_rx) =
+                tokio::sync::watch::channel(electro_agent::AgentTaskStatus::default());
+            let request_id_for_logs = request_id.clone();
+            let chat_id_for_logs = msg.chat_id.clone();
+            let runtime_for_logs = runtime.clone();
+            let lifecycle_logger = tokio::spawn(async move {
+                let mut last_phase = None;
+                while status_rx.changed().await.is_ok() {
+                    let status = status_rx.borrow().clone();
+                    if Some(status.phase.clone()) == last_phase {
+                        continue;
+                    }
+
+                    match &status.phase {
+                        electro_agent::AgentTaskPhase::CallingProvider { round } => tracing::info!(
+                            chat_id = %chat_id_for_logs,
+                            request_id = %request_id_for_logs,
+                            round = *round,
+                            "provider_called"
+                        ),
+                        electro_agent::AgentTaskPhase::ExecutingTool {
+                            round, tool_name, ..
+                        } => {
+                            emit_outbound_event(
+                                &runtime_for_logs,
+                                OutboundEvent::ToolCall {
+                                    request_id: request_id_for_logs.clone(),
+                                    tool: tool_name.clone(),
+                                },
+                            );
+                            runtime_for_logs
+                                .increment_counter("electro.runtime.tool_calls.started", &[])
+                                .await;
+                            tracing::info!(
+                                chat_id = %chat_id_for_logs,
+                                request_id = %request_id_for_logs,
+                                round = *round,
+                                tool = %tool_name,
+                                "tool_called"
+                            )
+                        }
+                        _ => {}
+                    }
+                    last_phase = Some(status.phase);
+                }
+            });
+
+            let result = tokio::time::timeout(
+                Duration::from_secs(max_task_duration),
+                agent.process_message(
+                    &msg,
+                    &mut session_ctx,
+                    Some(interrupt_worker.clone()),
+                    Some(pending_messages.clone()),
+                    None,
+                    Some(status_tx),
+                    Some(request_cancel.clone()),
+                ),
+            )
+            .await;
+            lifecycle_logger.abort();
+            // Wait for the lifecycle logger to finish with a short timeout
+            // This ensures any pending resources are released before continuing
+            let _ = tokio::time::timeout(Duration::from_millis(100), lifecycle_logger).await;
+            emit_tool_results_from_history(&runtime, &request_id, &session_ctx.history, history_start)
+                .await;
+
+            let outcome = match result {
+                Ok(Ok((reply, _usage))) => {
+                    let response_text = reply.text.clone();
+                    if should_send_direct_reply(&msg.channel) {
+                        let _ = sender.send_message(reply).await;
+                    }
+                    emit_outbound_event(
+                        &runtime,
+                        OutboundEvent::Completed {
+                            request_id: request_id.clone(),
+                            content: response_text.clone(),
+                        },
+                    );
+                    persistent_history = session_ctx.history.clone();
+
+                    if let Ok(history_json) = serde_json::to_string(&persistent_history) {
+                        let _ = memory
+                            .store(electro_core::MemoryEntry {
+                                id: history_key.clone(),
+                                content: history_json,
+                                metadata: serde_json::json!({
+                                    "chat_id": worker_chat_id,
+                                    "channel": msg.channel,
+                                }),
+                                timestamp: chrono::Utc::now(),
+                                session_id: Some(worker_chat_id.clone()),
+                                entry_type: electro_core::MemoryEntryType::Conversation,
+                            })
+                            .await;
+                    }
+
+                    runtime.increment_counter(METRIC_TASK_COMPLETIONS, &[]).await;
+                    runtime
+                        .increment_counter("electro.runtime.requests.local_success", &[])
+                        .await;
+                    runtime
+                        .observe_histogram(
+                            "electro.runtime.request.latency_ms",
+                            request_started_at.elapsed().as_secs_f64() * 1000.0,
+                            &[("route", "local")],
+                        )
+                        .await;
+                    WorkerOutcome::Success {
+                        response: response_text,
+                    }
+                }
+                Ok(Err(error)) => {
+                    if request_cancel.is_cancelled() || interrupt_worker.load(Ordering::Relaxed) {
+                        runtime
+                            .increment_counter("electro.runtime.requests.cancelled", &[])
+                            .await;
+                        WorkerOutcome::Cancelled
+                    } else {
+                        let error = error.to_string();
+                        emit_outbound_event(
+                            &runtime,
+                            OutboundEvent::Failed {
+                                request_id: request_id.clone(),
+                                error: error.clone(),
+                            },
+                        );
+                        runtime
+                            .increment_counter("electro.runtime.requests.failed", &[])
+                            .await;
+                        WorkerOutcome::Failed { error }
+                    }
+                }
+                Err(_) => {
+                    request_cancel.cancel();
+                    emit_outbound_event(
+                        &runtime,
+                        OutboundEvent::Failed {
+                            request_id: request_id.clone(),
+                            error: format!("request timed out after {} seconds", max_task_duration),
+                        },
+                    );
+                    runtime
+                        .increment_counter("electro.runtime.requests.timed_out", &[])
+                        .await;
+                    WorkerOutcome::Timeout
+                }
+            };
+
+            match &outcome {
+                WorkerOutcome::Success { response } => {
+                    tracing::info!(
+                        chat_id = %msg.chat_id,
+                        request_id = %request_id,
+                        response_len = response.len(),
+                        "worker request completed"
+                    );
+                    *state_worker.write().await = WorkerState::Idle;
+                }
+                WorkerOutcome::Timeout => {
+                    tracing::warn!(
+                        chat_id = %msg.chat_id,
+                        request_id = %request_id,
+                        timeout_secs = max_task_duration,
+                        "worker request timed out"
+                    );
+                    if should_send_direct_reply(&msg.channel) {
+                        let _ = sender
+                            .send_message(OutboundMessage {
+                                chat_id: msg.chat_id.clone(),
+                                text: format!(
+                                    "Error: request timed out after {} seconds",
+                                    max_task_duration
+                                ),
+                                reply_to: Some(msg.id.clone()),
+                                parse_mode: None,
+                            })
+                            .await;
+                    }
+                    *state_worker.write().await = WorkerState::Idle;
+                }
+                WorkerOutcome::Cancelled => {
+                    emit_outbound_event(
+                        &runtime,
+                        OutboundEvent::Failed {
+                            request_id: request_id.clone(),
+                            error: "request cancelled".to_string(),
+                        },
+                    );
+                    tracing::info!(
+                        chat_id = %msg.chat_id,
+                        request_id = %request_id,
+                        "worker request cancelled"
+                    );
+                    *state_worker.write().await = WorkerState::Idle;
+                }
+                WorkerOutcome::Failed { error } => {
+                    tracing::error!(
+                        chat_id = %msg.chat_id,
+                        request_id = %request_id,
+                        error = %error,
+                        "worker request failed"
+                    );
+                    if should_send_direct_reply(&msg.channel) {
+                        let _ = sender
+                            .send_message(OutboundMessage {
+                                chat_id: msg.chat_id.clone(),
+                                text: format!("Error: {error}"),
+                                reply_to: Some(msg.id.clone()),
+                                parse_mode: None,
+                            })
+                            .await;
+                    }
+                    *state_worker.write().await = WorkerState::Failed;
+                }
+            }
+
+            if let Ok(mut task) = current_task_worker.lock() {
+                task.clear();
+            }
+            let mut cancel_slot = cancel_token_worker.lock().await;
+            cancel_slot.cancel();
+            *cancel_slot = tokio_util::sync::CancellationToken::new();
+            drop(cancel_slot);
+            *last_active_worker.lock().await = Instant::now();
+            is_heartbeat_worker.store(false, Ordering::Relaxed);
+            drop(permit);
+            runtime
+                .record_metric(
+                    "electro.runtime.executions.active",
+                    (runtime.runtime_config.max_concurrency.saturating_sub(runtime.executor.available()))
+                        as f64,
+                    &[],
+                )
+                .await;
+        }
+    });
+
+    ChatSlot {
+        tx: chat_tx,
+        interrupt,
+        is_heartbeat,
+        current_task,
+        cancel_token,
+        state,
+        last_active,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::create_chat_worker;
+    use crate::app::server::dispatcher::state::WorkerState;
+    use async_trait::async_trait;
+    use electro_agent::AgentRuntime;
+    use electro_core::types::config::{ElectroMode, MemoryStrategy};
+    use electro_core::types::error::ElectroError;
+    use electro_core::types::message::{CompletionRequest, CompletionResponse};
+    use electro_core::{Channel, Memory, Provider, UsageStore};
+    use electro_runtime::{OutboundEvent, RuntimeHandle};
+    use electro_test_utils::{make_inbound_msg, MockChannel, MockMemory, MockProvider};
+    use std::collections::{HashMap, HashSet};
+    use std::sync::atomic::Ordering;
+    use std::sync::Arc;
+    use tokio::sync::{mpsc, Mutex, RwLock};
+    use tokio::time::{timeout, Duration};
+
+    const TEST_PROVIDER_DELAY_MS: u64 = 250;
+    const TEST_POLL_INTERVAL_MS: u64 = 10;
+
+    struct DelayedFailingProvider;
+
+    #[async_trait]
+    impl Provider for DelayedFailingProvider {
+        fn name(&self) -> &str {
+            "delayed-failing"
+        }
+
+        async fn complete(
+            &self,
+            _request: CompletionRequest,
+        ) -> Result<CompletionResponse, ElectroError> {
+            tokio::time::sleep(Duration::from_millis(TEST_PROVIDER_DELAY_MS)).await;
+            Err(ElectroError::Provider(
+                "cancelled during provider call".to_string(),
+            ))
+        }
+
+        async fn stream(
+            &self,
+            _request: CompletionRequest,
+        ) -> Result<
+            futures::stream::BoxStream<
+                '_,
+                Result<electro_core::types::message::StreamChunk, ElectroError>,
+            >,
+            ElectroError,
+        > {
+            Err(ElectroError::Provider("stream not supported".to_string()))
+        }
+
+        async fn health_check(&self) -> Result<bool, ElectroError> {
+            Ok(true)
+        }
+
+        async fn list_models(&self) -> Result<Vec<String>, ElectroError> {
+            Ok(vec!["mock-model".to_string()])
+        }
+    }
+
+    #[tokio::test]
+    async fn worker_processes_messages_through_runtime_handle() {
+        let sender = Arc::new(MockChannel::new("test"));
+        let sender_trait: Arc<dyn Channel> = sender.clone();
+        let memory = Arc::new(MockMemory::new());
+        let provider = Arc::new(MockProvider::with_text("worker reply"));
+        let agent = AgentRuntime::new(
+            provider,
+            memory.clone(),
+            Vec::new(),
+            "mock-model".to_string(),
+            None,
+        )
+        .with_v2_optimizations(false);
+        let (queue_tx, _queue_rx) = mpsc::channel(1);
+        let runtime = RuntimeHandle::new(
+            queue_tx,
+            Arc::new(RwLock::new(ElectroMode::Play)),
+            Arc::new(RwLock::new(MemoryStrategy::Lambda)),
+        );
+        runtime.set_agent(agent).await;
+        runtime.set_active_provider("anthropic").await;
+
+        let usage_store: Arc<dyn UsageStore> = Arc::new(
+            electro_memory::SqliteUsageStore::new("sqlite::memory:")
+                .await
+                .expect("usage store should initialize"),
+        );
+        let slot = create_chat_worker(
+            "test-chat",
+            &sender_trait,
+            &runtime,
+            &(memory.clone() as Arc<dyn Memory>),
+            &[],
+            &Arc::new(electro_tools::CustomToolRegistry::new()),
+            #[cfg(feature = "mcp")]
+            &Arc::new(electro_mcp::McpManager::new()),
+            8,
+            4096,
+            8,
+            30,
+            10.0,
+            false,
+            false,
+            &None,
+            &std::env::temp_dir(),
+            &Arc::new(std::sync::Mutex::new(HashMap::new())),
+            &electro_gateway::SetupTokenStore::new(),
+            &Arc::new(Mutex::new(HashSet::new())),
+            #[cfg(feature = "browser")]
+            &Arc::new(Mutex::new(HashMap::new())),
+            &usage_store,
+            &None,
+            false,
+            #[cfg(feature = "browser")]
+            &None,
+            &None,
+        );
+
+        let msg = make_inbound_msg("hello worker");
+
+        slot.tx
+            .send(msg)
+            .await
+            .expect("message should be accepted by worker");
+
+        timeout(Duration::from_secs(2), async {
+            loop {
+                if sender.sent_count().await > 0 {
+                    break;
+                }
+                tokio::time::sleep(Duration::from_millis(20)).await;
+            }
+        })
+        .await
+        .expect("worker should emit a reply");
+
+        let sent = sender.sent_messages.lock().await;
+        assert_eq!(sent.len(), 1);
+        assert_eq!(sent[0].text, "worker reply");
+        drop(sent);
+
+        let history = memory
+            .get("chat_history:test-chat")
+            .await
+            .expect("history lookup should succeed")
+            .expect("worker should persist chat history");
+        assert!(history.content.contains("hello worker"));
+        assert!(history.content.contains("worker reply"));
+        assert!(matches!(&*slot.state.read().await, WorkerState::Idle));
+    }
+
+    #[tokio::test]
+    async fn worker_emits_outbound_events_for_completed_requests() {
+        let sender = Arc::new(MockChannel::new("test"));
+        let sender_trait: Arc<dyn Channel> = sender.clone();
+        let memory = Arc::new(MockMemory::new());
+        let provider = Arc::new(MockProvider::with_text("worker reply"));
+        let agent = AgentRuntime::new(
+            provider,
+            memory.clone(),
+            Vec::new(),
+            "mock-model".to_string(),
+            None,
+        );
+        let (queue_tx, _queue_rx) = mpsc::channel(1);
+        let runtime = RuntimeHandle::new(
+            queue_tx,
+            Arc::new(RwLock::new(ElectroMode::Play)),
+            Arc::new(RwLock::new(MemoryStrategy::Lambda)),
+        );
+        runtime.set_agent(agent).await;
+
+        let usage_store: Arc<dyn UsageStore> = Arc::new(
+            electro_memory::SqliteUsageStore::new("sqlite::memory:")
+                .await
+                .expect("usage store should initialize"),
+        );
+        let slot = create_chat_worker(
+            "test-chat",
+            &sender_trait,
+            &runtime,
+            &(memory.clone() as Arc<dyn Memory>),
+            &[],
+            &Arc::new(electro_tools::CustomToolRegistry::new()),
+            #[cfg(feature = "mcp")]
+            &Arc::new(electro_mcp::McpManager::new()),
+            8,
+            4096,
+            8,
+            30,
+            10.0,
+            false,
+            false,
+            &None,
+            &std::env::temp_dir(),
+            &Arc::new(std::sync::Mutex::new(HashMap::new())),
+            &electro_gateway::SetupTokenStore::new(),
+            &Arc::new(Mutex::new(HashSet::new())),
+            #[cfg(feature = "browser")]
+            &Arc::new(Mutex::new(HashMap::new())),
+            &usage_store,
+            &None,
+            false,
+            #[cfg(feature = "browser")]
+            &None,
+            &None,
+        );
+        let mut events = runtime.subscribe_outbound_events();
+
+        let msg = make_inbound_msg("hello worker");
+        let request_id = msg.id.clone();
+
+        slot.tx
+            .send(msg)
+            .await
+            .expect("message should be accepted by worker");
+
+        let started = timeout(Duration::from_secs(2), events.recv())
+            .await
+            .expect("started event should arrive")
+            .expect("started event should be readable");
+        let completed = timeout(Duration::from_secs(2), events.recv())
+            .await
+            .expect("completed event should arrive")
+            .expect("completed event should be readable");
+
+        assert!(matches!(
+            started,
+            OutboundEvent::Started { request_id } if !request_id.is_empty()
+        ));
+        assert_eq!(
+            completed,
+            OutboundEvent::Completed {
+                request_id,
+                content: "worker reply".to_string(),
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn worker_emits_terminal_failed_event_for_cancelled_requests() {
+        let sender = Arc::new(MockChannel::new("test"));
+        let sender_trait: Arc<dyn Channel> = sender.clone();
+        let memory = Arc::new(MockMemory::new());
+        let provider = Arc::new(DelayedFailingProvider);
+        let agent = AgentRuntime::new(
+            provider,
+            memory.clone(),
+            Vec::new(),
+            "mock-model".to_string(),
+            None,
+        )
+        .with_v2_optimizations(false);
+        let (queue_tx, _queue_rx) = mpsc::channel(1);
+        let runtime = RuntimeHandle::new(
+            queue_tx,
+            Arc::new(RwLock::new(ElectroMode::Play)),
+            Arc::new(RwLock::new(MemoryStrategy::Lambda)),
+        );
+        runtime.set_agent(agent).await;
+
+        let usage_store: Arc<dyn UsageStore> = Arc::new(
+            electro_memory::SqliteUsageStore::new("sqlite::memory:")
+                .await
+                .expect("usage store should initialize"),
+        );
+        let slot = create_chat_worker(
+            "test-chat",
+            &sender_trait,
+            &runtime,
+            &(memory.clone() as Arc<dyn Memory>),
+            &[],
+            &Arc::new(electro_tools::CustomToolRegistry::new()),
+            #[cfg(feature = "mcp")]
+            &Arc::new(electro_mcp::McpManager::new()),
+            8,
+            4096,
+            8,
+            30,
+            10.0,
+            false,
+            false,
+            &None,
+            &std::env::temp_dir(),
+            &Arc::new(std::sync::Mutex::new(HashMap::new())),
+            &electro_gateway::SetupTokenStore::new(),
+            &Arc::new(Mutex::new(HashSet::new())),
+            #[cfg(feature = "browser")]
+            &Arc::new(Mutex::new(HashMap::new())),
+            &usage_store,
+            &None,
+            false,
+            #[cfg(feature = "browser")]
+            &None,
+            &None,
+        );
+        let mut events = runtime.subscribe_outbound_events();
+
+        let msg = make_inbound_msg("cancel me");
+        let request_id = msg.id.clone();
+        slot.tx.send(msg).await.expect("message should be accepted");
+
+        let started = timeout(Duration::from_secs(2), events.recv())
+            .await
+            .expect("started event should arrive")
+            .expect("started event should be readable");
+        assert!(matches!(
+            started,
+            OutboundEvent::Started { request_id } if !request_id.is_empty()
+        ));
+
+        timeout(Duration::from_secs(2), async {
+            loop {
+                if matches!(&*slot.state.read().await, WorkerState::Running { .. }) {
+                    break;
+                }
+                tokio::time::sleep(Duration::from_millis(TEST_POLL_INTERVAL_MS)).await;
+            }
+        })
+        .await
+        .expect("worker should enter running state");
+
+        slot.interrupt.store(true, Ordering::Relaxed);
+        slot.cancel_token.lock().await.cancel();
+
+        let cancelled = timeout(Duration::from_secs(2), events.recv())
+            .await
+            .expect("cancel event should arrive")
+            .expect("cancel event should be readable");
+
+        assert_eq!(
+            cancelled,
+            OutboundEvent::Failed {
+                request_id,
+                error: "request cancelled".to_string(),
+            }
+        );
+        assert!(matches!(&*slot.state.read().await, WorkerState::Idle));
+    }
+}

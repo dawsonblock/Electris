@@ -1,0 +1,2245 @@
+   Compiling subtle v2.6.1
+   Compiling num-traits v0.2.19
+   Compiling hyper v1.8.1
+   Compiling mime_guess v2.0.5
+   Compiling syn v1.0.109
+   Compiling deranged v0.5.8
+   Compiling digest v0.10.7
+   Compiling rustls v0.23.37
+   Compiling universal-hash v0.5.1
+   Compiling poly1305 v0.8.0
+   Compiling polyval v0.6.2
+   Compiling sha2 v0.10.9
+   Compiling hmac v0.12.1
+   Compiling chrono v0.4.44
+   Compiling atoi v2.0.0
+   Compiling hkdf v0.12.4
+   Compiling md-5 v0.10.6
+   Compiling sqlx-core v0.8.6
+   Compiling sha1 v0.10.6
+   Compiling chacha20poly1305 v0.10.1
+   Compiling time v0.3.47
+   Compiling ghash v0.5.1
+   Compiling tungstenite v0.28.0
+   Compiling tungstenite v0.23.0
+   Compiling aes-gcm v0.10.3
+   Compiling hyper-util v0.1.20
+   Compiling tokio-tungstenite v0.28.0
+   Compiling electro-core v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2/crates/electro-core)
+   Compiling plist v1.8.0
+   Compiling async-attributes v1.1.2
+   Compiling hyper-tls v0.6.0
+   Compiling axum v0.8.8
+   Compiling syntect v5.3.0
+   Compiling async-std v1.13.2
+   Compiling sqlx-postgres v0.8.6
+   Compiling sqlx-sqlite v0.8.6
+   Compiling tokio-rustls v0.26.4
+   Compiling electro-test-utils v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2/crates/electro-test-utils)
+   Compiling hyper-rustls v0.27.7
+   Compiling reqwest v0.12.28
+   Compiling electro-vault v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2/crates/electro-vault)
+   Compiling async-tungstenite v0.27.0
+   Compiling electro-observable v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2/crates/electro-observable)
+   Compiling electro-filestore v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2/crates/electro-filestore)
+   Compiling electro-providers v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2/crates/electro-providers)
+   Compiling sqlx-macros-core v0.8.6
+   Compiling chromiumoxide v0.7.0
+   Compiling electro-codex-oauth v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2/crates/electro-codex-oauth)
+   Compiling teloxide-core v0.13.0
+   Compiling electro-mcp v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2/crates/electro-mcp)
+   Compiling electro-skills v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2/crates/electro-skills)
+   Compiling electro-automation v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2/crates/electro-automation)
+   Compiling sqlx-macros v0.8.6
+   Compiling sqlx v0.8.6
+   Compiling electro-tools v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tools)
+   Compiling electro-agent v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2/crates/electro-agent)
+   Compiling electro-hive v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2/crates/electro-hive)
+   Compiling electro-memory v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2/crates/electro-memory)
+   Compiling electro-gateway v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2/crates/electro-gateway)
+   Compiling electro-tui v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2/crates/electro-tui)
+   Compiling teloxide v0.17.0
+   Compiling electro-channels v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2/crates/electro-channels)
+warning: unused import: `super::*`
+   --> crates/electro-tools/src/web_fetch.rs:170:9
+    |
+170 |     use super::*;
+    |         ^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unreachable expression
+  --> crates/electro-tools/src/custom_tools.rs:25:5
+   |
+23 |       { return true; }
+   |         ----------- any code following this expression is unreachable
+24 |
+25 | /     matches!(
+26 | |         std::env::va...
+27 | |             .unwrap_...
+28 | |             .trim()
+...  |
+31 | |         "1" | "true"...
+32 | |     )
+   | |_____^ unreachable expression
+   |
+   = note: `#[warn(unreachable_code)]` (part of `#[warn(unused)]`) on by default
+
+   Compiling electro v3.2.0 (/Users/dawsonblock/Downloads/Electro-main 2)
+warning: unused imports: `HashMap` and `HashSet`
+ --> src/main.rs:1:24
+  |
+1 | ...ions::{HashMap, HashSet};
+  |           ^^^^^^^  ^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused imports: `AtomicBool` and `Ordering`
+ --> src/main.rs:3:25
+  |
+3 | ...ic::{AtomicBool, Ordering};
+  |         ^^^^^^^^^^  ^^^^^^^^
+
+warning: unused import: `async_trait::async_trait`
+ --> src/main.rs:7:5
+  |
+7 | use async_trait::async_trait;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `credentials_path` and `load_credentials_file`
+  --> src/main.rs:12:5
+   |
+12 |     credentials_path, detect_api_...
+   |     ^^^^^^^^^^^^^^^^
+13 |     load_credentials_file, load_s...
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `available_models_for_provider` and `is_vision_model`
+  --> src/main.rs:16:5
+   |
+16 |     available_models_for_provider, default_model, is_vision_model,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                 ^^^^^^^^^^^^^^^
+
+warning: unused import: `tokio::sync::Mutex`
+  --> src/main.rs:20:5
+   |
+20 | use tokio::sync::Mutex;
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `load_active_provider_keys`
+ --> src/cli.rs:3:43
+  |
+3 | ...y, load_active_provider_keys, l...
+  |       ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `default_model`
+ --> src/cli.rs:6:36
+  |
+6 | ...rovider, default_model, is_visi...
+  |             ^^^^^^^^^^^^^
+
+warning: unused import: `electro_core::types::model_registry::default_model`
+ --> src/onboarding.rs:6:5
+  |
+6 | use electro_core::types::model_registry::default_model;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::panic::AssertUnwindSafe`
+ --> src/server_mode.rs:2:5
+  |
+2 | use std::panic::AssertUnwindSafe;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `async_trait::async_trait`
+ --> src/server_mode.rs:7:5
+  |
+7 | use async_trait::async_trait;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::admin::is_admin_user`
+  --> src/server_mode.rs:12:5
+   |
+12 | use crate::admin::is_admin_user;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `censor_secrets`
+  --> src/server_mode.rs:13:24
+   |
+13 | ...strap::{censor_secrets, Secret...
+   |            ^^^^^^^^^^^^^^
+
+warning: unused imports: `format_user_error`, `handle_model_command`, `list_configured_providers`, and `remove_provider`
+  --> src/server_mode.rs:14:18
+   |
+14 | ...::{format_user_error, handle_model_command, list_configured_providers, remove_provider};
+   |       ^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^
+
+warning: unused imports: `is_process_alive`, `pid_file_path`, `read_pid_file`, and `write_pid_file`
+  --> src/server_mode.rs:15:21
+   |
+15 | ...::{is_process_alive, pid_file_path, read_pid_file, remove_pid_file, write_pid_file};
+   |       ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^^^^                   ^^^^^^^^^^^^^^
+
+warning: unused imports: `ONBOARDING_REFERENCE`, `decrypt_otk_blob`, `onboarding_message_with_link`, `send_with_retry`, and `validate_provider_key`
+  --> src/server_mode.rs:16:46
+   |
+16 | ...t, decrypt_otk_blob, onboarding_message_with_link, send_with_retry, validate_provider_key, ONBOARDING_REFERENCE};
+   |       ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `pid_file_path`
+  --> src/main.rs:34:32
+   |
+34 | ..._alive, pid_file_path, read_pi...
+   |            ^^^^^^^^^^^^^
+
+warning: unused import: `send_with_retry`
+  --> src/main.rs:35:87
+   |
+35 | ..._link, send_with_retry, valida...
+   |           ^^^^^^^^^^^^^^^
+
+warning: variable does not need to be mutable
+   --> src/server_mode.rs:396:18
+    |
+396 |     let (msg_tx, mut msg_rx) =
+    |                  ----^^^^^^
+    |                  |
+    |                  help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: `electro-tools` (lib test) generated 2 warnings (run `cargo fix --lib -p electro-tools --tests` to apply 1 suggestion)
+warning: unused import: `futures::FutureExt`
+ --> src/server_mode.rs:8:5
+  |
+8 | use futures::FutureExt;
+  |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `base64::Engine`
+ --> src/main.rs:8:5
+  |
+8 | use base64::Engine as _;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused variable: `pid`
+  --> src/daemon.rs:79:14
+   |
+79 |         Some(pid) => {
+   |              ^^^ help: if this is intentional, prefix it with an underscore: `_pid`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `config`
+   --> src/server_mode.rs:567:29
+    |
+567 | ..._enabled(config: &electro_cor...
+    |             ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: unused variable: `config`
+   --> src/server_mode.rs:592:27
+    |
+592 | ...e_config(config: &electro_cor...
+    |             ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: variable does not need to be mutable
+    --> src/server_mode.rs:1015:13
+     |
+1015 | ...et mut persistent_history: V...
+     |       ----^^^^^^^^^^^^^^^^^^
+     |       |
+     |       help: remove this `mut`
+
+warning: variable does not need to be mutable
+    --> src/server_mode.rs:1048:24
+     |
+1048 | ...let Some(mut msg) = chat_rx....
+     |             ----^^^
+     |             |
+     |             help: remove this `mut`
+
+warning: unused variable: `persistent_history`
+    --> src/server_mode.rs:1015:13
+     |
+1015 | ...et mut persistent_history: V...
+     |       ^^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_persistent_history`
+
+warning: unused variable: `panic_chat_id`
+    --> src/server_mode.rs:1050:17
+     |
+1050 | ... let panic_chat_id = msg.cha...
+     |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_panic_chat_id`
+
+warning: unused variable: `panic_msg_id`
+    --> src/server_mode.rs:1051:17
+     |
+1051 | ...   let panic_msg_id = msg.id...
+     |           ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_panic_msg_id`
+
+warning: unused variable: `max_turns`
+   --> src/server_mode.rs:950:5
+    |
+950 |     max_turns: usize,
+    |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_turns`
+
+warning: unused variable: `max_ctx`
+   --> src/server_mode.rs:951:5
+    |
+951 |     max_ctx: usize,
+    |     ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_ctx`
+
+warning: unused variable: `max_rounds`
+   --> src/server_mode.rs:952:5
+    |
+952 |     max_rounds: usize,
+    |     ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_rounds`
+
+warning: unused variable: `max_task_duration`
+   --> src/server_mode.rs:953:5
+    |
+953 |     max_task_duration: u64,
+    |     ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_task_duration`
+
+warning: unused variable: `max_spend`
+   --> src/server_mode.rs:954:5
+    |
+954 |     max_spend: f64,
+    |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_spend`
+
+warning: unused variable: `v2_opt`
+   --> src/server_mode.rs:955:5
+    |
+955 |     v2_opt: bool,
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_v2_opt`
+
+warning: unused variable: `pp_opt`
+   --> src/server_mode.rs:956:5
+    |
+956 |     pp_opt: bool,
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_pp_opt`
+
+warning: unused variable: `base_url`
+   --> src/server_mode.rs:957:5
+    |
+957 |     base_url: &Option<String>,
+    |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_base_url`
+
+warning: unused variable: `is_busy_clone`
+   --> src/server_mode.rs:982:9
+    |
+982 |     let is_busy_clone = is_busy....
+    |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_is_busy_clone`
+
+warning: unused variable: `current_task_clone`
+   --> src/server_mode.rs:983:9
+    |
+983 |     let current_task_clone = cur...
+    |         ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_current_task_clone`
+
+warning: unused variable: `self_tx`
+   --> src/server_mode.rs:984:9
+    |
+984 |     let self_tx = chat_tx.clone();
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_self_tx`
+
+warning: unused variable: `agent_state`
+   --> src/server_mode.rs:986:9
+    |
+986 |     let agent_state = agent_stat...
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_agent_state`
+
+warning: unused variable: `tools_template`
+   --> src/server_mode.rs:988:9
+    |
+988 |     let tools_template = tools_t...
+    |         ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_tools_template`
+
+warning: unused variable: `custom_registry`
+   --> src/server_mode.rs:989:9
+    |
+989 |     let custom_registry = custom...
+    |         ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_custom_registry`
+
+warning: unused variable: `mcp_mgr`
+   --> src/server_mode.rs:991:9
+    |
+991 |     let mcp_mgr = mcp_mgr.clone();
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_mcp_mgr`
+
+warning: unused variable: `sender`
+   --> src/server_mode.rs:992:9
+    |
+992 |     let sender = sender.clone();
+    |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_sender`
+
+warning: unused variable: `workspace_path`
+   --> src/server_mode.rs:993:9
+    |
+993 |     let workspace_path = ws_path...
+    |         ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_workspace_path`
+
+warning: unused variable: `interrupt_clone`
+   --> src/server_mode.rs:994:9
+    |
+994 |     let interrupt_clone = interr...
+    |         ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_interrupt_clone`
+
+warning: unused variable: `is_heartbeat_clone`
+   --> src/server_mode.rs:995:9
+    |
+995 |     let is_heartbeat_clone = is_...
+    |         ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_is_heartbeat_clone`
+
+warning: unused variable: `cancel_token_clone`
+   --> src/server_mode.rs:996:9
+    |
+996 |     let cancel_token_clone = can...
+    |         ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cancel_token_clone`
+
+warning: unused variable: `pending_for_worker`
+   --> src/server_mode.rs:997:9
+    |
+997 |     let pending_for_worker = pen...
+    |         ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pending_for_worker`
+
+warning: unused variable: `shared_mode`
+   --> src/server_mode.rs:998:9
+    |
+998 |     let shared_mode = shared_mode;
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_shared_mode`
+
+warning: unused variable: `shared_memory_strategy`
+   --> src/server_mode.rs:999:9
+    |
+999 | ...et shared_memory_strategy = s...
+    |       ^^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_shared_memory_strategy`
+
+warning: unused variable: `setup_tokens_worker`
+    --> src/server_mode.rs:1000:9
+     |
+1000 | ...et setup_tokens_worker = set...
+     |       ^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_setup_tokens_worker`
+
+warning: unused variable: `pending_raw_keys_worker`
+    --> src/server_mode.rs:1001:9
+     |
+1001 | ...et pending_raw_keys_worker = ...
+     |       ^^^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pending_raw_keys_worker`
+
+warning: unused variable: `login_sessions_worker`
+    --> src/server_mode.rs:1003:9
+     |
+1003 | ...et login_sessions_worker = l...
+     |       ^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_login_sessions_worker`
+
+warning: unused variable: `vault_for_login`
+    --> src/server_mode.rs:1005:9
+     |
+1005 |     let vault_for_login = vault...
+     |         ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_vault_for_login`
+
+warning: unused variable: `browser_ref_worker`
+    --> src/server_mode.rs:1007:9
+     |
+1007 | ...et browser_ref_worker = brow...
+     |       ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_browser_ref_worker`
+
+warning: unused variable: `usage_store_worker`
+    --> src/server_mode.rs:1008:9
+     |
+1008 | ...et usage_store_worker = usag...
+     |       ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_usage_store_worker`
+
+warning: unused variable: `hive_worker`
+    --> src/server_mode.rs:1009:9
+     |
+1009 |     let hive_worker = hive_clon...
+     |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_hive_worker`
+
+warning: unused variable: `config_path`
+   --> src/main.rs:319:5
+    |
+319 |     config_path: Option<&std::pa...
+    |     ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_config_path`
+
+warning: unused variable: `cli_browser_ref`
+   --> src/main.rs:408:30
+    |
+408 | ...ate, cli_browser_ref) = elect...
+    |         ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cli_browser_ref`
+
+warning: unused variable: `mcp_manager`
+   --> src/main.rs:442:9
+    |
+442 |     let mcp_manager: Arc<electro...
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_mcp_manager`
+
+warning: function `is_admin_user` is never used
+ --> src/admin.rs:4:8
+  |
+4 | pub fn is_admin_user(user_id: &str...
+  |        ^^^^^^^^^^^^^
+  |
+  = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `pid_file_path` is never used
+  --> src/admin.rs:23:8
+   |
+23 | pub fn pid_file_path() -> Option<...
+   |        ^^^^^^^^^^^^^
+
+warning: function `write_pid_file` is never used
+  --> src/admin.rs:28:8
+   |
+28 | pub fn write_pid_file() {
+   |        ^^^^^^^^^^^^^^
+
+warning: function `remove_pid_file` is never used
+  --> src/admin.rs:35:8
+   |
+35 | pub fn remove_pid_file() {
+   |        ^^^^^^^^^^^^^^^
+
+warning: function `read_pid_file` is never used
+  --> src/admin.rs:42:8
+   |
+42 | pub fn read_pid_file() -> Option<...
+   |        ^^^^^^^^^^^^^
+
+warning: function `is_process_alive` is never used
+  --> src/admin.rs:49:8
+   |
+49 | pub fn is_process_alive(pid: u32)...
+   |        ^^^^^^^^^^^^^^^^
+
+warning: function `stop_daemon` is never used
+  --> src/daemon.rs:44:8
+   |
+44 | pub fn stop_daemon() -> Result<bo...
+   |        ^^^^^^^^^^^
+
+warning: function `format_capture_age` is never used
+  --> src/onboarding.rs:62:8
+   |
+62 | pub fn format_capture_age(capture...
+   |        ^^^^^^^^^^^^^^^^^^
+
+warning: function `send_with_retry` is never used
+   --> src/onboarding.rs:353:14
+    |
+353 | pub async fn send_with_retry(
+    |              ^^^^^^^^^^^^^^^
+
+warning: `electro` (bin "electro" test) generated 71 warnings (run `cargo fix --bin "electro" -p electro --tests` to apply 60 suggestions)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 35.41s
+     Running unittests src/main.rs (target/debug/deps/electro-ebd3f125fbe7b424)
+
+running 6 tests
+test daemon::tests::test_pid_file_path ... ok
+test tests::detect_unknown_key_returns_none ... ok
+test tests::detect_anthropic_key ... ok
+test tests::placeholder_key_rejects_common_fakes ... ok
+test tests::detect_openai_key ... ok
+test daemon::tests::test_read_write_pid_file ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/electro_agent-3ed526ccdff7f0ff)
+
+running 672 tests
+test agent_task_status::tests::new_equals_default ... ok
+test agent_task_status::tests::status_is_send_sync ... ok
+test agent_task_status::tests::status_is_clone ... ok
+test agent_task_status::tests::default_status_is_preparing ... ok
+test blueprint::tests::annotation_independent ... ok
+test blueprint::tests::catalog_format_empty ... ok
+test blueprint::tests::annotation_none ... ok
+test blueprint::tests::annotation_parallel_with ... ok
+test agent_task_status::tests::phase_variants_clone_correctly ... ok
+test blueprint::tests::create_blueprint_all_conditions_met ... ok
+test blueprint::tests::create_blueprint_already_loaded_rejected ... ok
+test blueprint::tests::create_blueprint_compound_but_few_tools ... ok
+test blueprint::tests::create_blueprint_failure_rejected ... ok
+test blueprint::tests::create_blueprint_low_effort_passed_to_llm ... ok
+test blueprint::tests::catalog_format_with_loaded_marker ... ok
+test blueprint::tests::create_blueprint_no_tools_rejected ... ok
+test blueprint::tests::catalog_format_with_blueprints ... ok
+test blueprint::tests::catalog_format_caps_at_five ... ok
+test blueprint::tests::create_blueprint_not_compound_but_enough_tools ... ok
+test blueprint::tests::create_blueprint_partial_success_accepted ... ok
+test blueprint::tests::extract_tools_empty_history ... ok
+test blueprint::tests::authoring_prompt_contains_metadata ... ok
+test blueprint::tests::format_context_includes_key_fields ... ok
+test blueprint::tests::extract_tools_from_history ... ok
+test blueprint::tests::header_basic ... ok
+test blueprint::tests::header_not_a_phase ... ok
+test blueprint::tests::header_with_independent ... ok
+test blueprint::tests::header_with_parallel ... ok
+test blueprint::tests::outline_format_shows_headers ... ok
+test blueprint::tests::parse_blueprint_missing_closing ... ok
+test blueprint::tests::parse_blueprint_no_frontmatter ... ok
+test blueprint::tests::parse_phases_empty_body ... ok
+test blueprint::tests::parse_blueprint_malformed_yaml ... ok
+test blueprint::tests::parse_phases_linear ... ok
+test blueprint::tests::parse_phases_single_phase ... ok
+test blueprint::tests::parse_phases_goal_extraction ... ok
+test blueprint::tests::phases_to_graph_empty ... ok
+test blueprint::tests::memory_entry_roundtrip ... ok
+test blueprint::tests::parse_valid_blueprint ... ok
+test blueprint::tests::parse_phases_with_independent_annotation ... ok
+test blueprint::tests::parse_phases_with_parallel_annotation ... ok
+test blueprint::tests::refinement_prompt_contains_original ... ok
+test blueprint::tests::select_best_empty_list ... ok
+test blueprint::tests::select_best_rejects_too_large ... ok
+test blueprint::tests::select_best_returns_highest_success_rate ... ok
+test blueprint::tests::success_rate_normal ... ok
+test blueprint::tests::phases_to_graph_linear ... ok
+test blueprint::tests::phases_to_graph_with_parallelism ... ok
+test blueprint::tests::success_rate_zero_executions ... ok
+test blueprint::tests::summarize_extracts_user_and_assistant ... ok
+test budget::tests::budget_tracker_check_budget_exactly_at_limit ... ok
+test budget::tests::budget_tracker_check_budget_exceeded ... ok
+test budget::tests::budget_tracker_check_budget_within_limit ... ok
+test budget::tests::budget_tracker_multiple_small_calls ... ok
+test budget::tests::budget_tracker_new_unlimited ... ok
+test budget::tests::budget_tracker_new_with_limit ... ok
+test budget::tests::budget_tracker_record_returns_cost ... ok
+test budget::tests::budget_tracker_record_usage_accumulates ... ok
+test budget::tests::budget_tracker_unlimited_never_exceeds ... ok
+test budget::tests::calculate_cost_known_pricing ... ok
+test budget::tests::calculate_cost_zero_tokens ... ok
+test budget::tests::get_pricing_gemini_2_0_flash ... ok
+test budget::tests::get_pricing_gemini_2_5_flash ... ok
+test budget::tests::get_pricing_gemini_2_5_pro ... ok
+test budget::tests::get_pricing_gpt4o ... ok
+test budget::tests::get_pricing_gpt4o_mini ... ok
+test budget::tests::get_pricing_gpt5 ... ok
+test budget::tests::get_pricing_gpt5_2 ... ok
+test budget::tests::get_pricing_grok4 ... ok
+test budget::tests::get_pricing_grok4_fast ... ok
+test budget::tests::get_pricing_haiku_3_5 ... ok
+test budget::tests::get_pricing_haiku_4_5 ... ok
+test budget::tests::get_pricing_minimax ... ok
+test budget::tests::get_pricing_o3 ... ok
+test budget::tests::get_pricing_o4_mini ... ok
+test budget::tests::get_pricing_ollama_glm ... ok
+test budget::tests::get_pricing_ollama_llama ... ok
+test budget::tests::get_pricing_opus_4_6 ... ok
+test budget::tests::get_pricing_sonnet_4_6 ... ok
+test budget::tests::get_pricing_unknown_model_defaults ... ok
+test circuit_breaker::tests::test_backoff_caps_at_30_seconds ... ok
+test circuit_breaker::tests::test_backoff_duration_increases ... ok
+test circuit_breaker::tests::test_closed_allows_execution ... ok
+test circuit_breaker::tests::test_open_rejects_execution ... ok
+test circuit_breaker::tests::test_opens_after_threshold_failures ... ok
+test context::tests::chat_digest_none_for_single_user_message ... ok
+test context::tests::chat_digest_extracts_user_assistant_only ... ok
+test context::tests::chat_digest_skips_pure_tool_use_messages ... ok
+test context::tests::chat_digest_truncates_long_assistant_replies ... ok
+test context::tests::generate_dropped_summary_empty ... ok
+test context::tests::generate_dropped_summary_with_tools ... ok
+test context::tests::strip_all_tool_messages_leaves_empty ... ok
+test context::tests::strip_empty_input ... ok
+test context::tests::strip_no_tool_messages ... ok
+test context::tests::strip_preserves_image_parts ... ok
+test context::tests::strip_preserves_text_in_mixed_assistant ... ok
+test context::tests::strip_preserves_user_messages ... ok
+test context::tests::strip_removes_pure_tool_use_assistant ... ok
+test context::tests::strip_removes_tool_role_messages ... ok
+test delegation::tests::aggregate_results_empty ... ok
+test context::tests::context_includes_system_prompt ... ok
+test delegation::tests::assign_tools_fallback_to_all_when_no_match ... ok
+test delegation::tests::aggregate_results_mixed_statuses ... ok
+test delegation::tests::assign_tools_matches_file_keywords ... ok
+test context::tests::context_default_system_prompt ... ok
+test delegation::tests::delegation_manager_can_spawn_under_limit ... ok
+test delegation::tests::delegation_manager_debug_output ... ok
+test delegation::tests::delegation_manager_defaults ... ok
+test delegation::tests::delegation_manager_register_spawn_increments ... ok
+test delegation::tests::delegation_manager_spawn_limit_enforced ... ok
+test delegation::tests::delegation_prompt_forbids_sub_delegation ... ok
+test delegation::tests::format_delegation_prompt_includes_objective ... ok
+test delegation::tests::format_delegation_prompt_no_tools ... ok
+test delegation::tests::format_status_update_empty ... ok
+test delegation::tests::format_status_update_mixed ... ok
+test delegation::tests::format_status_update_truncates_long_objectives ... ok
+test context::tests::context_includes_conversation_history ... ok
+test delegation::tests::plan_delegation_empty_task_returns_error ... ok
+test delegation::tests::plan_delegation_respects_remaining_budget ... ok
+test context::tests::context_includes_chat_digest_when_enough_messages ... ok
+test context::tests::dropped_messages_generate_summary ... ok
+test delegation::tests::plan_delegation_single_task_no_split ... ok
+test delegation::tests::plan_delegation_splits_on_and ... ok
+test delegation::tests::plan_delegation_splits_on_semicolons ... ok
+test delegation::tests::split_task_no_split_for_short_and ... ok
+test delegation::tests::plan_delegation_splits_on_then ... ok
+test context::tests::recent_messages_always_kept ... ok
+test delegation::tests::split_task_numbered_multiline ... ok
+test delegation::tests::sub_agent_builder_methods ... ok
+test delegation::tests::sub_agent_creation_defaults ... ok
+test delegation::tests::sub_agent_invalid_complete_from_pending ... ok
+test context::tests::context_includes_tool_definitions ... ok
+test delegation::tests::sub_agent_invalid_fail_from_pending ... ok
+test delegation::tests::sub_agent_invalid_start_from_running ... ok
+test delegation::tests::sub_agent_result_failure_fields ... ok
+test delegation::tests::sub_agent_result_success_fields ... ok
+test delegation::tests::sub_agent_result_timed_out_fields ... ok
+test delegation::tests::sub_agent_status_display ... ok
+test delegation::tests::sub_agent_result_serde_roundtrip ... ok
+test delegation::tests::sub_agent_transition_to_failed ... ok
+test delegation::tests::sub_agent_serde_roundtrip ... ok
+test delegation::tests::sub_agent_transition_to_timed_out ... ok
+test delegation::tests::sub_agent_valid_status_transitions ... ok
+test done_criteria::tests::done_criteria_add_and_verify ... ok
+test done_criteria::tests::done_criteria_mark_out_of_bounds_is_safe ... ok
+test done_criteria::tests::done_criteria_new_is_empty ... ok
+test done_criteria::tests::format_done_prompt_contains_user_text ... ok
+test done_criteria::tests::format_verification_prompt_empty_criteria ... ok
+test done_criteria::tests::format_verification_prompt_lists_criteria ... ok
+test done_criteria::tests::is_compound_action_verbs_with_and ... ok
+test done_criteria::tests::is_compound_action_verbs_with_then ... ok
+test done_criteria::tests::is_compound_bulleted_list ... ok
+test done_criteria::tests::is_compound_numbered_list ... ok
+test done_criteria::tests::is_compound_multiple_imperative_sentences ... ok
+test done_criteria::tests::is_compound_short_text_is_not_compound ... ok
+test done_criteria::tests::is_compound_single_action_is_not_compound ... ok
+test executor::tests::deps_empty_calls ... ok
+test executor::tests::deps_different_tools_different_paths_independent ... ok
+test executor::tests::deps_file_reads_same_path_independent ... ok
+test executor::tests::deps_independent_file_reads_separate_paths ... ok
+test executor::tests::deps_chain_of_three_dependent_calls ... ok
+test executor::tests::deps_no_path_args_different_tools_independent ... ok
+test executor::tests::deps_mixed_independent_and_dependent ... ok
+test executor::tests::deps_no_path_args_same_unknown_tool_dependent ... ok
+test executor::tests::deps_shell_calls_always_dependent ... ok
+test executor::tests::deps_single_call ... ok
+test executor::tests::deps_two_writes_same_file_dependent ... ok
+test executor::tests::deps_write_then_read_same_file_dependent ... ok
+test executor::tests::extract_file_paths_empty_for_non_object ... ok
+test executor::tests::extract_file_paths_from_arguments ... ok
+test executor::tests::extract_write_paths_file_read_returns_empty ... ok
+test executor::tests::extract_write_paths_file_write_returns_paths ... ok
+test executor::tests::is_read_only_tool_classification ... ok
+test executor::tests::execute_tool_returns_output ... ok
+test executor::tests::execute_tool_with_custom_output ... ok
+test executor::tests::execute_tool_error_output ... ok
+test executor::tests::execute_unknown_tool_returns_error ... ok
+test executor::tests::parallel_individual_failure_does_not_abort_others ... ok
+test executor::tests::parallel_empty_tool_calls ... ok
+test executor::tests::parallel_max_concurrent_zero_uses_default ... ok
+test executor::tests::parallel_unknown_tool_returns_error_result ... ok
+test circuit_breaker::tests::test_half_open_success_closes ... ok
+test executor::tests::parallel_single_tool_call ... ok
+test executor::tests::parallel_result_ordering_preserved ... ok
+test executor::tests::parallel_multiple_different_tools ... ok
+test circuit_breaker::tests::test_half_open_after_recovery_timeout ... ok
+test executor::tests::sandbox_allows_no_file_access ... ok
+test history_pruning::tests::conservative_scoring_ambiguous_messages ... ok
+test history_pruning::tests::critical_system_messages ... ok
+test history_pruning::tests::critical_user_messages_with_instructions ... ok
+test history_pruning::tests::critical_user_messages_with_markers ... ok
+test executor::tests::sandbox_allows_nested_workspace_path ... ok
+test history_pruning::tests::group_into_turns_empty ... ok
+test history_pruning::tests::group_into_turns_multi_tool_use_in_single_message ... ok
+test history_pruning::tests::group_into_turns_multiple_tool_uses ... ok
+test history_pruning::tests::group_into_turns_no_tools ... ok
+test executor::tests::sandbox_allows_workspace_relative_path ... ok
+test history_pruning::tests::high_assistant_error_report ... ok
+test history_pruning::tests::group_into_turns_pairs_tool_use_with_result ... ok
+test history_pruning::tests::high_messages_with_code_blocks ... ok
+test history_pruning::tests::high_messages_with_structured_data ... ok
+test history_pruning::tests::high_tool_error_results ... ok
+test history_pruning::tests::importance_ordering ... ok
+test history_pruning::tests::long_greeting_not_classified_as_trivial ... ok
+test history_pruning::tests::low_short_user_message ... ok
+test history_pruning::tests::low_trivial_tool_results ... ok
+test history_pruning::tests::low_status_updates ... ok
+test history_pruning::tests::medium_regular_user_message ... ok
+test history_pruning::tests::medium_substantive_assistant_response ... ok
+test history_pruning::tests::medium_successful_tool_result ... ok
+test history_pruning::tests::medium_tool_use_message ... ok
+test history_pruning::tests::parts_message_uses_highest_part_importance ... ok
+test executor::tests::sandbox_rejects_absolute_path_to_root ... ok
+test history_pruning::tests::position_bonus_recent_messages ... ok
+test executor::tests::sandbox_rejects_double_dot_encoded_traversal ... ok
+test history_pruning::tests::position_bonus_small_history ... ok
+test executor::tests::sandbox_multiple_file_accesses_all_valid ... ok
+test history_pruning::tests::prune_empty_history ... ok
+test history_pruning::tests::prune_exact_limit ... ok
+test executor::tests::sandbox_one_bad_path_among_multiple_fails ... ok
+test executor::tests::sandbox_rejects_path_outside_workspace ... ok
+test executor::tests::sandbox_rejects_path_traversal ... ok
+test history_pruning::tests::prune_drops_tool_pair_together ... ok
+test history_pruning::tests::prune_all_same_importance ... ok
+test history_pruning::tests::prune_history_with_mixed_importance_keeps_critical ... ok
+test history_pruning::tests::prune_maintains_original_order ... ok
+test history_pruning::tests::prune_never_orphans_tool_result ... ok
+test history_pruning::tests::prune_no_op_when_under_limit ... ok
+test history_pruning::tests::prune_to_one ... ok
+test history_pruning::tests::remove_orphaned_tool_results_empty ... ok
+test history_pruning::tests::prune_preserves_high_importance_messages ... ok
+test history_pruning::tests::remove_orphaned_tool_results_keeps_matched ... ok
+test history_pruning::tests::remove_orphaned_tool_results_mixed_matched_and_orphaned ... ok
+test history_pruning::tests::remove_orphaned_tool_results_removes_orphans ... ok
+test history_pruning::tests::score_message_zero_total ... ok
+test history_pruning::tests::serde_roundtrip_message_importance ... ok
+test history_pruning::tests::serde_roundtrip_pruned_history ... ok
+test history_pruning::tests::serde_roundtrip_scored_message ... ok
+test history_pruning::tests::summary_empty_when_no_drops ... ok
+test history_pruning::tests::summary_for_only_trivial_drops ... ok
+test history_pruning::tests::summary_includes_error_outcome ... ok
+test history_pruning::tests::summary_includes_tools_used ... ok
+test history_pruning::tests::summary_includes_user_topics ... ok
+test history_pruning::tests::summary_limits_topics_to_three ... ok
+test history_pruning::tests::tool_result_with_error_flag_is_high ... ok
+test history_pruning::tests::summary_truncates_long_topics ... ok
+test history_pruning::tests::trivial_assistant_acknowledgments ... ok
+test history_pruning::tests::trivial_greetings ... ok
+test lambda_memory::tests::decay_score_after_24h ... ok
+test lambda_memory::tests::decay_score_after_7_days ... ok
+test lambda_memory::tests::decay_score_at_creation ... ok
+test lambda_memory::tests::effective_thresholds_full_pressure ... ok
+test lambda_memory::tests::effective_thresholds_no_pressure ... ok
+test lambda_memory::tests::high_importance_decays_slower ... ok
+test lambda_memory::tests::parse_memory_block_clamps_importance ... ok
+test lambda_memory::tests::make_hash_unique ... ok
+test lambda_memory::tests::make_hash_deterministic ... ok
+test lambda_memory::tests::parse_memory_block_empty_content ... ok
+test lambda_memory::tests::parse_memory_block_missing ... ok
+test lambda_memory::tests::parse_memory_block_valid ... ok
+test lambda_memory::tests::recall_reheats ... ok
+test lambda_memory::tests::strip_memory_blocks_clean ... ok
+test lambda_memory::tests::strip_memory_blocks_no_block ... ok
+test lambda_memory::tests::worth_remembering_decision ... ok
+test lambda_memory::tests::worth_remembering_explicit ... ok
+test lambda_memory::tests::worth_remembering_trivial ... ok
+test learning::tests::format_learnings_empty ... ok
+test learning::tests::format_learnings_capped_at_five ... ok
+test learning::tests::format_learnings_non_empty ... ok
+test learning::tests::infer_task_type_browser_only ... ok
+test learning::tests::infer_task_type_shell_and_file ... ok
+test learning::tests::infer_task_type_web_fetch_only ... ok
+test learning::tests::learning_from_failed_task ... ok
+test learning::tests::learning_from_successful_shell_task ... ok
+test learning::tests::no_learnings_for_empty_history ... ok
+test learning::tests::learning_with_strategy_rotation ... ok
+test learning::tests::no_learnings_for_text_only_conversation ... ok
+test learning::tests::serialize_learning_format ... ok
+test llm_classifier::tests::build_prompt_without_categories ... ok
+test llm_classifier::tests::category_serde_roundtrip ... ok
+test llm_classifier::tests::classification_with_hint_serde_roundtrip ... ok
+test llm_classifier::tests::difficulty_maps_to_execution_profile ... ok
+test llm_classifier::tests::build_prompt_with_categories ... ok
+test llm_classifier::tests::difficulty_serde_roundtrip ... ok
+test llm_classifier::tests::empty_input_returns_error ... ok
+test llm_classifier::tests::full_classification_serde_roundtrip ... ok
+test llm_classifier::tests::invalid_json_returns_error ... ok
+test llm_classifier::tests::parse_chat_classification ... ok
+test llm_classifier::tests::parse_complex_order ... ok
+test llm_classifier::tests::parse_order_classification ... ok
+test llm_classifier::tests::parse_order_with_blueprint_hint ... ok
+test llm_classifier::tests::parse_order_with_null_blueprint_hint ... ok
+test llm_classifier::tests::parse_order_without_blueprint_hint ... ok
+test llm_classifier::tests::parse_stop_classification ... ok
+test llm_classifier::tests::parse_stop_english ... ok
+test llm_classifier::tests::parse_with_extra_whitespace ... ok
+test llm_classifier::tests::parse_with_markdown_code_block ... ok
+test llm_classifier::tests::parse_with_surrounding_text ... ok
+test model_router::tests::complex_keyword_case_insensitive ... ok
+test model_router::tests::complex_task_architecture_keyword ... ok
+test model_router::tests::complex_task_debug_keyword ... ok
+test model_router::tests::acceptance_criteria_triggers_complex ... ok
+test model_router::tests::complex_task_done_criteria_in_history ... ok
+test model_router::tests::complex_task_refactor_keyword ... ok
+test model_router::tests::complex_task_done_criteria_in_description ... ok
+test model_router::tests::complex_task_deep_history_multi_tools ... ok
+test model_router::tests::config_default_values ... ok
+test model_router::tests::config_serde_roundtrip ... ok
+test model_router::tests::disabled_router_returns_primary ... ok
+test model_router::tests::empty_history_and_no_tools_is_trivial ... ok
+test model_router::tests::execution_profile_from_complexity ... ok
+test model_router::tests::deep_history_alone_not_complex ... ok
+test model_router::tests::get_model_name_all_fallback_to_primary ... ok
+test model_router::tests::get_model_name_fast_falls_back_to_primary ... ok
+test model_router::tests::config_deserialize_minimal_toml ... ok
+test model_router::tests::get_model_name_premium_falls_back_to_primary ... ok
+test model_router::tests::config_toml_roundtrip ... ok
+test model_router::tests::get_model_name_with_all_tiers_configured ... ok
+test model_router::tests::compound_english_task_is_standard ... ok
+test model_router::tests::compound_vietnamese_task_is_standard ... ok
+test model_router::tests::multiple_readonly_tools_still_standard ... ok
+test model_router::tests::complex_vietnamese_keywords ... ok
+test model_router::tests::not_trivial_with_action_verb ... ok
+test model_router::tests::not_trivial_with_path ... ok
+test model_router::tests::not_trivial_vietnamese_action_verb ... ok
+test model_router::tests::route_user_override_best_overrides_complexity ... ok
+test model_router::tests::route_user_override_fast_overrides_complexity ... ok
+test model_router::tests::select_tier_complex_maps_to_premium ... ok
+test model_router::tests::route_complex_task_to_premium_model ... ok
+test model_router::tests::select_tier_standard_maps_to_primary ... ok
+test model_router::tests::select_tier_simple_maps_to_fast ... ok
+test model_router::tests::route_simple_task_to_fast_model ... ok
+test model_router::tests::select_tier_trivial_maps_to_fast ... ok
+test model_router::tests::complex_multilingual_keywords ... ok
+test model_router::tests::simple_task_no_tools ... ok
+test model_router::tests::simple_task_git_status ... ok
+test model_router::tests::route_standard_task_to_primary_model ... ok
+test model_router::tests::simple_task_short_readonly ... ok
+test model_router::tests::not_trivial_long_message ... ok
+test model_router::tests::trivial_emoji_response ... ok
+test model_router::tests::single_action_verb_can_be_simple ... ok
+test model_router::tests::trivial_greeting_hi ... ok
+test model_router::tests::standard_task_write_tool ... ok
+test model_router::tests::trivial_greeting_thanks ... ok
+test model_router::tests::trivial_chinese_greeting ... ok
+test model_router::tests::trivial_short_no_action ... ok
+test model_router::tests::user_override_best ... ok
+test model_router::tests::user_override_fast ... ok
+test model_router::tests::user_override_none ... ok
+test model_router::tests::user_override_with_leading_whitespace ... ok
+test model_router::tests::verification_ignores_user_override ... ok
+test model_router::tests::verification_uses_premium_when_available ... ok
+test model_router::tests::verification_uses_primary_when_no_premium ... ok
+test output_compression::tests::compress_tool_output_unknown_tool_uses_default ... ok
+test model_router::tests::trivial_japanese_greeting ... ok
+test output_compression::tests::default_compress_small_output ... ok
+test output_compression::tests::default_compress_large_output ... ok
+test model_router::tests::trivial_korean_greeting ... ok
+test output_compression::tests::empty_output_handled ... ok
+test model_router::tests::not_trivial_multilingual_action_verbs ... ok
+test model_router::tests::trivial_european_greetings ... ok
+test output_compression::tests::extract_key_lines_case_insensitive ... ok
+test output_compression::tests::extract_key_lines_no_matches ... ok
+test output_compression::tests::extract_key_lines_finds_errors ... ok
+test output_compression::tests::extract_key_lines_respects_max ... ok
+test model_router::tests::trivial_vietnamese_greeting ... ok
+test model_router::tests::trivial_arabic_hindi_thai ... ok
+test output_compression::tests::large_text_output_head_tail_preserved ... ok
+test output_compression::tests::file_read_compression ... ok
+test model_router::tests::standard_task_long_description ... ok
+test output_compression::tests::small_output_just_under_threshold ... ok
+test output_compression::tests::small_output_returned_as_is ... ok
+test output_compression::tests::large_text_small_enough_returned_as_is ... ok
+test output_compression::tests::summarize_large_text_exact_boundary ... ok
+test output_compression::tests::git_output_compression ... ok
+test output_compression::tests::unicode_safe_truncate ... ok
+test output_compression::tests::unicode_safe_truncate_tail ... ok
+test output_compression::tests::git_output_preserves_errors ... ok
+test proactive::tests::action_inherits_requires_confirmation ... ok
+test proactive::tests::add_rule_empty_action_prompt_fails ... ok
+test proactive::tests::add_rule_empty_name_fails ... ok
+test output_compression::tests::summarize_shell_output_with_no_errors ... ok
+test proactive::tests::add_rule_success ... ok
+test proactive::tests::cooldown_enforcement ... ok
+test proactive::tests::cross_type_triggers_dont_match ... ok
+test proactive::tests::disabled_rule_skipped ... ok
+test output_compression::tests::web_fetch_compression ... ok
+test proactive::tests::enable_disable_toggle ... ok
+test proactive::tests::evaluate_trigger_matching ... ok
+test proactive::tests::format_confirmation_request_output ... ok
+test proactive::tests::evaluate_trigger_when_disabled ... ok
+test proactive::tests::format_action_request_output ... ok
+test proactive::tests::list_rules_returns_all ... ok
+test output_compression::tests::shell_output_last_lines_preserved ... ok
+test proactive::tests::manager_disabled_by_default ... ok
+test proactive::tests::non_matching_trigger ... ok
+test proactive::tests::multiple_rules_match_same_trigger ... ok
+test proactive::tests::record_action_increments ... ok
+test proactive::tests::rate_limiting ... ok
+test output_compression::tests::shell_output_preserves_exit_code ... ok
+test proactive::tests::remove_nonexistent_rule_fails ... ok
+test output_compression::tests::large_shell_output_compressed_with_errors_preserved ... ok
+test proactive::tests::remove_rule_success ... ok
+test proactive::tests::threshold_trigger_matching ... ok
+test prompt_optimizer::tests::build_system_prompt_convenience ... ok
+test proactive::tests::trigger_rule_serde_roundtrip ... ok
+test prompt_optimizer::tests::build_system_prompt_with_done_criteria ... ok
+test prompt_optimizer::tests::basic_tier_has_tools_but_no_verification ... ok
+test prompt_optimizer::tests::builder_done_criteria_conditional ... ok
+test prompt_optimizer::tests::builder_file_tools_include_file_protocol ... ok
+test prompt_optimizer::tests::builder_always_includes_core_sections ... ok
+test prompt_optimizer::tests::builder_prompt_is_reasonable_size ... ok
+test prompt_optimizer::tests::default_builder_produces_valid_prompt ... ok
+test prompt_optimizer::tests::builder_no_file_tools_excludes_file_protocol ... ok
+test prompt_optimizer::tests::builder_without_workspace ... ok
+test prompt_optimizer::tests::builder_with_tools_includes_tool_section ... ok
+test prompt_optimizer::tests::builder_no_tools_excludes_tool_sections ... ok
+test prompt_optimizer::tests::estimate_empty_string ... ok
+test prompt_optimizer::tests::estimate_exact_boundary ... ok
+test prompt_optimizer::tests::estimate_large_text ... ok
+test prompt_optimizer::tests::estimate_one_over_boundary ... ok
+test prompt_optimizer::tests::estimate_short_string ... ok
+test prompt_optimizer::tests::minimal_tier_is_smallest ... ok
+test prompt_optimizer::tests::full_tier_has_planning ... ok
+test prompt_optimizer::tests::git_guideline_included_when_present ... ok
+test prompt_optimizer::tests::minimal_tier_only_has_identity ... ok
+test prompt_optimizer::tests::no_tools_much_smaller_than_all_tools ... ok
+test prompt_optimizer::tests::prompt_never_mentions_api_keys ... ok
+test prompt_optimizer::tests::standard_tier_matches_default_behavior ... ok
+test prompt_optimizer::tests::tier_token_ordering ... ok
+test prompt_optimizer::tests::web_fetch_guideline_included_when_present ... ok
+test prompt_optimizer::tests::tool_guidelines_only_for_present_tools ... ok
+test prompt_patches::tests::approve_non_proposed_patch_fails ... ok
+test prompt_patches::tests::approve_nonexistent_patch_fails ... ok
+test prompt_patches::tests::approve_patch_changes_status ... ok
+test prompt_patches::tests::auto_approve_low_risk_above_threshold ... ok
+test prompt_patches::tests::auto_approve_style_preference_above_threshold ... ok
+test prompt_patches::tests::expire_underperforming_expires_bad_patches ... ok
+test prompt_patches::tests::expire_underperforming_ignores_insufficient_applications ... ok
+test prompt_patches::tests::expire_underperforming_keeps_good_patches ... ok
+test prompt_patches::tests::extract_patches_no_tools_returns_empty ... ok
+test prompt_patches::tests::extract_patches_multiple_tools_tried ... ok
+test prompt_patches::tests::extract_patches_strategy_rotation ... ok
+test prompt_patches::tests::extract_patches_tool_sequence ... ok
+test prompt_patches::tests::format_patches_command_output_empty ... ok
+test prompt_patches::tests::format_patches_command_output_displays_details ... ok
+test prompt_patches::tests::format_patches_for_prompt_empty_when_no_approved ... ok
+test prompt_patches::tests::format_patches_for_prompt_only_approved ... ok
+test prompt_patches::tests::get_active_patches_returns_approved_sorted_by_confidence ... ok
+test prompt_patches::tests::list_patches_with_status_filter ... ok
+test output_compression::tests::error_lines_always_kept_in_shell_summary ... ok
+test prompt_patches::tests::max_patches_eviction_removes_lowest_confidence_rejected ... ok
+test prompt_patches::tests::max_patches_no_evictable_returns_error ... ok
+test prompt_patches::tests::no_auto_approve_error_avoidance ... ok
+test prompt_patches::tests::no_auto_approve_low_risk_below_threshold ... ok
+test prompt_patches::tests::no_auto_approve_workflow_pattern ... ok
+test prompt_patches::tests::prompt_patch_clamps_confidence ... ok
+test prompt_patches::tests::prompt_patch_creation ... ok
+test prompt_patches::tests::propose_empty_content_fails ... ok
+test prompt_patches::tests::propose_patch_adds_to_manager ... ok
+test prompt_patches::tests::prompt_patch_serde_roundtrip ... ok
+test prompt_patches::tests::record_task_outcome_ignores_non_approved ... ok
+test prompt_patches::tests::record_task_outcome_updates_success_rate ... ok
+test prompt_patches::tests::reject_non_proposed_patch_fails ... ok
+test prompt_patches::tests::reject_patch_changes_status ... ok
+test prompt_patches::tests::status_transition_approved_to_expired ... ok
+test prompt_patches::tests::status_transition_proposed_to_approved ... ok
+test prompt_patches::tests::status_transition_proposed_to_rejected ... ok
+test prompted_tool_calling::tests::extract_json_object_basic ... ok
+test prompted_tool_calling::tests::extract_json_object_nested ... ok
+test prompted_tool_calling::tests::extract_json_object_no_braces ... ok
+test prompted_tool_calling::tests::extract_json_object_unbalanced ... ok
+test prompted_tool_calling::tests::extract_json_object_with_string_braces ... ok
+test prompted_tool_calling::tests::parse_empty_string ... ok
+test prompted_tool_calling::tests::format_tools_prompt_includes_all_tools ... ok
+test prompted_tool_calling::tests::parse_invalid_json ... ok
+test prompted_tool_calling::tests::parse_json_without_tool_call ... ok
+test prompted_tool_calling::tests::parse_markdown_fenced_json ... ok
+test prompted_tool_calling::tests::parse_nested_json_in_arguments ... ok
+test prompted_tool_calling::tests::parse_plain_text ... ok
+test prompted_tool_calling::tests::parse_text_before_json ... ok
+test prompted_tool_calling::tests::parse_tool_call_empty_name ... ok
+test prompted_tool_calling::tests::parse_tool_call_missing_name ... ok
+test prompted_tool_calling::tests::parse_tool_call_no_arguments_field ... ok
+test prompted_tool_calling::tests::parse_valid_tool_call ... ok
+test prompted_tool_calling::tests::strip_code_fences_basic ... ok
+test prompted_tool_calling::tests::strip_code_fences_no_closing ... ok
+test prompted_tool_calling::tests::strip_code_fences_no_fences ... ok
+test prompted_tool_calling::tests::tool_fallback_message_includes_model_and_tool ... ok
+test prompted_tool_calling::tests::unicode_in_json_tool_call ... ok
+test prompted_tool_calling::tests::unicode_safety_in_parse ... ok
+test recovery::tests::classify_just_under_24h_not_abandoned ... ok
+test recovery::tests::classify_old_task_abandoned ... ok
+test recovery::tests::classify_old_task_with_checkpoint_still_abandoned ... ok
+test recovery::tests::classify_over_24h_abandoned ... ok
+test recovery::tests::classify_pending_no_checkpoint_restarts ... ok
+test recovery::tests::classify_running_no_checkpoint_restarts ... ok
+test recovery::tests::classify_with_empty_checkpoint_restarts ... ok
+test recovery::tests::classify_with_invalid_json_checkpoint_restarts ... ok
+test recovery::tests::classify_with_valid_checkpoint_resumes ... ok
+test recovery::tests::extract_steps_empty_array ... ok
+test recovery::tests::extract_steps_multiple_tools ... ok
+test recovery::tests::extract_steps_non_array_returns_empty ... ok
+test recovery::tests::format_notification_empty_plans ... ok
+test recovery::tests::format_notification_long_goal_truncated ... ok
+test recovery::tests::format_notification_mixed_actions ... ok
+test recovery::tests::format_notification_single_resume ... ok
+test recovery::tests::parse_checkpoint_empty_string ... ok
+test recovery::tests::parse_checkpoint_error_tool_step_not_completed ... ok
+test recovery::tests::parse_checkpoint_extracts_tool_steps ... ok
+test recovery::tests::parse_checkpoint_invalid_json ... ok
+test recovery::tests::parse_checkpoint_none ... ok
+test recovery::tests::parse_checkpoint_valid_json_array ... ok
+test recovery::tests::recovery_manager_default ... ok
+test recovery::tests::per_chat_notifications_groups_correctly ... ok
+test recovery::tests::truncate_id_works ... ok
+test recovery::tests::truncate_goal_works ... ok
+test output_compression::tests::unicode_content_does_not_panic ... ok
+test runtime::tests::vision_anthropic_models ... ok
+test runtime::tests::vision_gemini_models ... ok
+test runtime::tests::vision_grok_models ... ok
+test runtime::tests::vision_minimax_models ... ok
+test runtime::tests::vision_openai_models ... ok
+test runtime::tests::vision_unknown_defaults_true ... ok
+test runtime::tests::vision_zai_models ... ok
+test self_correction::tests::default_tracker_has_threshold_of_two ... ok
+test self_correction::tests::failures_are_tracked_per_tool ... ok
+test self_correction::tests::format_rotation_prompt_contains_errors ... ok
+test self_correction::tests::format_rotation_prompt_none_below_threshold ... ok
+test self_correction::tests::format_rotation_prompt_truncates_long_errors ... ok
+test self_correction::tests::get_failures_returns_empty_for_unknown_tool ... ok
+test self_correction::tests::get_failures_returns_recorded_errors ... ok
+test self_correction::tests::new_tracker_has_no_failures ... ok
+test self_correction::tests::record_failure_increments_count ... ok
+test self_correction::tests::record_success_resets_count ... ok
+test startup::tests::check_startup_health_fails_for_slow_subsystem ... ok
+test startup::tests::check_startup_health_fails_for_excessive_total ... ok
+test startup::tests::check_startup_health_passes_for_normal_timings ... ok
+test startup::tests::default_metrics_equal_new ... ok
+test startup::tests::display_format_is_readable ... ok
+test startup::tests::has_slow_subsystem_detects_threshold ... ok
+test startup::tests::log_startup_metrics_does_not_panic ... ok
+test startup::tests::lazy_resource_initializes_once ... ok
+test startup::tests::lazy_resource_retries_on_failure ... ok
+test startup::tests::metrics_clone_is_independent ... ok
+test startup::tests::new_metrics_are_zeroed ... ok
+test startup::tests::slowest_subsystem_identifies_bottleneck ... ok
+test startup::tests::slowest_subsystem_when_all_zero ... ok
+test streaming::tests::buffer_flush_all ... ok
+test streaming::tests::buffer_flush_all_empty ... ok
+test recovery::tests::recovery_manager_is_recovered ... ok
+test streaming::tests::buffer_from_config ... ok
+test recovery::tests::apply_abandonments_updates_status ... ok
+test streaming::tests::buffer_new_is_empty ... ok
+test streaming::tests::buffer_push_accumulates ... ok
+test recovery::tests::apply_abandonments_skips_non_abandoned ... ok
+test recovery::tests::recovery_manager_new_tasks_after_recovery ... ok
+test recovery::tests::recovery_manager_idempotent ... ok
+test recovery::tests::full_recovery_flow ... ok
+test streaming::tests::buffer_flush_all_preserves_stats ... ok
+test streaming::tests::buffer_try_flush_respects_interval ... ok
+test streaming::tests::buffer_try_flush_at_word_boundary ... ok
+test streaming::tests::buffer_try_flush_after_interval ... ok
+test streaming::tests::buffer_try_flush_at_punctuation ... ok
+test streaming::tests::config_defaults_are_sensible ... ok
+test streaming::tests::config_serde_roundtrip ... ok
+test streaming::tests::config_validate_boundary_values ... ok
+test streaming::tests::config_validate_ok ... ok
+test streaming::tests::config_toml_roundtrip ... ok
+test streaming::tests::config_validate_too_fast ... ok
+test streaming::tests::buffer_try_flush_at_newline ... ok
+test streaming::tests::config_validate_too_slow ... ok
+test streaming::tests::find_boundary_comma ... ok
+test streaming::tests::find_boundary_empty ... ok
+test streaming::tests::find_boundary_newline ... ok
+test streaming::tests::find_boundary_none ... ok
+test streaming::tests::find_boundary_period ... ok
+test streaming::tests::find_boundary_space ... ok
+test streaming::tests::find_boundary_trailing_space ... ok
+test streaming::tests::find_boundary_unicode ... ok
+test streaming::tests::format_tool_complete_failure ... ok
+test streaming::tests::format_tool_complete_success ... ok
+test streaming::tests::format_tool_start_known_tools ... ok
+test streaming::tests::format_tool_start_unknown_tool ... ok
+test streaming::tests::notifier_channel_error_is_swallowed ... ok
+test streaming::tests::notifier_disabled_constructor ... ok
+test streaming::tests::notifier_disabled_sends_nothing ... ok
+test streaming::tests::notifier_sends_status ... ok
+test streaming::tests::notifier_no_channel_is_noop ... ok
+test streaming::tests::notifier_sends_tool_complete_failure ... ok
+test streaming::tests::notifier_sends_tool_complete_success ... ok
+test streaming::tests::notifier_sends_tool_start ... ok
+test streaming::tests::notifier_tool_updates_disabled ... ok
+test streaming::tests::notifier_uses_correct_chat_id ... ok
+test streaming::tests::buffer_try_flush_empty_returns_none ... ok
+test task_decomposition::tests::create_linear_chain_empty ... ok
+test task_decomposition::tests::create_linear_chain_basic ... ok
+test task_decomposition::tests::create_linear_chain_single ... ok
+test task_decomposition::tests::decompose_prompt_contains_goal ... ok
+test task_decomposition::tests::get_nonexistent_task ... ok
+test task_decomposition::tests::end_to_end_failure_blocks_dependents ... ok
+test task_decomposition::tests::graph_creation_empty ... ok
+test task_decomposition::tests::end_to_end_parse_and_execute ... ok
+test task_decomposition::tests::graph_creation_linear ... ok
+test task_decomposition::tests::graph_rejects_indirect_cycle ... ok
+test task_decomposition::tests::graph_rejects_cycle ... ok
+test task_decomposition::tests::graph_rejects_missing_dependency ... ok
+test task_decomposition::tests::graph_rejects_self_cycle ... ok
+test task_decomposition::tests::graph_with_diamond_deps ... ok
+test task_decomposition::tests::is_complete_all_done ... ok
+test task_decomposition::tests::is_failed_any_failed ... ok
+test task_decomposition::tests::mark_completed_valid ... ok
+test task_decomposition::tests::mark_failed_valid ... ok
+test task_decomposition::tests::mark_nonexistent_returns_error ... ok
+test task_decomposition::tests::mark_running_valid ... ok
+test task_decomposition::tests::parse_fallback_on_empty ... ok
+test task_decomposition::tests::parse_fallback_on_garbage ... ok
+test task_decomposition::tests::parse_ignores_blank_lines ... ok
+test task_decomposition::tests::parse_simple_numbered_list ... ok
+test task_decomposition::tests::parse_with_depends_on_syntax ... ok
+test task_decomposition::tests::parse_with_multiple_deps ... ok
+test task_decomposition::tests::parse_with_and_syntax ... ok
+test task_decomposition::tests::parse_with_paren_numbering ... ok
+test task_decomposition::tests::progress_summary_all_complete ... ok
+test task_decomposition::tests::progress_summary_initial ... ok
+test task_decomposition::tests::progress_summary_partial ... ok
+test task_decomposition::tests::progress_summary_with_failure ... ok
+test task_decomposition::tests::ready_tasks_after_first_complete ... ok
+test task_decomposition::tests::ready_tasks_initial_state ... ok
+test task_decomposition::tests::ready_tasks_no_deps_all_ready ... ok
+test task_decomposition::tests::ready_tasks_running_not_included ... ok
+test task_decomposition::tests::subtask_new_defaults ... ok
+test task_decomposition::tests::subtask_serde_roundtrip ... ok
+test task_decomposition::tests::subtask_status_display ... ok
+test task_decomposition::tests::subtask_with_dependency ... ok
+test task_decomposition::tests::subtask_with_multiple_dependencies ... ok
+test task_decomposition::tests::to_prompt_complete_graph ... ok
+test task_decomposition::tests::to_prompt_failed_graph ... ok
+test task_decomposition::tests::task_graph_serde_roundtrip ... ok
+test task_decomposition::tests::to_prompt_shows_structure ... ok
+test task_decomposition::tests::to_prompt_truncates_long_results ... ok
+test task_decomposition::tests::topological_order_all_independent ... ok
+test task_decomposition::tests::topological_order_diamond ... ok
+test task_decomposition::tests::topological_order_linear ... ok
+test streaming::tests::buffer_try_flush_single_long_token ... ok
+test task_queue::tests::checkpoint_saves_data ... ok
+test task_queue::tests::create_and_list_task ... ok
+test task_queue::tests::failed_task_not_in_incomplete ... ok
+test streaming::tests::buffer_multiple_flushes ... ok
+test task_queue::tests::status_roundtrip ... ok
+test watchdog::tests::channel_health_reporting ... ok
+test watchdog::tests::consecutive_failures_trigger_shutdown ... ok
+test task_queue::tests::list_tasks_chat_filter ... ok
+test watchdog::tests::default_config_values ... ok
+test watchdog::tests::failures_reset_when_all_healthy ... ok
+test watchdog::tests::memory_health_reporting ... ok
+test watchdog::tests::new_watchdog_is_healthy ... ok
+test watchdog::tests::provider_health_reporting ... ok
+test streaming::tests::buffer_try_flush_very_long_single_token ... ok
+test watchdog::tests::reset_failures_works ... ok
+test watchdog::tests::unhealthy_without_detail_uses_default_message ... ok
+test task_queue::tests::list_tasks_no_filter ... ok
+test task_queue::tests::update_status ... ok
+test task_queue::tests::multiple_checkpoints_overwrite ... ok
+test task_queue::tests::load_incomplete_filters_correctly ... ok
+test watchdog::tests::record_activity_updates_timestamp ... ok
+test circuit_breaker::tests::test_half_open_failure_reopens_with_doubled_timeout ... ok
+test executor::tests::parallel_independent_file_reads_run_concurrently ... ok
+test startup::tests::measure_async_captures_elapsed_time ... ok
+test startup::tests::measure_captures_elapsed_time ... ok
+test watchdog::tests::health_report_includes_correct_uptime ... ok
+test executor::tests::parallel_max_concurrency_respected ... ok
+
+test result: ok. 672 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+
+     Running tests/runtime_integration.rs (target/debug/deps/runtime_integration-e080e22dde1a66dc)
+
+running 13 tests
+test runtime_accessor_methods ... ok
+test runtime_with_no_text_in_inbound_msg ... ok
+test session_history_grows_after_processing ... ok
+test none_status_and_cancel_is_backward_compatible ... ok
+test cancel_token_does_not_affect_normal_flow ... ok
+test simple_text_response ... ok
+test status_watch_final_state_is_done ... ok
+test status_watch_channel_receives_phase_transitions ... ok
+test provider_called_exactly_once_for_simple_text ... ok
+test runtime_with_memory_entries ... ok
+test status_watch_tracks_token_counts ... ok
+test watch_channel_with_multiple_messages ... ok
+test multiple_messages_in_sequence ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/lib.rs (target/debug/deps/electro_automation-42b71997cccdf54a)
+
+running 19 tests
+test duration::tests::parse_days ... ok
+test duration::tests::parse_seconds ... ok
+test duration::tests::parse_hours ... ok
+test duration::tests::parse_minutes ... ok
+test duration::tests::parse_errors ... ok
+test heartbeat::tests::health_status_display ... ok
+test heartbeat::tests::active_hours_always_true_for_bad_format ... ok
+test heartbeat::tests::parse_active_hours_invalid ... ok
+test heartbeat::tests::parse_active_hours_overnight ... ok
+test heartbeat::tests::parse_active_hours_normal ... ok
+test heartbeat::tests::heartbeat_metrics_default ... ok
+test heartbeat::tests::heartbeat_metrics_summary ... ok
+test heartbeat::tests::heartbeat_with_unhealthy_check ... ok
+test heartbeat::tests::heartbeat_tracks_metrics ... ok
+test heartbeat::tests::heartbeat_sends_when_checklist_exists ... ok
+test heartbeat::tests::heartbeat_with_healthy_check ... ok
+test heartbeat::tests::heartbeat_with_degraded_check ... ok
+test heartbeat::tests::heartbeat_ok_suppression ... ok
+test heartbeat::tests::heartbeat_skips_when_no_checklist ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.50s
+
+     Running unittests src/lib.rs (target/debug/deps/electro_channels-c129647b09f35695)
+
+running 26 tests
+test file_transfer::tests::mime_detection_all_extensions ... ok
+test file_transfer::tests::mime_detection_known_extensions ... ok
+test file_transfer::tests::mime_detection_unknown_extension ... ok
+test telegram::tests::create_telegram_channel_requires_token ... ok
+test telegram::tests::telegram_allowlist_matches_user_ids ... ok
+test telegram::tests::create_telegram_channel_with_token ... ok
+test telegram::tests::telegram_channel_implements_channel_trait ... ok
+test telegram::tests::telegram_channel_name ... ok
+test telegram::tests::telegram_file_transfer_available ... ok
+test telegram::tests::telegram_empty_allowlist_denies_all ... ok
+test telegram::tests::telegram_delete_message_requires_bot_started ... ok
+test telegram::tests::telegram_take_receiver ... ok
+test telegram::tests::telegram_max_file_size ... ok
+test file_transfer::tests::read_file_for_sending_nonexistent_fails ... ok
+test tests::cli_channel_implements_channel_trait ... ok
+test tests::create_cli_channel ... ok
+test file_transfer::tests::read_file_for_sending_zero_byte ... ok
+test tests::cli_delete_message_is_noop ... ok
+test tests::create_unknown_channel_fails ... ok
+test file_transfer::tests::save_file_strips_backslash_traversal ... ok
+test file_transfer::tests::save_zero_byte_file ... ok
+test file_transfer::tests::read_file_for_sending_roundtrip ... ok
+test file_transfer::tests::save_received_file_sanitizes_path_traversal ... ok
+test file_transfer::tests::save_file_with_unicode_name ... ok
+test file_transfer::tests::save_duplicate_file_overwrites ... ok
+test file_transfer::tests::save_received_file_creates_workspace_dir ... ok
+
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/lib.rs (target/debug/deps/electro_codex_oauth-ad138821bb1e43fd)
+
+running 21 tests
+test callback_server::tests::success_page_contains_message ... ok
+test callback_server::tests::error_page_contains_error ... ok
+test callback_server::tests::find_port_succeeds ... ok
+test pkce::tests::state_is_unique ... ok
+test pkce::tests::pkce_challenge_is_sha256_of_verifier ... ok
+test pkce::tests::pkce_verifier_length ... ok
+test pkce::tests::state_is_base64url ... ok
+test pkce::tests::pkce_challenge_differs_from_verifier ... ok
+test tests::auth_url_contains_required_params ... ok
+test responses_provider::tests::parse_simple_sse_data ... ok
+test responses_provider::tests::parse_tool_call_sse_data ... ok
+test tests::urlencoding_encodes_spaces_and_colons ... ok
+test tests::decode_invalid_jwt_returns_unknown ... ok
+test token_store::tests::default_path_ends_with_oauth_json ... ok
+test tests::decode_id_token_extracts_email ... ok
+test token_store::tests::token_serialization_roundtrip ... ok
+test responses_provider::tests::convert_tool_result_message ... ok
+test responses_provider::tests::build_request_extracts_system ... ok
+test token_store::tests::token_store_expiry_check ... ok
+test token_store::tests::token_store_not_expired ... ok
+test responses_provider::tests::build_request_converts_tools ... ok
+
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/electro_core-f26951a8534d7285)
+
+running 150 tests
+test config::credentials::tests::placeholder_keys_rejected ... ok
+test config::credentials::tests::detect_openai_key ... ok
+test config::credentials::tests::detect_gemini_key ... ok
+test config::credentials::tests::detect_anthropic_key ... ok
+test config::credentials::tests::detect_grok_key ... ok
+test config::credentials::tests::detect_openrouter_key ... ok
+test config::credentials::tests::normalize_known_providers ... ok
+test config::credentials::tests::detect_explicit_provider_key ... ok
+test config::credentials::tests::real_keys_accepted ... ok
+test config::credentials::tests::reject_placeholder_in_detect ... ok
+test config::credentials::tests::detect_proxy_config ... ok
+test config::credentials::tests::detect_proxy_kv_format ... ok
+test config::loader::tests::test_config_parsing_performance ... ignored
+test config::loader::tests::test_default_agent_config_path ... ok
+test config::loader::tests::test_default_config_no_file ... ok
+test config::loader::tests::test_empty_config_file_returns_defaults ... ok
+test config::env::tests::test_empty_input ... ok
+test config::env::tests::test_dollar_without_braces_not_expanded ... ok
+test config::env::tests::test_expand_env_vars ... ok
+test config::env::tests::test_multiple_vars_in_one_string ... ok
+test config::env::tests::test_nested_braces_not_recursive ... ok
+test config::env::tests::test_missing_env_var_expands_to_empty ... ok
+test config::loader::tests::test_load_agent_config_none_when_missing ... ok
+test config::loader::tests::test_config_partial_overrides_keep_defaults ... ok
+test config::loader::tests::test_config_observability ... ok
+test config::loader::tests::test_env_var_expansion_missing_var ... ok
+test config::loader::tests::test_env_var_expansion_in_config ... ok
+test config::loader::tests::test_load_agent_config_rejects_invalid ... ok
+test config::loader::tests::test_load_config_with_no_agent_overlay ... ok
+test config::loader::tests::test_config_with_tunnel ... ok
+test config::loader::tests::test_config_with_security_settings ... ok
+test config::loader::tests::test_load_config_with_agent_overlay ... ok
+test config::loader::tests::test_missing_config_file ... ok
+test config::loader::tests::test_load_agent_config_valid ... ok
+test config::loader::tests::test_invalid_config_file ... ok
+test config::loader::tests::test_config_with_channels ... ok
+test orchestrator_impl::tests::test_backend_name_docker ... ok
+test orchestrator_impl::tests::test_backend_name_kubernetes ... ok
+test orchestrator_impl::tests::test_accessors ... ok
+test orchestrator_impl::tests::test_destroy_frees_capacity ... ok
+test orchestrator_impl::tests::test_destroy_propagates_stop_error ... ok
+test orchestrator_impl::tests::test_destroy_removes_instance ... ok
+test orchestrator_impl::tests::test_env_mapping ... ok
+test orchestrator_impl::tests::test_factory_unknown_backend ... ok
+test orchestrator_impl::tests::test_factory_docker_defaults ... ok
+test orchestrator_impl::tests::test_factory_kubernetes ... ok
+test orchestrator_impl::tests::test_health_exited ... ok
+test orchestrator_impl::tests::test_factory_docker ... ok
+test orchestrator_impl::tests::test_health_running ... ok
+test orchestrator_impl::tests::test_health_updates_tracked_status ... ok
+test config::loader::tests::test_load_toml_config ... ok
+test orchestrator_impl::tests::test_kubernetes_stub_errors ... ok
+test orchestrator_impl::tests::test_no_privilege_escalation ... ok
+test orchestrator_impl::tests::test_max_instances_limit ... ok
+test orchestrator_impl::tests::test_provision_propagates_create_error ... ok
+test config::loader::tests::test_load_yaml_config ... ok
+test orchestrator_impl::tests::test_provision_creates_instance ... ok
+test orchestrator_impl::tests::test_provision_unique_ids ... ok
+test orchestrator_impl::tests::test_resource_mapping ... ok
+test orchestrator_impl::tests::test_scale_same_count_noop ... ok
+test orchestrator_impl::tests::test_scale_zero_replicas_rejected ... ok
+test tenant_impl::tests::factory_creates_manager_with_defaults ... ok
+test tenant_impl::tests::factory_with_tenant_isolation_enabled ... ok
+test path_policy::tests::test_resolve_safe_path_absolute_outside ... ok
+test tenant_impl::tests::memory_db_path_format ... ok
+test tenant_impl::tests::rate_limit_blocks_at_limit ... ok
+test tenant_impl::tests::current_call_count_tracks_calls ... ok
+test path_policy::tests::test_resolve_safe_path_basic ... ok
+test path_policy::tests::test_resolve_safe_path_escape ... ok
+test tenant_impl::tests::resolve_tenant_exact_match ... ok
+test tenant_impl::tests::rate_limit_allows_under_limit ... ok
+test tenant_impl::tests::rate_limit_independent_per_tenant ... ok
+test tenant_impl::tests::resolve_tenant_falls_back_to_default ... ok
+test types::config::tests::agent_config_apply_to_master ... ok
+test tenant_impl::tests::tenant_config_serde_roundtrip ... ok
+test types::config::tests::agent_config_extract_from_master ... ok
+test tenant_impl::tests::resolve_tenant_multiple_channels_same_tenant ... ok
+test tenant_impl::tests::rate_limit_default_tenant_unlimited ... ok
+test types::config::tests::agent_config_roundtrip_preserves_system_fields ... ok
+test types::config::tests::agent_config_validate_bad_log_level ... ok
+test types::config::tests::agent_config_validate_low_context_tokens ... ok
+test types::config::tests::agent_config_validate_low_task_duration ... ok
+test tenant_impl::tests::ensure_workspace_creates_directories ... ok
+test types::config::tests::agent_config_serde_roundtrip ... ok
+test types::config::tests::agent_config_validate_negative_weights ... ok
+test types::config::tests::agent_config_validate_ok ... ok
+test tenant_impl::tests::ensure_workspace_idempotent ... ok
+test types::config::tests::agent_config_validate_zero_turns ... ok
+test types::config::tests::browser_timeout_secs_default_is_zero_persistent ... ok
+test types::config::tests::browser_timeout_secs_default_in_full_config ... ok
+test types::config::tests::agent_config_save_rejects_invalid ... ok
+test types::config::tests::agent_config_validate_zero_weights ... ok
+test tenant_impl::tests::workspace_path_format ... ok
+test tenant_impl::tests::vault_path_format ... ok
+test tenant_impl::tests::workspace_paths_are_isolated ... ok
+test tenant_impl::tests::resolve_tenant_second_tenant ... ok
+test types::config::tests::browser_timeout_secs_deserialize_custom ... ok
+test types::config::tests::browser_timeout_secs_deserialize_default ... ok
+test tenant_impl::tests::resolve_tenant_wrong_channel_falls_back ... ok
+test types::config::tests::browser_timeout_secs_in_full_config ... ok
+test types::config::tests::defaults_are_sensible ... ok
+test types::config::tests::browser_timeout_secs_serialize_roundtrip ... ok
+test types::error::tests::classify_command_not_found ... ok
+test types::error::tests::classify_connection_refused ... ok
+test types::error::tests::classify_disk_full ... ok
+test path_policy::tests::test_resolve_safe_path_symlink_escape ... ok
+test types::error::tests::classify_generic_error ... ok
+test types::error::tests::classify_http_401 ... ok
+test types::error::tests::classify_http_404 ... ok
+test types::error::tests::classify_http_429 ... ok
+test types::error::tests::classify_http_500 ... ok
+test types::error::tests::classify_permission_denied ... ok
+test types::error::tests::classify_timeout ... ok
+test types::error::tests::extract_first_error_line_basic ... ok
+test types::error::tests::extract_first_error_line_fallback ... ok
+test types::error::tests::extract_http_status_from_response ... ok
+test types::error::tests::long_error_truncated ... ok
+test types::error::tests::recovery_action_for_impossible ... ok
+test types::error::tests::recovery_action_for_needs_human ... ok
+test types::error::tests::recovery_action_for_retry_direct ... ok
+test types::error::tests::unicode_safe_error_extraction ... ok
+test types::error::tests::verify_failure_compact_string ... ok
+test types::message::tests::format_number_with_commas ... ok
+test types::config::tests::agent_config_save_and_reload ... ok
+test types::message::tests::serde_content_part_image ... ok
+test types::message::tests::serde_content_part_text ... ok
+test types::message::tests::serde_content_part_tool_use ... ok
+test types::message::tests::serde_role_lowercase ... ok
+test types::message::tests::turn_usage_combined_tokens ... ok
+test types::message::tests::serde_roundtrip_completion_request ... ok
+test types::message::tests::serde_roundtrip_inbound_message ... ok
+test types::message::tests::turn_usage_default ... ok
+test types::message::tests::turn_usage_format_summary ... ok
+test types::model_registry::tests::hunter_alpha_model ... ok
+test types::model_registry::tests::known_anthropic_models ... ok
+test types::model_registry::tests::known_gemini_models ... ok
+test types::model_registry::tests::known_grok_models ... ok
+test types::model_registry::tests::known_openai_models ... ok
+test types::model_registry::tests::known_proxy_models ... ok
+test types::config::tests::config_serde_roundtrip ... ok
+test types::model_registry::tests::minimax_model ... ok
+test types::model_registry::tests::provider_prefix_stripping ... ok
+test types::model_registry::tests::unknown_model_gets_defaults ... ok
+test types::model_registry::tests::zai_models ... ok
+test types::optimization::tests::complex_profile_highest_limits ... ok
+test types::optimization::tests::output_caps_scale_with_complexity ... ok
+test types::optimization::tests::prompt_tier_serde_roundtrip ... ok
+test types::optimization::tests::simple_profile_uses_rule_based_verify ... ok
+test types::optimization::tests::standard_profile_uses_llm_verify_and_learn ... ok
+test types::optimization::tests::trivial_profile_skips_tool_loop ... ok
+
+test result: ok. 149 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running unittests src/lib.rs (target/debug/deps/electro_filestore-359aa054ccac0097)
+
+running 24 tests
+test local::tests::test_empty_path_rejected ... ok
+test local::tests::test_backend_name ... ok
+test local::tests::test_get_nonexistent ... ok
+test local::tests::test_delete_nonexistent_is_ok ... ok
+test local::tests::test_list_nonexistent_prefix ... ok
+test local::tests::test_list_empty ... ok
+test local::tests::test_creates_base_dir_if_missing ... ok
+test local::tests::test_delete ... ok
+test local::tests::test_presigned_url_returns_none ... ok
+test local::tests::test_store_and_get ... ok
+test local::tests::test_overwrite_existing_file ... ok
+test local::tests::test_store_empty_file ... ok
+test local::tests::test_store_large_content ... ok
+test tests::test_create_s3_without_feature ... ok
+test tests::test_create_unknown_backend ... ok
+test local::tests::test_path_traversal_rejected ... ok
+test tests::test_create_local_filestore_default_path ... ok
+test tests::test_create_local_filestore ... ok
+test local::tests::test_store_stream_empty ... ok
+test local::tests::test_store_stream ... ok
+test local::tests::test_store_nested_path ... ok
+test local::tests::test_full_crud_cycle ... ok
+test local::tests::test_list_files ... ok
+test local::tests::test_list_with_prefix ... ok
+
+test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/lib.rs (target/debug/deps/electro_gateway-1590aa2a2fdec3df)
+
+running 54 tests
+test dashboard::tests::html_escape_prevents_xss ... ok
+test health::tests::health_response_serializes_correctly ... ok
+test health::tests::status_response_serializes_correctly ... ok
+test dashboard::tests::health_response_serializes_correctly ... ok
+test health::tests::health_handler_returns_ok ... ok
+test dashboard::tests::dashboard_page_is_under_50kb ... ok
+test dashboard::tests::dashboard_page_returns_200_with_html ... ok
+test dashboard::tests::dashboard_health_returns_valid_json ... ok
+test dashboard::tests::dashboard_config_shows_correct_agent_limits ... ok
+test dashboard::tests::dashboard_tasks_returns_valid_json ... ok
+test dashboard::tests::dashboard_config_returns_valid_json_without_secrets ... ok
+test identity::tests::is_token_expired_false_for_future_expiry ... ok
+test identity::tests::is_token_expired_false_when_no_expiry ... ok
+test identity::tests::has_permission_errors_for_unknown_user ... ok
+test identity::tests::authenticate_wrong_channel_returns_denied ... ok
+test identity::tests::authenticate_unregistered_user_returns_needs_setup ... ok
+test identity::tests::is_token_expired_true_for_past_expiry ... ok
+test identity::tests::authenticate_registered_user_returns_allowed ... ok
+test identity::tests::has_permission_returns_false_for_missing_perm ... ok
+test identity::tests::has_permission_returns_true_for_default_perms ... ok
+test identity::tests::complete_flow_with_expired_state_fails ... ok
+test identity::tests::complete_flow_with_invalid_state_fails ... ok
+test identity::tests::pkce_verifier_has_correct_length ... ok
+test identity::tests::pkce_challenge_is_deterministic_for_same_verifier ... ok
+test identity::tests::refresh_token_fails_for_unknown_user ... ok
+test identity::tests::pkce_challenge_differs_from_verifier ... ok
+test identity::tests::refresh_token_fails_when_no_token_stored ... ok
+test identity::tests::refresh_token_fails_when_no_refresh_token ... ok
+test identity::tests::register_duplicate_user_fails ... ok
+test identity::tests::register_user_creates_record_with_defaults ... ok
+test identity::tests::multiple_providers_generate_distinct_urls ... ok
+test identity::tests::user_record_serializes_to_json ... ok
+test identity::tests::start_oauth_flow_unknown_provider_fails ... ok
+test identity::tests::start_oauth_flow_returns_valid_url ... ok
+test session::tests::default_session_manager_empty ... ok
+test session::tests::create_session_returns_new_session ... ok
+test identity::tests::start_flow_creates_pending_state ... ok
+test session::tests::different_users_get_different_sessions ... ok
+test session::tests::get_existing_session_returns_same ... ok
+test session::tests::remove_nonexistent_session_is_noop ... ok
+test session::tests::session_key_is_deterministic ... ok
+test session::tests::session_count_tracks_active ... ok
+test session::tests::remove_session_decreases_count ... ok
+test session::tests::session_key_with_special_characters ... ok
+test session::tests::update_nonexistent_session_creates_it ... ok
+test setup_tokens::tests::test_chat_id_isolation ... ok
+test session::tests::update_session_preserves_changes ... ok
+test setup_tokens::tests::test_consume_nonexistent ... ok
+test session::tests::concurrent_session_creation ... ok
+test setup_tokens::tests::test_generate_and_consume ... ok
+test setup_tokens::tests::test_generate_returns_random_bytes ... ok
+test setup_tokens::tests::test_replace_existing ... ok
+test setup_tokens::tests::test_expired_token ... ok
+test setup_tokens::tests::test_cleanup_expired ... ok
+
+test result: ok. 54 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/health_integration.rs (target/debug/deps/health_integration-d3cc4ec8a34b9182)
+
+running 2 tests
+test nonexistent_route_returns_404 ... ok
+test health_endpoint_returns_200_json ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/electro_hive-28953f14e4381aaf)
+
+running 76 tests
+test config::tests::default_config_enabled ... ok
+test config::tests::serde_empty_toml ... ok
+test config::tests::serde_partial_toml ... ok
+test config::tests::serde_full_toml ... ok
+test dag::tests::cyclic_graph_rejected ... ok
+test dag::tests::dependent_counts_correct ... ok
+test dag::tests::empty_tasks ... ok
+test dag::tests::diamond_dag_critical_path ... ok
+test dag::tests::fully_parallel_speedup ... ok
+test dag::tests::self_reference_rejected ... ok
+test dag::tests::serial_chain_speedup ... ok
+test dag::tests::single_task_speedup ... ok
+test dag::tests::topological_sort_order ... ok
+test dag::tests::unknown_dependency_rejected ... ok
+test dag::tests::valid_dag ... ok
+test pheromone::tests::emit_and_read ... ok
+test pheromone::tests::different_types_independent ... ok
+test blackboard::tests::create_order_and_tasks ... ok
+test blackboard::tests::atomic_claim ... ok
+test blackboard::tests::tasks_without_deps_start_ready ... ok
+test blackboard::tests::fail_increments_retry ... ok
+test queen::tests::activation_threshold_high_speedup ... ok
+test queen::tests::activation_threshold_low_speedup ... ok
+test queen::tests::complex_order_decomposes ... ok
+test queen::tests::not_complex_no_decompose ... ok
+test queen::tests::parse_cyclic_dag_error ... ok
+test queen::tests::parse_malformed_json_error ... ok
+test queen::tests::parse_markdown_wrapped_json ... ok
+test queen::tests::parse_no_response ... ok
+test queen::tests::parse_valid_json ... ok
+test queen::tests::parse_yes_response ... ok
+test pheromone::tests::exponential_decay ... ok
+test queen::tests::web_decomposition_guide_excluded_without_browser ... ok
+test queen::tests::web_decomposition_guide_included_when_browser_available ... ok
+test queen::tests::web_decomposition_guide_with_empty_tools ... ok
+test selection::tests::score_decreases_with_difficulty ... ok
+test selection::tests::score_decreases_with_failure ... ok
+test selection::tests::score_increases_with_affinity ... ok
+test blackboard::tests::fail_escalates_after_max_retries ... ok
+test selection::tests::score_increases_with_reward ... ok
+test selection::tests::score_increases_with_urgency ... ok
+test selection::tests::tag_affinity_empty_is_floor ... ok
+test selection::tests::tag_affinity_exact_match ... ok
+test selection::tests::tag_affinity_no_overlap ... ok
+test selection::tests::tag_affinity_partial_match ... ok
+test tests::aggregate_complete_tasks ... ok
+test tests::aggregate_empty ... ok
+test tests::aggregate_with_escalation ... ok
+test blackboard::tests::complete_updates_order ... ok
+test pheromone::tests::gc_preserves_active ... ok
+test types::tests::browse_signal_decay_rates ... ok
+test types::tests::browse_signal_default_intensities ... ok
+test types::tests::decomposition_serde ... ok
+test types::tests::order_status_roundtrip ... ok
+test types::tests::pheromone_decay ... ok
+test types::tests::selection_exponents_default ... ok
+test types::tests::signal_type_roundtrip ... ok
+test types::tests::task_status_roundtrip ... ok
+test types::tests::terminal_states ... ok
+test types::tests::urgency_grows_and_caps ... ok
+test types::tests::worker_state_new ... ok
+test worker::tests::scoped_context_no_deps ... ok
+test worker::tests::scoped_context_with_deps ... ok
+test blackboard::tests::order_completion_detection ... ok
+test blackboard::tests::dependency_resolution ... ok
+test pheromone::tests::superposition ... ok
+test blackboard::tests::order_results_in_order ... ok
+test pheromone::tests::urgency_grows ... ok
+test selection::tests::select_single_task ... ok
+test blackboard::tests::get_dependency_results ... ok
+test pheromone::tests::gc_removes_expired ... ok
+test selection::tests::select_returns_none_for_empty ... ok
+test worker::tests::worker_completes_single_task ... ok
+test worker::tests::worker_handles_failure_and_retry ... ok
+test tests::parallel_workers_actually_parallel ... ok
+test tests::parallel_respects_dag_dependencies ... ok
+
+test result: ok. 76 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.65s
+
+     Running tests/context_degradation_bench.rs (target/debug/deps/context_degradation_bench-ab377206b1810efb)
+
+running 1 test
+test context_degradation_benchmark ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/live_ab_bench.rs (target/debug/deps/live_ab_bench-6ef6c385c205f892)
+
+running 2 tests
+test live_ab_benchmark ... ok
+test execution_time_benchmark ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/project_bench.rs (target/debug/deps/project_bench-b091941b1790ffdc)
+
+running 1 test
+test project_benchmark ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/project_bench_py.rs (target/debug/deps/project_bench_py-4415aed792fb5dc1)
+
+running 1 test
+test python_project_benchmark ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/project_bench_v2.rs (target/debug/deps/project_bench_v2-6ec4b6698a27980a)
+
+running 1 test
+test project_benchmark_v2 ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/electro_mcp-e64251c8b7fa7d3f)
+
+running 36 tests
+test client::tests::mcp_server_info_debug ... ok
+test client::tests::mcp_tool_result_error ... ok
+test bridge::tests::sanitize_dots_and_special_chars ... ok
+test bridge::tests::resolve_name_empty_existing ... ok
+test config::tests::default_config_is_empty ... ok
+test bridge::tests::resolve_name_no_collision ... ok
+test bridge::tests::resolve_name_with_collision ... ok
+test config::tests::empty_name_fails_validation ... ok
+test config::tests::http_without_url_fails ... ok
+test config::tests::http_config_validates ... ok
+test config::tests::name_with_spaces_fails_validation ... ok
+test client::tests::mcp_tool_info_debug ... ok
+test config::tests::stdio_config_validates ... ok
+test config::tests::stdio_without_command_fails ... ok
+test config::tests::unknown_transport_fails ... ok
+test jsonrpc::tests::parse_incoming_garbage ... ok
+test jsonrpc::tests::parse_incoming_notification ... ok
+test jsonrpc::tests::deserialize_success_response ... ok
+test jsonrpc::tests::parse_incoming_response ... ok
+test jsonrpc::tests::response_into_result_null ... ok
+test jsonrpc::tests::deserialize_error_response ... ok
+test jsonrpc::tests::response_into_result_ok ... ok
+test jsonrpc::tests::serialize_notification ... ok
+test jsonrpc::tests::serialize_request ... ok
+test jsonrpc::tests::serialize_request_without_params ... ok
+test config::tests::env_vars_roundtrip ... ok
+test mcp_manage::tests::parameters_schema_is_valid ... ok
+test config::tests::roundtrip_serialize_deserialize ... ok
+test mcp_manage::tests::mcp_manage_unknown_action ... ok
+test manager::tests::tools_changed_flag ... ok
+test mcp_manage::tests::mcp_manage_tool_name ... ok
+test manager::tests::remove_nonexistent_server ... ok
+test manager::tests::list_servers_empty ... ok
+test manager::tests::bridge_tools_empty_when_no_servers ... ok
+test manager::tests::new_manager_has_no_servers ... ok
+test mcp_manage::tests::mcp_manage_list_empty ... ok
+
+test result: ok. 36 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/lib.rs (target/debug/deps/electro_memory-0f65a4d9c87f33ea)
+
+running 66 tests
+test failover::tests::healthy_status_initially ... ok
+test failover::tests::backend_name_is_resilient ... ok
+test failover::tests::failure_counter_increments ... ok
+test failover::tests::failure_counter_resets_on_success ... ok
+test failover::tests::passthrough_delete ... ok
+test failover::tests::delete_removes_from_cache_even_on_failure ... ok
+test failover::tests::get_falls_back_to_cache ... ok
+test failover::tests::health_status_transitions ... ok
+test failover::tests::custom_failover_config ... ok
+test failover::tests::cache_sync_on_recovery ... ok
+test failover::tests::list_sessions_falls_back_to_cache ... ok
+test failover::tests::passthrough_search ... ok
+test failover::tests::passthrough_list_sessions ... ok
+test failover::tests::passthrough_session_history ... ok
+test failover::tests::passthrough_store_and_get ... ok
+test failover::tests::repair_fails_when_primary_still_down ... ok
+test failover::tests::recovery_after_repair ... ok
+test failover::tests::search_falls_back_to_cache ... ok
+test failover::tests::store_falls_back_to_cache_on_primary_failure ... ok
+test markdown::tests::entry_to_markdown_format ... ok
+test failover::tests::session_history_falls_back_to_cache ... ok
+test failover::tests::concurrent_operations_during_failover ... ok
+test markdown::tests::parse_entries_roundtrip ... ok
+test search::tests::test_empty_query_returns_all ... ok
+test search::tests::test_case_insensitive_search ... ok
+test search::tests::test_keyword_weight_zero_returns_empty ... ok
+test search::tests::test_search_1000_entries_performance ... ignored
+test search::tests::test_no_entries_returns_empty ... ok
+test search::tests::test_query_with_no_matches ... ok
+test search::tests::test_search_ranks_relevant_first ... ok
+test search::tests::test_search_with_high_keyword_weight ... ok
+test sqlite::tests::backend_name ... ok
+test search::tests::test_special_characters_in_query ... ok
+test search::tests::test_single_char_query_treated_as_empty ... ok
+test sqlite::tests::entry_type_roundtrip ... ok
+test markdown::tests::store_long_term_in_memory_file ... ok
+test markdown::tests::store_and_get_conversation ... ok
+test markdown::tests::list_sessions_from_markdown ... ok
+test markdown::tests::delete_entry_from_markdown ... ok
+test sqlite::tests::delete_nonexistent_does_not_error ... ok
+test sqlite::tests::get_nonexistent_returns_none ... ok
+test sqlite::tests::delete_entry ... ok
+test sqlite::tests::empty_database_search_returns_empty ... ok
+test sqlite::tests::large_content_entry ... ok
+test sqlite::tests::list_sessions ... ok
+test sqlite::tests::empty_database_list_sessions_returns_empty ... ok
+test sqlite::tests::search_by_keyword ... ok
+test sqlite::tests::unknown_entry_type_fails ... ok
+test sqlite::tests::search_special_characters ... ok
+test sqlite::tests::search_empty_query_matches_all ... ok
+test sqlite::tests::search_limit_respected ... ok
+test sqlite::tests::concurrent_stores_with_retry ... ok
+test sqlite_usage::tests::chat_isolation ... ok
+test sqlite_usage::tests::display_default_enabled ... ok
+test sqlite_usage::tests::display_toggle ... ok
+test sqlite::tests::search_with_entry_type_filter ... ok
+test sqlite::tests::session_history_empty_session ... ok
+test sqlite_usage::tests::summary_empty ... ok
+test sqlite_usage::tests::query_with_limit ... ok
+test sqlite_usage::tests::record_and_query ... ok
+test sqlite::tests::store_and_get ... ok
+test sqlite::tests::unicode_content_round_trip ... ok
+test sqlite::tests::store_replaces_existing ... ok
+test sqlite::tests::search_with_session_filter ... ok
+test sqlite_usage::tests::summary_aggregation ... ok
+test sqlite::tests::session_history_ordered_and_limited ... ok
+
+test result: ok. 65 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/memory_integration.rs (target/debug/deps/memory_integration-a6bb6e65ee629119)
+
+running 7 tests
+test create_unknown_backend_fails ... ok
+test create_markdown_backend ... ok
+test markdown_full_lifecycle ... ok
+test create_sqlite_backend ... ok
+test sqlite_mixed_entry_types ... ok
+test sqlite_search_with_unicode ... ok
+test sqlite_full_lifecycle ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/lib.rs (target/debug/deps/electro_observable-88f945cd76be035c)
+
+running 24 tests
+test metrics::tests::qualified_name_no_labels ... ok
+test metrics::tests::health_status_is_healthy ... ok
+test metrics::tests::histogram_percentile_p50 ... ok
+test metrics::tests::observe_histogram_records_values ... ok
+test metrics::tests::gauge_with_labels ... ok
+test metrics::tests::increment_counter_with_labels ... ok
+test metrics::tests::histogram_percentile_empty_returns_none ... ok
+test metrics::tests::counter_missing_returns_none ... ok
+test metrics::tests::increment_counter_creates_and_increments ... ok
+test metrics::tests::qualified_name_with_labels ... ok
+test otel::tests::empty_endpoint_rejected ... ok
+test metrics::tests::histogram_percentile_p99 ... ok
+test metrics::tests::record_metric_overwrites_gauge ... ok
+test otel::tests::endpoint_accessor ... ok
+test metrics::tests::record_metric_sets_gauge ... ok
+test metrics::tests::concurrent_histogram_observations ... ok
+test tests::factory_default_config_returns_metrics_collector ... ok
+test tests::factory_otel_enabled_with_endpoint ... ok
+test otel::tests::otel_delegates_to_inner_collector ... ok
+test otel::tests::otel_health_includes_exporter_component ... ok
+test tests::factory_otel_enabled_without_endpoint_falls_back ... ok
+test tests::predefined_metric_names ... ok
+test tests::factory_produced_observable_is_functional ... ok
+test metrics::tests::concurrent_counter_increments ... ok
+
+test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/electro_providers-69e513770c1e4728)
+
+running 45 tests
+test anthropic::tests::convert_message_filters_system ... ok
+test anthropic::tests::convert_message_tool_role_becomes_user ... ok
+test anthropic::tests::convert_message_user_text ... ok
+test anthropic::tests::convert_tool_definition ... ok
+test anthropic::tests::convert_message_with_image ... ok
+test anthropic::tests::sse_error_event ... ok
+test openai_compat::tests::convert_tool_result_message ... ok
+test anthropic::tests::sse_text_delta_event ... ok
+test anthropic::tests::sse_message_delta_stop ... ok
+test openai_compat::tests::convert_assistant_with_tool_calls ... ok
+test anthropic::tests::sse_ping_event_skipped ... ok
+test openai_compat::tests::convert_user_message ... ok
+test openai_compat::tests::flush_tool_calls_emits_first ... ok
+test openai_compat::tests::convert_user_message_with_image ... ok
+test openai_compat::tests::flush_tool_calls_empty ... ok
+test anthropic::tests::build_request_body_with_tools ... ok
+test openai_compat::tests::provider_name ... ok
+test anthropic::tests::anthropic_with_base_url ... ok
+test anthropic::tests::build_request_body_with_stream ... ok
+test anthropic::tests::build_request_body_basic ... ok
+test openai_compat::tests::response_with_present_id_field ... ok
+test openai_compat::tests::build_request_body_basic ... ok
+test anthropic::tests::anthropic_provider_name ... ok
+test openai_compat::tests::build_request_body_with_tools ... ok
+test openai_compat::tests::response_with_null_id_field ... ok
+test openai_compat::tests::response_with_missing_id_field ... ok
+test openai_compat::tests::sse_done_signal ... ok
+test openai_compat::tests::sse_comment_lines_ignored ... ok
+test openai_compat::tests::sse_midstream_error_finish_reason ... ok
+test openai_compat::tests::sse_midstream_error_without_content ... ok
+test openai_compat::tests::sse_multiple_comment_lines_ignored ... ok
+test openai_compat::tests::sse_text_delta ... ok
+test openai_compat::tests::with_base_url_strips_trailing_slash ... ok
+test openai_compat::tests::with_extra_headers ... ok
+test tests::create_anthropic_provider ... ok
+test tests::create_default_provider_without_name ... ok
+test tests::create_grok_provider ... ok
+test tests::create_minimax_provider ... ok
+test tests::create_ollama_provider ... ok
+test tests::create_openai_provider ... ok
+test tests::create_provider_without_api_key_fails ... ok
+test tests::create_openrouter_provider ... ok
+test tests::create_xai_provider ... ok
+test tests::create_zai_provider ... ok
+test tests::create_zhipu_provider ... ok
+
+test result: ok. 45 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/lib.rs (target/debug/deps/electro_skills-73067c401626c53f)
+
+running 24 tests
+test tests::test_format_skill_context_empty ... ok
+test tests::test_get_skill_not_found ... ok
+test tests::test_load_skills_empty_directory ... ok
+test tests::test_load_skills_no_directory ... ok
+test tests::test_find_relevant_skills_no_match ... ok
+test tests::test_format_skill_context_single ... ok
+test tests::test_find_relevant_skills_partial_capability_match ... ok
+test tests::test_load_skills_from_workspace_dir ... ok
+test tests::test_parse_skill_content_empty_body ... ok
+test tests::test_parse_skill_content_full ... ok
+test tests::test_find_relevant_skills_case_insensitive ... ok
+test tests::test_format_skill_context_multiple ... ok
+test tests::test_parse_skill_content_no_opening_delimiter ... ok
+test tests::test_parse_skill_content_missing_name ... ok
+test tests::test_load_skills_clears_previous ... ok
+test tests::test_parse_skill_content_whitespace_before_frontmatter ... ok
+test tests::test_get_skill_found ... ok
+test tests::test_load_skills_ignores_non_md_files ... ok
+test tests::test_find_relevant_skills_matches ... ok
+test tests::test_load_skills_skips_unclosed_frontmatter ... ok
+test tests::test_load_skills_skips_no_frontmatter ... ok
+test tests::test_load_skills_skips_malformed_frontmatter ... ok
+test tests::test_skill_source_path_preserved ... ok
+test tests::test_multiple_skills_loaded_from_single_dir ... ok
+
+test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/lib.rs (target/debug/deps/electro_test_utils-db4d59a420839008)
+
+running 6 tests
+test tests::test_make_inbound_msg ... ok
+test tests::test_make_test_entry ... ok
+test tests::test_config_builder ... ok
+test tests::test_mock_memory ... ok
+test tests::test_mock_provider ... ok
+test tests::test_mock_channel ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/electro_tools-c33b787a041fe599)
+
+running 272 tests
+test browser::tests::ax_tree_tests::empty_nodes_returns_placeholder ... ok
+test browser::tests::ax_tree_tests::nested_hierarchy_indentation ... ok
+test browser::tests::ax_tree_tests::generic_container_is_skipped_but_children_shown ... ok
+test browser::tests::ax_tree_tests::single_button_node ... ok
+test browser::tests::ax_tree_tests::ignored_node_is_skipped ... ok
+test browser::tests::ax_tree_tests::all_semantic_roles_recognized ... ok
+test browser::tests::ax_tree_tests::all_interactive_roles_recognized ... ok
+test browser::tests::browser_tool_close_with_capture_no_browser ... ok
+test browser::tests::ax_tree_tests::description_mentions_observe_action ... ok
+test browser::tests::ax_tree_tests::browser_tool_schema_lists_all_actions ... ok
+test browser::tests::ax_tree_tests::schema_includes_hint_and_retry_parameters ... ok
+test browser::tests::browser_tool_default_timeout ... ok
+test browser::tests::ax_tree_tests::last_tree_hash_initializes_to_none ... ok
+test browser::tests::browser_tool_custom_timeout ... ok
+test browser::tests::browser_tool_default_impl ... ok
+test browser::tests::browser_tool_declarations_has_network_access ... ok
+test browser::tests::browser_tool_close_when_not_running ... ok
+test browser::tests::ax_tree_tests::schema_includes_observe_action ... ok
+test browser::tests::browser_tool_forget_session_no_vault ... ok
+test browser::tests::browser_tool_list_saved_sessions_no_vault ... ok
+test browser::tests::browser_tool_description_mentions_session_actions ... ok
+test browser::tests::browser_tool_name ... ok
+test browser::tests::browser_tool_large_timeout ... ok
+test browser::tests::browser_tool_get_active_domains_empty_default ... ok
+test browser::tests::browser_tool_nonzero_timeout_backwards_compat ... ok
+test browser::tests::browser_tool_is_not_running_by_default ... ok
+test browser::tests::browser_tool_has_tracking_fields ... ok
+test browser::tests::browser_tool_parameters_schema_includes_session_name ... ok
+test browser::tests::browser_tool_parameters_schema_includes_session_actions ... ok
+test browser::tests::default_idle_timeout_is_zero_persistent ... ok
+test browser::tests::extract_base_domain_invalid ... ok
+test browser::tests::extract_base_domain_simple ... ok
+test browser::tests::extract_base_domain_no_www ... ok
+test browser::tests::extract_base_domain_subdomain ... ok
+test browser::tests::browser_tool_description_mentions_stealth ... ok
+test browser::tests::extract_base_domain_with_port ... ok
+test browser::tests::qr_detect_js_checks_canvas ... ok
+test browser::tests::qr_detect_js_checks_square_ratio ... ok
+test browser::tests::qr_detect_js_checks_images ... ok
+test browser::tests::qr_detect_js_checks_src_alt_class ... ok
+test browser::tests::qr_detect_js_is_iife ... ok
+test browser::tests::browser_tool_short_timeout ... ok
+test browser::tests::qr_detect_js_minimum_size_filter ... ok
+test browser::tests::qr_detect_js_not_empty ... ok
+test browser::tests::qr_detect_js_returns_no_qr ... ok
+test browser::tests::qr_detect_js_returns_qr_canvas ... ok
+test browser::tests::browser_tool_schema_lists_all_ten_actions ... ok
+test browser::tests::browser_tool_schema_action_is_required ... ok
+test browser::tests::qr_detect_js_returns_qr_image ... ok
+test browser::tests::qr_detect_js_returns_qr_possible ... ok
+test browser::tests::browser_tool_zero_timeout ... ok
+test browser::tests::sanitize_session_name_all_special_becomes_default_not ... ok
+test browser::tests::browser_tool_uptime_none_when_not_started ... ok
+test browser::tests::sanitize_session_name_alphanumeric ... ok
+test browser::tests::browser_tool_persistent_timeout_skips_watchdog ... ok
+test browser::tests::sanitize_session_name_backslash ... ok
+test browser::tests::sanitize_session_name_dashes_and_underscores_mixed ... ok
+test browser::tests::sanitize_session_name_empty_becomes_default ... ok
+test browser::tests::sanitize_session_name_dots_allowed ... ok
+test browser::tests::sanitize_session_name_leading_dot ... ok
+test browser::tests::sanitize_session_name_replaces_spaces ... ok
+test browser::tests::sanitize_session_name_replaces_special_chars ... ok
+test browser::tests::sanitize_session_name_strips_path_traversal ... ok
+test browser::tests::sanitize_session_name_unicode ... ok
+test browser::tests::sanitize_session_name_very_long ... ok
+test browser::tests::session_cookie_deserialize_from_json_string ... ok
+test browser::tests::session_cookie_empty_vec_serialization ... ok
+test browser::tests::session_cookie_serialization_roundtrip ... ok
+test browser::tests::session_cookie_large_expiry_value ... ok
+test browser::tests::session_cookie_with_optional_fields_none ... ok
+test browser::tests::session_cookie_with_special_chars_in_value ... ok
+test browser::tests::session_cookie_vec_serialization ... ok
+test browser::tests::session_cookie_zero_expiry ... ok
+test browser::tests::session_cookie_with_unicode_value ... ok
+test browser::tests::sessions_dir_constant_is_sessions ... ok
+test browser::tests::stealth_js_not_empty ... ok
+test browser::tests::sessions_dir_returns_correct_path ... ok
+test browser::tests::stealth_js_fakes_three_plugins ... ok
+test browser::tests::sessions_dir_is_under_home ... ok
+test browser::tests::stealth_js_patches_chrome_runtime ... ok
+test browser::tests::stealth_js_patches_navigator_languages ... ok
+test browser::tests::stealth_js_patches_navigator_plugins ... ok
+test browser::tests::stealth_js_patches_navigator_webdriver ... ok
+test browser::tests::session_cookie_file_not_found_gives_error ... ok
+test browser::tests::stealth_js_patches_permissions_query ... ok
+test browser::tests::stealth_js_patches_webgl2 ... ok
+test browser::tests::stealth_js_patches_webgl_fingerprint ... ok
+test browser::tests::stealth_js_uses_object_defineproperty ... ok
+test browser::tests::stealth_user_agent_contains_applewebkit ... ok
+test browser::tests::stealth_js_patches_webgl_magic_numbers ... ok
+test browser::tests::stealth_user_agent_contains_safari_string ... ok
+test browser::tests::session_cookie_file_empty_array ... ok
+test browser::tests::stealth_user_agent_not_empty ... ok
+test browser::tests::stealth_user_agent_is_chrome_134 ... ok
+test browser::tests::session_cookie_file_write_and_read ... ok
+test browser::tests::stealth_user_agent_looks_like_windows_desktop ... ok
+test browser_observation::tests::analyze_tree_counts_unlabeled_interactive ... ok
+test browser_observation::tests::analyze_tree_counts_interactive_elements ... ok
+test browser_observation::tests::analyze_empty_tree ... ok
+test browser_observation::tests::analyze_tree_detects_form ... ok
+test browser_observation::tests::analyze_tree_detects_images ... ok
+test browser_observation::tests::analyze_tree_detects_table ... ok
+test browser_observation::tests::no_qr_does_not_escalate ... ok
+test browser_observation::tests::qr_default_is_false ... ok
+test browser::tests::session_cookie_file_invalid_json_gives_error ... ok
+test browser_observation::tests::analyze_tree_no_false_positives ... ok
+test browser_observation::tests::tier1_for_simple_tree ... ok
+test browser_observation::tests::tier1_when_all_labeled ... ok
+test browser_observation::tests::tier1_with_irrelevant_hint ... ok
+test browser_observation::tests::tier1_zero_interactive_no_flags ... ok
+test browser::tests::session_file_permissions_0600 ... ok
+test browser_observation::tests::tier2_for_form ... ok
+test browser_observation::tests::tier2_for_many_unlabeled ... ok
+test browser_observation::tests::tier2_for_table ... ok
+test browser_observation::tests::tier2_table_takes_priority_over_form ... ok
+test browser_observation::tests::tier3_failure_overrides_simple_tree ... ok
+test browser_observation::tests::tier3_failure_takes_priority_over_qr ... ok
+test browser_observation::tests::tier3_hint_case_insensitive ... ok
+test browser_observation::tests::tier3_on_captcha_hint ... ok
+test browser_observation::tests::tier3_on_image_hint ... ok
+test browser_observation::tests::tier3_on_layout_hint ... ok
+test browser_observation::tests::tier3_on_previous_action_failure ... ok
+test browser_observation::tests::tier3_on_qr_code_detected ... ok
+test browser_observation::tests::tier3_on_visual_hint ... ok
+test browser_observation::tests::tier3_qr_overrides_form ... ok
+test browser_observation::tests::tier3_qr_overrides_table ... ok
+test browser_observation::tests::truncate_safe_empty_string ... ok
+test browser_observation::tests::truncate_safe_exact_length ... ok
+test browser_observation::tests::truncate_safe_respects_utf8_boundary ... ok
+test browser_observation::tests::truncate_safe_short_string ... ok
+test browser_observation::tests::truncate_safe_truncates_ascii ... ok
+test browser_observation::tests::truncate_safe_zero_limit ... ok
+test browser_observation::tests::unlabeled_threshold_boundary ... ok
+test browser::tests::session_cookie_file_creates_parent_directories ... ok
+test browser_pool::tests::bitset_acquire_release_logic ... ok
+test browser_pool::tests::empty_bitset_returns_none ... ok
+test browser_pool::tests::max_pool_size_64 ... ok
+test browser_session::tests::overlay_inject_js_has_class_name ... ok
+test browser_session::tests::overlay_inject_js_has_high_z_index ... ok
+test browser_session::tests::overlay_inject_js_has_placeholders ... ok
+test browser_session::tests::overlay_inject_js_placeholder_replacement ... ok
+test browser_session::tests::overlay_inject_js_uses_fixed_positioning ... ok
+test browser_session::tests::overlay_remove_js_calls_remove ... ok
+test browser_pool::tests::oversized_pool_panics - should panic ... ok
+test browser_pool::tests::zero_pool_size_panics - should panic ... ok
+test browser_session::tests::overlay_remove_js_targets_class ... ok
+test browser_session::tests::session_action_continue_eq ... ok
+test browser_session::tests::session_action_done_eq ... ok
+test browser_session::tests::session_action_variants_differ ... ok
+test browser_session::tests::session_interactive_roles_contains_button ... ok
+test browser_session::tests::session_interactive_roles_contains_link ... ok
+test browser_session::tests::session_interactive_roles_contains_textbox ... ok
+test browser_session::tests::session_interactive_roles_does_not_contain_heading ... ok
+test browser_session::tests::session_interactive_roles_does_not_contain_img ... ok
+test browser_session::tests::session_state_empty_storage ... ok
+test browser_session::tests::session_state_cookie_with_full_cdp_fields ... ok
+test browser_session::tests::session_state_multiple_cookies ... ok
+test browser_session::tests::session_state_multiple_storage_entries ... ok
+test browser_session::tests::session_state_serialization_roundtrip ... ok
+test credential_scrub::tests::scrub_empty_text ... ok
+test credential_scrub::tests::scrub_empty_known_values_skipped ... ok
+test credential_scrub::tests::scrub_case_insensitive_url_params ... ok
+test credential_scrub::tests::scrub_auth_header_basic ... ok
+test credential_scrub::tests::scrub_auth_header_bearer ... ok
+test credential_scrub::tests::scrub_known_value_appears_multiple_times ... ok
+test credential_scrub::tests::scrub_csrf_and_nonce_params ... ok
+test credential_scrub::tests::scrub_multiple_known_values ... ok
+test credential_scrub::tests::scrub_known_username ... ok
+test credential_scrub::tests::scrub_known_password ... ok
+test credential_scrub::tests::scrub_short_known_values_skipped ... ok
+test credential_scrub::tests::scrub_preserves_non_sensitive_text ... ok
+test credential_scrub::tests::scrub_url_access_token_param ... ok
+test credential_scrub::tests::scrub_combined_patterns ... ok
+test credential_scrub::tests::scrub_url_session_id_param ... ok
+test credential_scrub::tests::scrub_url_token_param ... ok
+test credential_scrub::tests::scrub_url_password_param ... ok
+test credential_scrub::tests::scrub_url_api_key_param ... ok
+test credential_scrub::tests::scrub_openai_api_key ... ok
+test credential_scrub::tests::scrub_x_api_key_header ... ok
+test git::tests::test_add_all ... ok
+test credential_scrub::tests::scrub_x_auth_token_header ... ok
+test git::tests::test_add_files ... ok
+test git::tests::test_add_requires_files_or_all ... ok
+test credential_scrub::tests::scrub_github_oauth ... ok
+test git::tests::test_branch_create ... ok
+test credential_scrub::tests::scrub_github_pat ... ok
+test git::tests::test_branch_delete ... ok
+test git::tests::test_branch_list ... ok
+test git::tests::test_checkout_requires_branch ... ok
+test git::tests::test_checkout_with_create ... ok
+test custom_tools::tests::invalid_tool_name ... ok
+test custom_tools::tests::empty_script_rejected ... ok
+test git::tests::test_clone_requires_url ... ok
+test git::tests::test_clone_with_directory ... ok
+test custom_tools::tests::unsupported_language ... ok
+test git::tests::test_commit_builds_correct_command ... ok
+test git::tests::test_commit_requires_message ... ok
+test custom_tools::tests::delete_nonexistent ... ok
+test git::tests::test_force_push_no_branch_blocked ... ok
+test custom_tools::tests::list_empty ... ok
+test git::tests::test_execute_invalid_action ... ok
+test git::tests::test_declarations_has_shell_access ... FAILED
+test git::tests::test_force_push_to_main_with_force_allowed ... ok
+test git::tests::test_force_push_to_feature_branch_with_force_allowed ... ok
+test git::tests::test_force_push_to_main_blocked ... ok
+test git::tests::test_execute_missing_action ... ok
+test git::tests::test_force_push_to_master_blocked ... ok
+test git::tests::test_name ... ok
+test git::tests::test_pull_with_remote_and_branch ... ok
+test git::tests::test_push_without_force_allowed ... ok
+test custom_tools::tests::create_and_load_tool ... ok
+test git::tests::test_parameters_schema_valid_json ... ok
+test git::tests::test_reset_hard_blocked_via_safety ... ok
+test git::tests::test_status_with_extra_args ... ok
+test git::tests::test_unknown_action_rejected ... ok
+test key_manage::tests::test_add_with_generator ... ok
+test custom_tools::tests::delete_tool ... ok
+test key_manage::tests::test_remove_with_provider ... ok
+test key_manage::tests::test_list_action ... ok
+test key_manage::tests::test_add_without_generator ... ok
+test key_manage::tests::test_tool_metadata ... ok
+test key_manage::tests::test_help_action ... ok
+test key_manage::tests::test_remove_no_provider ... ok
+test memory_manage::tests::forget_deletes_entry ... ok
+test memory_manage::tests::invalid_action_returns_error ... ok
+test memory_manage::tests::forget_nonexistent_returns_error ... ok
+test memory_manage::tests::missing_action_returns_error ... ok
+test memory_manage::tests::recall_by_key ... ok
+test memory_manage::tests::recall_missing_key_returns_not_found ... ok
+test memory_manage::tests::remember_missing_content_returns_error ... ok
+test memory_manage::tests::remember_rejects_duplicate_key ... ok
+test memory_manage::tests::remember_missing_key_returns_error ... ok
+test memory_manage::tests::remember_stores_entry ... ok
+test memory_manage::tests::tool_metadata ... ok
+test memory_manage::tests::scope_isolation ... ok
+test memory_manage::tests::update_nonexistent_returns_error ... ok
+test mode_switch::tests::invalid_mode ... ok
+test memory_manage::tests::update_modifies_content ... ok
+test network_guard::tests::host_allow_entry_matches_exact_and_subdomain ... ok
+test mode_switch::tests::switch_to_play ... ok
+test mode_switch::tests::missing_mode_param ... ok
+test mode_switch::tests::tool_metadata ... ok
+test mode_switch::tests::switch_to_pro ... ok
+test mode_switch::tests::switch_to_work ... ok
+test prowl_blueprints::login_registry::tests::resolve_direct_url ... ok
+test prowl_blueprints::login_registry::tests::resolve_empty_returns_none ... ok
+test prowl_blueprints::login_registry::tests::lookup_known_service ... ok
+test prowl_blueprints::login_registry::tests::registry_has_100_services ... ok
+test prowl_blueprints::login_registry::tests::resolve_alias ... ok
+test prowl_blueprints::login_registry::tests::resolve_name_and_url ... ok
+test prowl_blueprints::login_registry::tests::resolve_service_name ... ok
+test prowl_blueprints::login_registry::tests::resolve_unknown_falls_back ... ok
+test prowl_blueprints::tests::all_blueprints_contain_expected_id ... ok
+test prowl_blueprints::tests::all_blueprints_have_phases ... ok
+test prowl_blueprints::tests::all_blueprints_have_yaml_frontmatter ... ok
+test prowl_blueprints::tests::blueprint_count ... ok
+test shell::tests::auto_backend_name_is_stable ... ok
+test shell::tests::host_program_validation_blocks_shell_launchers ... ok
+test shell::tests::build_container_args_disables_network_by_default ... ok
+test shell::tests::parse_command_line_handles_quotes ... ok
+test shell::tests::parse_command_line_rejects_unterminated_quote ... ok
+test usage_audit::tests::config_query_current ... ok
+test usage_audit::tests::config_toggle ... ok
+test usage_audit::tests::invalid_action ... ok
+test usage_audit::tests::missing_action ... ok
+test usage_audit::tests::recent_records ... ok
+test usage_audit::tests::summary_empty ... ok
+test web_fetch::tests::host_filter_blocks_local_targets ... ok
+test usage_audit::tests::tool_metadata ... ok
+test usage_audit::tests::summary_with_records ... ok
+test network_guard::tests::load_allowlist_normalizes ... ok
+test custom_tools::tests::execute_bash_script ... FAILED
+
+failures:
+
+---- git::tests::test_declarations_has_shell_access stdout ----
+
+thread 'git::tests::test_declarations_has_shell_access' (9866118) panicked at crates/electro-tools/src/git.rs:429:9:
+assertion failed: matches!(decl.network_access,
+    electro_core::net_policy::NetworkPolicy::Blocked)
+
+---- custom_tools::tests::execute_bash_script stdout ----
+
+thread 'custom_tools::tests::execute_bash_script' (9866102) panicked at crates/electro-tools/src/custom_tools.rs:575:9:
+assertion failed: !output.is_error
+
+
+failures:
+    custom_tools::tests::execute_bash_script
+    git::tests::test_declarations_has_shell_access
+
+test result: FAILED. 270 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
+
+error: test failed, to rerun pass `-p electro-tools --lib`

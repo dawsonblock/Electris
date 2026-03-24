@@ -1,0 +1,68 @@
+# ELECTRO Default Configuration
+# Cloud-native Rust AI agent runtime — Telegram-native
+
+[electro]
+mode = "auto"  # "cloud" | "local" | "auto"
+tenant_isolation = false
+
+[gateway]
+host = "127.0.0.1"
+port = 8080
+tls = false
+
+# Provider is auto-configured via Telegram onboarding.
+# Or set manually here to skip onboarding:
+[provider]
+# name = "anthropic"
+# api_key = "your-api-key-here"
+# model = "claude-sonnet-4-6"
+
+[memory]
+backend = "sqlite"
+
+[memory.search]
+vector_weight = 0.7
+keyword_weight = 0.3
+
+[vault]
+backend = "local-chacha20"
+
+[filestore]
+backend = "local"
+
+[security]
+sandbox = "mandatory"
+file_scanning = true
+skill_signing = "required"
+audit_log = true
+
+[heartbeat]
+enabled = false
+interval = "30m"
+checklist = "HEARTBEAT.md"
+
+[cron]
+storage = "sqlite"
+
+[tools]
+shell = true
+# Shell tool isolation is controlled by environment variables:
+# ELECTRO_SHELL_BACKEND=auto|docker|podman|host
+# ELECTRO_SHELL_CONTAINER_IMAGE=electro-shell-runner:local
+# ELECTRO_SHELL_ALLOW_NETWORK=0
+browser = true
+file = true
+git = true
+cron = true
+http = true
+
+[observability]
+log_level = "info"
+otel_enabled = false
+
+# Telegram channel — set your bot token here or via TELEGRAM_BOT_TOKEN env var
+[channel.telegram]
+enabled = true
+token = "${TELEGRAM_BOT_TOKEN}"
+allowlist = []
+file_transfer = true

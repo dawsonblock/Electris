@@ -1,0 +1,27 @@
+[package]
+name = "electro-hive"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Stigmergic swarm intelligence runtime for ELECTRO (Experimental)"
+
+[dependencies]
+electro-core = { path = "../electro-core" }
+tokio = { workspace = true }
+sqlx = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+rand = { workspace = true }
+async-trait = { workspace = true }
+tokio-util = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util"] }
+toml = { workspace = true }
+electro-providers = { path = "../electro-providers" }
+tokio-util = { workspace = true }

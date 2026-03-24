@@ -1,0 +1,19 @@
+[Unit]
+Description=ELECTRO AI Agent Runtime
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=electro
+Group=electro
+WorkingDirectory=/var/lib/electro
+EnvironmentFile=/etc/electro/env
+ExecStart=/usr/local/bin/electro start
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
