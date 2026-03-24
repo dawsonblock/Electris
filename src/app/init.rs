@@ -75,6 +75,7 @@ pub async fn check_hive_enabled() -> bool {
     }
 }
 
+#[cfg(feature = "hive")]
 #[allow(dead_code)]
 pub async fn load_hive_config() -> electro_hive::HiveConfig {
     let config_content = std::fs::read_to_string(paths::electro_home().join("config.toml"))
@@ -93,4 +94,10 @@ pub async fn load_hive_config() -> electro_hive::HiveConfig {
     } else {
         electro_hive::HiveConfig::default()
     }
+}
+
+#[cfg(not(feature = "hive"))]
+#[allow(dead_code)]
+pub async fn load_hive_config() -> () {
+    ()
 }

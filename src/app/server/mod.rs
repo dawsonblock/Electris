@@ -1,7 +1,9 @@
 use crate::app::agent::{build_provider_config, resolve_credentials};
 use crate::app::onboarding::build_system_prompt;
 use crate::app::server::dispatcher::run_message_dispatcher;
-use crate::app::{create_agent, create_provider, init_core_stack, init_tools, load_hive_config};
+use crate::app::{create_agent, create_provider, init_core_stack, init_tools};
+#[cfg(feature = "hive")]
+use crate::app::load_hive_config;
 use crate::bootstrap::SecretCensorChannel;
 use crate::daemon::remove_pid_file;
 use anyhow::Result;
@@ -221,6 +223,7 @@ pub async fn start_server(
     // ── Workspace & Heartbeat ──
     let workspace_path = electro_core::paths::workspace_dir();
     std::fs::create_dir_all(&workspace_path).ok();
+    #[cfg(feature = "automation")]
     if config.heartbeat.enabled {
         let runner = electro_automation::HeartbeatRunner::new(
             config.heartbeat.clone(),
@@ -237,20 +240,25 @@ pub async fn start_server(
         }));
     }
 
-    // ── Hive ──
-    let hive_config = load_hive_config().await;
-    let hive_instance = if hive_config.enabled {
-        let hive_url = format!(
-            "sqlite:{}?mode=rwc",
-            electro_core::paths::hive_db_file().display()
-        );
-        electro_hive::Hive::new(&hive_config, &hive_url)
-            .await
-            .ok()
-            .map(Arc::new)
-    } else {
-        None
+    // ── Hive (experimental, disabled in core-only build) ──
+    #[cfg(feature = "hive")]
+    let hive_instance = {
+        let hive_config = load_hive_config().await;
+        if hive_config.enabled {
+            let hive_url = format!(
+                "sqlite:{}?mode=rwc",
+                electro_core::paths::hive_db_file().display()
+            );
+            electro_hive::Hive::new(&hive_config, &hive_url)
+                .await
+                .ok()
+                .map(Arc::new)
+        } else {
+            None
+        }
     };
+    #[cfg(not(feature = "hive"))]
+    let hive_instance: Option<Arc<()>> = None;
 
     // ── Tenant Manager ──
     let tenant_manager = Arc::new(electro_core::tenant_impl::create_tenant_manager(&config));
@@ -268,7 +276,10 @@ pub async fn start_server(
                         tools.clone(),
                         model,
                         Some(build_system_prompt()),
+                        #[cfg(feature = "hive")]
                         hive_config.enabled,
+                        #[cfg(not(feature = "hive"))]
+                        false,
                         runtime.shared_mode.clone(),
                         runtime.shared_memory_strategy.clone(),
                     )

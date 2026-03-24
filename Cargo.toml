@@ -1,26 +1,35 @@
 [workspace]
 resolver = "2"
 members = [
-    # Core runtime - required for operation
-    "crates/electro-core",
-    "crates/electro-runtime",
-    "crates/electro-agent",
-    "crates/electro-gateway",
-    "crates/electro-tools",
-    "crates/electro-providers",
-    "crates/electro-memory",
-    "crates/electro-vault",
-    "crates/electro-channels",
-    "crates/electro-mcp",
-    "crates/electro-tui",
-    "crates/electro-observable",
-    "crates/electro-test-utils",
-    # Experimental - feature-gated
-    "crates/electro-skills",
-    "crates/electro-automation",
-    "crates/electro-filestore",
-    "crates/electro-codex-oauth",
-    "crates/electro-hive",
+    # ═══════════════════════════════════════════════════════════════════
+    # CORE STABILIZATION SET
+    # These crates are required for the operational runtime.
+    # They are built and tested in core-only mode.
+    # ═══════════════════════════════════════════════════════════════════
+    "crates/electro-core",      # Types, policies, contracts
+    "crates/electro-runtime",   # Execution controller, events
+    "crates/electro-agent",     # Agent runtime, process_message
+    "crates/electro-gateway",   # HTTP surface (transport only)
+    "crates/electro-tools",     # Tool registry + sandbox
+    "crates/electro-providers", # LLM provider implementations
+    "crates/electro-memory",    # Lambda memory, persistence
+    "crates/electro-vault",     # Secrets management
+    "crates/electro-channels",  # Telegram, Discord, Slack adapters
+    "crates/electro-mcp",       # Model Context Protocol
+    "crates/electro-tui",       # CLI/TUI interface
+    "crates/electro-observable", # Metrics, tracing
+    "crates/electro-test-utils", # Test helpers
+    
+    # ═══════════════════════════════════════════════════════════════════
+    # EXPERIMENTAL / OPTIONAL
+    # These crates are NOT included in core stabilization.
+    # They may be incomplete, untested, or require external deps.
+    # ═══════════════════════════════════════════════════════════════════
+    "crates/electro-skills",       # Skill system (partial)
+    "crates/electro-automation",   # Proactive automation (experimental)
+    "crates/electro-filestore",    # Object storage (optional)
+    "crates/electro-codex-oauth",  # OAuth flow (optional)
+    "crates/electro-hive",         # Multi-agent swarm (experimental)
 ]
 
 [workspace.package]
@@ -143,6 +152,9 @@ name = "worker-node"
 path = "src/bin/worker-node.rs"
 
 [dependencies]
+# ═══════════════════════════════════════════════════════════════════
+# CORE STABILIZATION DEPS (always included)
+# ═══════════════════════════════════════════════════════════════════
 electro-core.workspace = true
 electro-gateway.workspace = true
 electro-agent.workspace = true
@@ -152,14 +164,18 @@ electro-channels.workspace = true
 electro-memory.workspace = true
 electro-vault.workspace = true
 electro-tools.workspace = true
-electro-skills.workspace = true
-electro-automation.workspace = true
 electro-observable.workspace = true
-electro-filestore.workspace = true
+
+# ═══════════════════════════════════════════════════════════════════
+# OPTIONAL / EXPERIMENTAL DEPS (feature-gated)
+# ═══════════════════════════════════════════════════════════════════
 electro-mcp = { workspace = true, optional = true }
-electro-codex-oauth = { workspace = true, optional = true }
 electro-tui = { workspace = true, optional = true }
-electro-hive.workspace = true
+electro-codex-oauth = { workspace = true, optional = true }
+electro-skills = { workspace = true, optional = true }
+electro-automation = { workspace = true, optional = true }
+electro-filestore = { workspace = true, optional = true }
+electro-hive = { workspace = true, optional = true }
 tokio.workspace = true
 clap.workspace = true
 axum.workspace = true
@@ -181,16 +197,45 @@ futures.workspace = true
 tokio-util.workspace = true
 
 [features]
-default = ["telegram", "mcp", "codex-oauth"]
+# ═══════════════════════════════════════════════════════════════════
+# BUILD MODES
+# ═══════════════════════════════════════════════════════════════════
+
+# Core-only: Minimal operational runtime
+# Usage: cargo build --no-default-features --features "core-only,telegram"
+core-only = []
+
+# Default: Full build with optional features
+default = ["telegram", "mcp", "tui"]
+
+# ═══════════════════════════════════════════════════════════════════
+# CHANNEL FEATURES
+# ═══════════════════════════════════════════════════════════════════
 telegram = ["electro-channels/telegram"]
 discord = ["electro-channels/discord"]
 slack = ["electro-channels/slack"]
-# Browser disabled - requires htmd which needs Rust 1.88
+
+# ═══════════════════════════════════════════════════════════════════
+# OPTIONAL MODULES
+# ═══════════════════════════════════════════════════════════════════
+mcp = ["dep:electro-mcp"]
+tui = ["dep:electro-tui"]
+codex-oauth = ["dep:electro-codex-oauth"]
+
+# ═══════════════════════════════════════════════════════════════════
+# EXPERIMENTAL MODULES (not part of core stabilization)
+# ═══════════════════════════════════════════════════════════════════
+skills = ["dep:electro-skills"]
+automation = ["dep:electro-automation"]
+filestore = ["dep:electro-filestore"]
+hive = ["dep:electro-hive"]
+
+# ═══════════════════════════════════════════════════════════════════
+# DISABLED MODULES
+# ═══════════════════════════════════════════════════════════════════
+# Browser disabled - requires htmd which needs Rust 1.88+
 browser = []
 postgres = ["electro-memory/postgres"]
-mcp = ["dep:electro-mcp"]
-codex-oauth = ["dep:electro-codex-oauth"]
-tui = ["dep:electro-tui"]
 
 [profile.release]
 opt-level = "z"

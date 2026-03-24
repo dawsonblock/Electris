@@ -52,7 +52,8 @@ pub async fn run_message_dispatcher(
         Mutex<HashMap<String, electro_tools::browser_session::InteractiveBrowseSession>>,
     >,
     usage_store: Arc<dyn UsageStore>,
-    hive_instance: Option<Arc<electro_hive::Hive>>,
+    #[cfg(feature = "hive")] hive_instance: Option<Arc<electro_hive::Hive>>,
+    #[cfg(not(feature = "hive"))] _hive_instance: Option<Arc<()>>,
     workspace_path: std::path::PathBuf,
     personality_locked: bool,
     tenant_manager: Arc<electro_core::tenant_impl::TenantManager>,
@@ -74,7 +75,10 @@ pub async fn run_message_dispatcher(
         #[cfg(feature = "browser")]
         let login_sessions_clone = login_sessions.clone();
         let usage_store_clone = usage_store.clone();
+        #[cfg(feature = "hive")]
         let hive_clone = hive_instance.clone();
+        #[cfg(not(feature = "hive"))]
+        let hive_clone: Option<Arc<()>> = None;
         let tenant_mgr_clone = tenant_manager.clone();
         let tenant_isolation_enabled = config.electro.tenant_isolation;
         #[cfg(feature = "browser")]
@@ -307,7 +311,7 @@ fn ensure_worker<'a>(
         Mutex<HashMap<String, electro_tools::browser_session::InteractiveBrowseSession>>,
     >,
     usage_store: &Arc<dyn UsageStore>,
-    hive_instance: &Option<Arc<electro_hive::Hive>>,
+    #[allow(unused)] _hive_instance: &Option<Arc<()>>,
     workspace_path: &std::path::Path,
     _tenant_isolation_enabled: bool,
     personality_locked: bool,
@@ -340,7 +344,7 @@ fn ensure_worker<'a>(
             #[cfg(feature = "browser")]
             login_sessions,
             usage_store,
-            hive_instance,
+            _hive_instance,
             personality_locked,
             #[cfg(feature = "browser")]
             browser_tool_ref,
