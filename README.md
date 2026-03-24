@@ -34,7 +34,7 @@
 
 **Build Status:**
 - ✅ `cargo check` passes (default features)
-- ✅ `cargo test` passes (39+ tests)
+- ✅ `cargo test` passes (1500+ tests)
 - ✅ Rust 1.88.0 toolchain
 
 **Feature Flags:**
@@ -67,7 +67,7 @@ pub async fn deploy() -> Result<Eternity, Never> {
 | **Binary Size** | ~15 MB (stripped release) |
 | **Memory Footprint** | < 50 MB baseline |
 | **Cold Start** | < 100ms |
-| **Test Coverage** | 905+ tests |
+| **Test Coverage** | 1522 tests |
 | **Clippy Warnings** | Core clean, experimental has warnings |
 | **Channels** | 4 (Telegram, Discord, Slack, CLI) |
 | **AI Providers** | 6 (Anthropic, OpenAI, Gemini, Grok, OpenRouter, Codex OAuth) |
