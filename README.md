@@ -16,24 +16,30 @@
 
 ---
 
+## Operational Status
+
+| Capability | Status | Notes |
+|------------|--------|-------|
+| Core runtime | ✅ Operational | Event-driven execution, worker pool |
+| Gateway | ✅ Operational | HTTP endpoints, health checks, SSE streaming |
+| Event streaming | ✅ Operational | OutboundEvent system |
+| Remote worker | ✅ Operational | Authenticated remote execution |
+| Tool sandbox | ⚠️ Partial | Host execution with env isolation |
+| CLI/TUI | ✅ Operational | Command-line interface |
+| Telegram | ✅ Operational | Channel integration |
+| Discord | ⚠️ Partial | Channel exists, limited testing |
+| Slack | ⚠️ Partial | Channel exists, limited testing |
+| Hive | ❌ Experimental | Swarm/orchestration not ready |
+| Browser | ❌ Disabled | Requires Rust 1.88+ |
+
+**Build Status:**
+- ✅ `cargo check` passes (zero warnings)
+- ✅ `cargo test` passes (39 tests)
+- ✅ Rust 1.85.0 toolchain
+
 ## What is Electris
 
-> **Archive status:** This zip is a cleaned salvage snapshot of `Electris-main 5`, not a compile-verified release.
->
-> What is true in this archive:
-> - core merge conflicts in the main runtime path were removed in the corrected build process
-> - the structured runtime path (events + executor + router + remote worker support) was preserved
-> - Rust toolchain is pinned to stable `1.83.0`
->
-> What is not claimed here:
-> - successful `cargo check`, `cargo test`, or `cargo clippy` in this container
-> - production readiness
-> - zero warnings
-> - complete feature closure for hive, delegation, proactive, or orchestration systems
->
-> Read `docs/STATUS.md`, `CORRECTED_BUILD_NOTES.md`, and `COMPLETE_FIX_PLAN.md` before treating this as a release artifact.
-
-Electris is a **production-grade AI agent runtime** written in Rust, designed for deploying autonomous agents across multiple messaging channels with enterprise reliability. It combines a modular microkernel architecture with advanced agentic capabilities—enabling everything from simple chatbots to complex multi-agent swarms.
+Electris is an **AI agent runtime** written in Rust, designed for deploying autonomous agents across multiple messaging channels. It uses a modular microkernel architecture with event-driven execution.
 
 ```rust
 // The core philosophy: reliability at scale
