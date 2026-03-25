@@ -1,0 +1,15 @@
+[package]
+name = "spine-worker"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+spine-core = { path = "../spine-core" }
+spine-tools = { path = "../spine-tools" }
+tokio = { version = "1", features = ["full"] }
+tracing = "0.1"
+thiserror = "1.0"
+
+[dev-dependencies]
+tokio-test = "0.4"
+serde_json = "1.0"

@@ -1,0 +1,31 @@
+# Electris Runtime Spine Configuration
+# Copy this file to spine.toml and customize for your environment
+
+[server]
+port = 8080
+host = "0.0.0.0"
+max_body_size_mb = 10
+request_timeout_secs = 30
+
+[llm]
+provider = "openai"  # or "anthropic", "kimi"
+model = "gpt-4"  # or "kimi-latest" for Kimi
+max_tokens = 4000
+temperature = 0.7
+timeout_secs = 60
+
+[worker]
+policy = "standard"  # "permissive", "standard", or "restrictive"
+max_concurrent = 10
+
+[worker.limits]
+memory_mb = 512
+cpu_time_secs = 60
+output_kb = 1024
+max_file_size_mb = 100
+
+[logging]
+level = "info"  # trace, debug, info, warn, error
+format = "pretty"  # pretty, json, compact
+file_logging = false
+# log_file = "/var/log/spine.log"

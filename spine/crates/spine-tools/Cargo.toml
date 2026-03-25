@@ -1,0 +1,12 @@
+[package]
+name = "spine-tools"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+spine-core = { path = "../spine-core" }
+tokio = { version = "1", features = ["full"] }
+tracing = "0.1"
+
+[dev-dependencies]
+tokio-test = "0.4"

@@ -1,0 +1,20 @@
+[package]
+name = "spine-llm"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+spine-core = { path = "../spine-core" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+async-trait = "0.1"
+tokio = { version = "1", features = ["full"] }
+tracing = "0.1"
+reqwest = { version = "0.11", features = ["json", "stream"] }
+futures = "0.3"
+thiserror = "1.0"
+anyhow = "1.0"
+
+[dev-dependencies]
+tokio-test = "0.4"
+wiremock = "0.6"
